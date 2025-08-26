@@ -103,7 +103,7 @@ export async function PUT(request: Request) {
     }
 
     const { id, name, slug, ...rest } = await request.json();
-    // console.log({ id, name, slug });
+    console.log({ id, name, slug });
 
     if (!id || !name || !slug) {
       return NextResponse.json(

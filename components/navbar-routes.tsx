@@ -106,7 +106,7 @@ export const NavbarRoutes = ({ session, status }) => {
 
     fetchUserState();
   }, [userId]);
-  // console.log("session result:", session);
+
   return (
     <>
       {isSearchPage && (
@@ -220,10 +220,7 @@ export const NavbarRoutes = ({ session, status }) => {
           </>
         )}
 
-        <UserProfileMenus
-          session={session}
-          subscription={session?.user?.info?.studentProfile?.subscription}
-        />
+        <UserProfileMenus session={session} />
       </div>
     </>
   );

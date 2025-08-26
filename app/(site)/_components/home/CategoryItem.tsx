@@ -29,7 +29,6 @@ const CategoryItem = ({ category }: { category: ICategory }) => {
               sizes="100vw"
               onError={imgErrorHandler}
               className="block object-cover w-full h-full rounded-md"
-              quality={75}
             />
           </div>
           <p className="font-medium">{textLangChecker(category.name)}</p>

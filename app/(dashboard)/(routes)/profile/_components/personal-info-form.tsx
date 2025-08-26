@@ -38,11 +38,6 @@ interface PersonalInfoFormProps {
   defaultValues: any;
   isLoading: boolean;
   isSubmitting: boolean;
-  parsedEducation: Array<{
-    degree: string;
-    major: string;
-    passingYear: string;
-  }>;
 }
 
 export const PersonalInfoForm = ({
@@ -50,14 +45,20 @@ export const PersonalInfoForm = ({
   defaultValues,
   isLoading,
   isSubmitting,
-  parsedEducation,
 }: PersonalInfoFormProps) => {
+  // if (isLoading && Object.keys(defaultValues).length === 0) {
+  //   return (
+  //     <div className="bg-white p-6 rounded-lg shadow-md border">
+  //       <h1 className="text-2xl font-bold">আপনার সম্পর্কে</h1>
+  //       <hr className="border-gray-200 my-2" />
+  //       <ProfileFormSkeleton />
+  //     </div>
+  //   );
+  // }
+
   const personalInfoForm = useForm({
     resolver: zodResolver(generalSchema),
-    defaultValues: {
-      ...defaultValues,
-      education: parsedEducation,
-    },
+    defaultValues,
   });
 
   const {
@@ -66,42 +67,39 @@ export const PersonalInfoForm = ({
     reset: resetPersonalInfo,
   } = personalInfoForm;
 
-  const onSubmitHandler = (data: any) => {
-    // Convert education array from objects to strings before submitting
-    const formattedData = {
-      ...data,
-      education: data.education.map((edu: any) => {
-        return `${edu.degree || ""} - ${edu.major || ""} - ${
-          edu.passingYear || ""
-        }`;
-      }),
-    };
-    onSubmit(formattedData);
-  };
-
   useEffect(() => {
     if (defaultValues) {
       const transformedValues = {
-        ...defaultValues,
+        ...defaultValues, // Then override with actual values
         name: defaultValues?.name || "",
         email: defaultValues?.email || "",
         dateOfBirth: defaultValues?.dateOfBirth
-          ? new Date(defaultValues.dateOfBirth)
+          ? new Date(defaultValues.dateOfBirth) // Convert string to Date
           : undefined,
         nationality: defaultValues.nationality || "",
         bio: defaultValues.bio || "",
-        education: parsedEducation || [],
+        education: defaultValues.education || [],
         gender: defaultValues.gender || "",
       };
 
-      resetPersonalInfo(transformedValues);
+      resetPersonalInfo({
+        name: defaultValues.name || "",
+        email: defaultValues.email || "",
+        dateOfBirth: defaultValues?.dateOfBirth
+          ? new Date(defaultValues.dateOfBirth) // Convert string to Date
+          : undefined,
+        gender: defaultValues.gender || "",
+        nationality: defaultValues.nationality || "",
+        bio: defaultValues.bio || "",
+        education: defaultValues.education || [],
+      });
     }
-  }, [JSON.stringify(defaultValues), JSON.stringify(parsedEducation)]);
+  }, [JSON.stringify(defaultValues)]);
 
   return (
     <div className="bg-white border p-6 rounded-lg shadow-md">
       <div className="flex items-start gap-4 justify-between">
-        <h1 className="text-2xl font-bold">প্রোফাইল</h1>
+        <h1 className="text-2xl font-bold">About</h1>
       </div>
       <hr className="border-gray-200 my-2" />
       <div className="mt-4">
@@ -109,7 +107,7 @@ export const PersonalInfoForm = ({
       </div>
       <FormProvider {...personalInfoForm}>
         <form
-          onSubmit={personalInfoForm.handleSubmit(onSubmitHandler)}
+          onSubmit={personalInfoForm.handleSubmit(onSubmit)}
           className="space-y-8"
         >
           {/* Name & Email */}
@@ -122,7 +120,7 @@ export const PersonalInfoForm = ({
                 render={({ field }) => (
                   <FormItem className="space-y-2">
                     <FormLabel>
-                      <RequiredFieldStar labelText="নাম" />
+                      <RequiredFieldStar labelText="Name" />
                     </FormLabel>
                     <FormControl>
                       <Input placeholder="John Doe" {...field} />
@@ -137,7 +135,7 @@ export const PersonalInfoForm = ({
             {/* Email */}
             <div className="w-full">
               <div>
-                <RequiredFieldStar labelText="ইমেইল " />
+                <RequiredFieldStar labelText="Email" />
                 <div className="text-sm border border-input rounded-md bg-gray-100 h-[38px] w-full px-3 py-2 cursor-not-allowed">
                   {defaultValues?.email || ""}
                 </div>
@@ -154,7 +152,7 @@ export const PersonalInfoForm = ({
                 name="dateOfBirth"
                 render={({ field }) => (
                   <FormItem>
-                    <RequiredFieldStar labelText={"জন্ম তারিখ"} />
+                    <RequiredFieldStar labelText={"Date of Birth"} />
                     <FormControl>
                       <Popover>
                         <PopoverTrigger asChild>
@@ -164,7 +162,7 @@ export const PersonalInfoForm = ({
                           >
                             {field.value
                               ? format(field.value, "PPP")
-                              : "তারিখ নির্বাচন করুন"}
+                              : "Pick a date"}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
                         </PopoverTrigger>
@@ -199,7 +197,7 @@ export const PersonalInfoForm = ({
                 name="gender"
                 render={({ field }) => (
                   <FormItem>
-                    <RequiredFieldStar labelText={"লিঙ্গ"} />
+                    <RequiredFieldStar labelText={"Gender"} />
                     <FormControl>
                       <Select
                         onValueChange={field.onChange}
@@ -209,8 +207,9 @@ export const PersonalInfoForm = ({
                           <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="MALE">পুরুষ</SelectItem>
-                          <SelectItem value="FEMALE">মহিলা</SelectItem>
+                          <SelectItem value="MALE">Male</SelectItem>
+                          <SelectItem value="FEMALE">Female</SelectItem>
+                          <SelectItem value="OTHER">Other</SelectItem>
                         </SelectContent>
                       </Select>
                     </FormControl>
@@ -230,9 +229,9 @@ export const PersonalInfoForm = ({
               name="nationality"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>জাতীয়তা</FormLabel>
+                  <FormLabel>Nationality</FormLabel>
                   <FormControl>
-                    <Input placeholder="বাংলাদেশি" {...field} />
+                    <Input placeholder="Nationality" {...field} />
                   </FormControl>
                   <FormMessage>
                     {personalInfoErrors.nationality?.message}
@@ -251,11 +250,11 @@ export const PersonalInfoForm = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      <RequiredFieldStar labelText="জীবনবৃত্তান্ত (বায়ো)" />
+                      <RequiredFieldStar labelText="Bio" />
                     </FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="আপনার সম্পর্কে সংক্ষেপে কিছু বলুন"
+                        placeholder="Tell us a little about yourself"
                         {...field}
                       />
                     </FormControl>
@@ -272,7 +271,7 @@ export const PersonalInfoForm = ({
             control={personalInfoForm.control}
             render={({ field }) => (
               <FormItem>
-                {/* <RequiredFieldStar labelText="Education" /> */}
+                <RequiredFieldStar labelText="Education" />
                 <FormControl>
                   <EducationsInput
                     initialEducations={field.value || []}

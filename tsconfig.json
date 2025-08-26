@@ -30,7 +30,6 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "lib/sessionUtils.js",
-    "tailwind.config.js"
-  ],
+    "tailwind.config.js"],
   "exclude": ["node_modules"]
 }

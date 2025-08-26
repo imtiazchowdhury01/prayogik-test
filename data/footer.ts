@@ -24,7 +24,7 @@ export const footerOthersLinks = [
     path: "/teachers",
   },
   {
-    title: "শেখাতে চাই",
+    title: "প্রশিক্ষক হতে চাই ",
     path: "/become-a-teacher",
   },
   {

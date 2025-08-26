@@ -219,7 +219,7 @@ export default function SignIn() {
           )}
         </button>
       </form>
-      {/* <p className="mt-4 mb-6 text-center">
+      <p className="mt-4 mb-6 text-center">
         {`আপনার অ্যাকাউন্ট নেই?`}{" "}
         <Link
           href="/signup"
@@ -228,8 +228,8 @@ export default function SignIn() {
         >
           অ্যাকাউন্ট তৈরি করুন
         </Link>
-      </p> */}
-      <div className="flex items-center space-x-2 mt-4">
+      </p>
+      <div className="flex items-center space-x-2">
         <span className="flex-1 border-[1px] border-greyscale-200"></span>
         <span className="text-fontcolor-description">অথবা</span>
         <span className="flex-1 border-[1px] border-greyscale-200"></span>

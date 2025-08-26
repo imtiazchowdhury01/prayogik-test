@@ -63,15 +63,7 @@ export default function TeacherForm({
     email: z.string().min(1, { message: "Email is required" }),
     bio: z.string(),
     yearsOfExperience: z.string(),
-    education: z
-      .array(
-        z.object({
-          degree: z.string().optional(),
-          major: z.string().optional(),
-          passingYear: z.string().optional(),
-        })
-      )
-      .optional(),
+    education: z.array(z.string()),
     subjectSpecializations: z.array(z.string()),
     expertiseLevel: z.enum([
       TeacherExpertiseLevel.ENTRY_LEVEL,
@@ -94,27 +86,6 @@ export default function TeacherForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dialogVisible, setDialogVisible] = useState(false);
   const router = useRouter();
-  // console.log("initialData result:", initialData);
-  // Parse existing education data if it exists
-  let parsedEducation = [
-    {
-      degree: "",
-      major: "",
-      passingYear: "",
-    },
-  ];
-
-  if (initialData?.education && initialData.education.length > 0) {
-    parsedEducation = initialData.education.map((edu) => {
-      // Try to parse the existing education string format "Degree - Major - Year"
-      const parts = edu.split(" - ");
-      return {
-        degree: parts[0] || "",
-        major: parts[1] || "",
-        passingYear: parts[2] || "",
-      };
-    });
-  }
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -128,7 +99,7 @@ export default function TeacherForm({
       expertiseLevel:
         initialData?.teacherProfile?.expertiseLevel ||
         TeacherExpertiseLevel.ENTRY_LEVEL,
-      education: parsedEducation || [],
+      education: initialData.education || [],
       dateOfBirth: new Date(initialData?.dateOfBirth),
       gender: initialData?.gender || "",
       phoneNumber: initialData.phoneNumber || "",
@@ -143,6 +114,32 @@ export default function TeacherForm({
     },
   });
 
+  // useEffect(() => {
+  //   form.reset({
+  //     email: initialData.email || "",
+  //     name: initialData.name || "",
+  //     bio: initialData.bio || "",
+  //     yearsOfExperience: initialData?.teacherProfile?.yearsOfExperience || "",
+  //     subjectSpecializations:
+  //       initialData?.teacherProfile?.subjectSpecializations || [],
+  //     expertiseLevel:
+  //       initialData?.teacherProfile?.expertiseLevel ||
+  //       TeacherExpertiseLevel.ENTRY_LEVEL,
+  //     education: initialData.education || [],
+  //     dateOfBirth: new Date(initialData?.dateOfBirth),
+  //     gender: initialData?.gender || "",
+  //     phoneNumber: initialData.phoneNumber || "",
+  //     city: initialData.city || "",
+  //     state: initialData.state || "",
+  //     country: initialData.country || "",
+  //     zipCode: initialData.zipCode || "",
+  //     teacherRankId: initialData?.teacherProfile?.teacherRankId || "",
+  //     isAdmin: initialData.isAdmin || false,
+  //     isSuperAdmin: initialData.isSuperAdmin || false,
+  //     teacherStatus: initialData?.teacherProfile?.teacherStatus || "NONE",
+  //   });
+  // }, [initialData, form]);
+
   const {
     formState: { isDirty },
   } = form;
@@ -150,16 +147,7 @@ export default function TeacherForm({
   const onSubmit = async (data) => {
     try {
       setIsSubmitting(true);
-      // Format education data before sending
-      const formattedData = {
-        ...data,
-        education: data.education.map(
-          (edu) => `${edu.degree} - ${edu.major} - ${edu.passingYear}`
-        ),
-      };
-
-      const result = await updateTeacherByAdmin(teacherId, formattedData);
-      console.log("result result:", result);
+      const result = await updateTeacherByAdmin(teacherId, data);
 
       toast.success("Changes saved successfully");
       form.reset(data);
@@ -180,26 +168,7 @@ export default function TeacherForm({
       setIsSubmitting(false);
     }
   };
-  const banglaLabels = {
-    name: "নাম",
-    email: "ইমেইল",
-    bio: "জীবনবৃত্তান্ত",
-    yearsOfExperience: "শিক্ষকতার অভিজ্ঞতা",
-    education: "",
-    subjectSpecializations: "বিশেষায়িত ক্ষেত্র",
-    expertiseLevel: "শিক্ষকতার দক্ষতার স্তর",
-    dateOfBirth: "জন্ম তারিখ",
-    gender: "লিঙ্গ",
-    phoneNumber: "ফোন নম্বর",
-    city: "শহর",
-    state: "জেলা/বিভাগ",
-    country: "দেশ",
-    zipCode: "জিপ কোড",
-    teacherRankId: "শিক্ষকের পদবী",
-    isAdmin: "অ্যাডমিন কি না",
-    isSuperAdmin: "সুপার অ্যাডমিন কি না",
-    teacherStatus: "শিক্ষকতার জন্য আবেদনের অগ্রগতি",
-  };
+
   return (
     <>
       <Form {...form}>
@@ -216,16 +185,14 @@ export default function TeacherForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      {field.name === "education"
-                        ? null
-                        : banglaLabels[field.name] ||
-                          (field.name === "teacherRankId"
-                            ? "শিক্ষকের পদবী"
-                            : capitalizeFirstLetter(field.name).replace(
-                                /Ids?/g,
-                                " "
-                              ))}
-                      {/* Required field asterisk remains same */}
+                      {field.name === "teacherRankId"
+                        ? capitalizeFirstLetter(field.name).replace(/Id/g, " ")
+                        : capitalizeFirstLetter(field.name).replace(
+                            /Ids/g,
+                            " "
+                          )}
+
+                      {/* Check for required fields */}
                       {(formSchema.shape[field.name]._def.typeName ===
                         "ZodString" &&
                         formSchema.shape[field.name]._def.checks?.some(
@@ -234,17 +201,17 @@ export default function TeacherForm({
                       (formSchema.shape[field.name]._def.typeName ===
                         "ZodArray" &&
                         formSchema.shape[field.name]._def.checks?.some(
-                          (check) => check.kind === "min" && check.value === 1
+                          (check) => check.kind === "min" && check.value === 1 // Check for min(1) for array
                         )) ||
                       (formSchema.shape[field.name]._def.typeName ===
                         "ZodDate" &&
                         formSchema.shape[field.name]._def.checks?.some(
-                          (check) => check.kind === "required"
+                          (check) => check.kind === "required" // Check for required date
                         )) ||
                       (formSchema.shape[field.name]._def.typeName ===
                         "ZodEnum" &&
                         formSchema.shape[field.name]._def.checks?.some(
-                          (check) => check.kind === "required"
+                          (check) => check.kind === "required" // Check for required enum
                         )) ? (
                         <span className="text-red-500"> *</span>
                       ) : null}
@@ -253,7 +220,7 @@ export default function TeacherForm({
                     <FormControl>
                       {field.name === "teacherRankId" ? (
                         <Select
-                          placeholder={`শিক্ষকের পদবী নির্বাচন করুন`}
+                          placeholder={`Select teacher rank`}
                           onValueChange={field.onChange}
                           value={field.value}
                         >
@@ -278,11 +245,6 @@ export default function TeacherForm({
                         >
                           <div className="flex gap-4 items-center">
                             {Object.keys(TeacherExpertiseLevel).map((level) => {
-                              const banglaLabels = {
-                                ENTRY_LEVEL: "নতুন",
-                                MID_LEVEL: "মধ্যম",
-                                EXPERT: "বিশেষজ্ঞ",
-                              };
                               return (
                                 <FormItem
                                   key={level}
@@ -291,17 +253,16 @@ export default function TeacherForm({
                                   <FormControl>
                                     <RadioGroupItem
                                       value={level}
-                                      label={banglaLabels[level] || level}
+                                      label={level}
                                     />
                                   </FormControl>
-                                  <FormLabel className="font-normal text-sm">
-                                    {banglaLabels[level] ||
+                                  <FormLabel className="font-normal text-sm capitalize">
+                                    {String(level?.split("_")[0])
+                                      .charAt(0)
+                                      .toUpperCase() +
                                       String(level?.split("_")[0])
-                                        .charAt(0)
-                                        .toUpperCase() +
-                                        String(level?.split("_")[0])
-                                          .slice(1)
-                                          .toLowerCase()}
+                                        .slice(1)
+                                        .toLowerCase()}
                                   </FormLabel>
                                 </FormItem>
                               );
@@ -331,10 +292,7 @@ export default function TeacherForm({
                           }}
                         />
                       ) : field.name === "bio" ? (
-                        <Textarea
-                          placeholder="আপনার সম্পর্কে সংক্ষেপে কিছু বলুন"
-                          {...field}
-                        />
+                        <Textarea placeholder="Enter bio..." {...field} />
                       ) : field.name === "dateOfBirth" ? (
                         <Popover>
                           <PopoverTrigger asChild>
@@ -344,7 +302,7 @@ export default function TeacherForm({
                             >
                               {field.value
                                 ? format(field.value, "PPP")
-                                : "জন্ম তারিখ নির্বাচন করুন"}
+                                : "Pick a date"}
                               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
                           </PopoverTrigger>
@@ -371,11 +329,12 @@ export default function TeacherForm({
                           value={field.value}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="লিঙ্গ নির্বাচন করুন" />
+                            <SelectValue placeholder="Select Gender" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="MALE">পুরুষ</SelectItem>
-                            <SelectItem value="FEMALE">মহিলা</SelectItem>
+                            <SelectItem value="MALE">Male</SelectItem>
+                            <SelectItem value="FEMALE">Female</SelectItem>
+                            <SelectItem value="OTHER">Other</SelectItem>
                           </SelectContent>
                         </Select>
                       ) : ["isAdmin", "isSuperAdmin"].includes(field.name) ? (
@@ -398,8 +357,8 @@ export default function TeacherForm({
                             }
                           >
                             {field.name === "isAdmin"
-                              ? "অ্যাডমিন হিসেবে নিযুক্ত"
-                              : "সুপার অ্যাডমিন হিসেবে নিযুক্ত"}
+                              ? "User is Admin"
+                              : "User is Super Admin"}
                           </FormLabel>
                         </div>
                       ) : field.name === "teacherStatus" ? (
@@ -408,7 +367,7 @@ export default function TeacherForm({
                           value={field.value}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="স্ট্যাটাস নির্বাচন করুন" />
+                            <SelectValue placeholder="Select Status" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="NONE">None</SelectItem>
@@ -423,36 +382,21 @@ export default function TeacherForm({
                           value={field.value}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="অভিজ্ঞতার বছর নির্বাচন করুন" />
+                            <SelectValue placeholder="Select years of experience" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="0-1 year">০-১ বছর</SelectItem>
-                            <SelectItem value="1-2 years">১-২ বছর</SelectItem>
-                            <SelectItem value="2-4 years">২-৪ বছর</SelectItem>
-                            <SelectItem value="4-6 years">৪-৬ বছর</SelectItem>
-                            <SelectItem value="6-10 years">৬-১০ বছর</SelectItem>
-                            <SelectItem value="10+ years">১০+ বছর</SelectItem>
+                            <SelectItem value="0-1 year">0-1 year</SelectItem>
+                            <SelectItem value="1-2 years">1-2 years</SelectItem>
+                            <SelectItem value="2-4 years">2-4 years</SelectItem>
+                            <SelectItem value="4-6 years">4-6 years</SelectItem>
+                            <SelectItem value="6-10 years">
+                              6-10 years
+                            </SelectItem>
+                            <SelectItem value="10+ years">10+ years</SelectItem>
                           </SelectContent>
                         </Select>
                       ) : (
-                        <Input
-                          placeholder={
-                            field.name === "name"
-                              ? "নাম লিখুন"
-                              : field.name === "phoneNumber"
-                              ? "+880 1XXX-XXXXXX"
-                              : field.name === "city"
-                              ? "শহরের নাম"
-                              : field.name === "state"
-                              ? "জেলা/বিভাগের নাম"
-                              : field.name === "country"
-                              ? "বাংলাদেশ"
-                              : field.name === "zipCode"
-                              ? "১২০০"
-                              : `${field.name} লিখুন`
-                          }
-                          {...field}
-                        />
+                        <Input placeholder={`Enter ${field.name}`} {...field} />
                       )}
                     </FormControl>
                     <FormMessage />

@@ -42,4 +42,3 @@ export const Urls = {
   },
   vdocipherDevUrl: `https://dev.vdocipher.com/api/videos`,
 };
-

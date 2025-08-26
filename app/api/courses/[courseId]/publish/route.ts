@@ -52,12 +52,11 @@ export async function PATCH(
 
     // Check required fields for publishing
     const hasRequiredFields = course.title && course.categoryId;
-    // const hasPublishedLesson = course.lessons.some(
-    //   (lesson) => lesson.isPublished
-    // );
+    const hasPublishedLesson = course.lessons.some(
+      (lesson) => lesson.isPublished
+    );
 
-    // if (!hasRequiredFields || !hasPublishedLesson) {
-    if (!hasRequiredFields) {
+    if (!hasRequiredFields || !hasPublishedLesson) {
       return new NextResponse("Missing required fields for publishing", {
         status: 400,
       });

@@ -10,7 +10,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { clientApi } from "@/lib/utils/openai/client";
 
 async function getAccountOverview(teacherProfileId: string) {
-  // console.log(teacherProfileId, "teacherProfileId in getAccountOverview");
+  console.log(teacherProfileId, "teacherProfileId in getAccountOverview");
   try {
     const response = await clientApi.getAccountOverview({
       query: { teacherId: teacherProfileId }

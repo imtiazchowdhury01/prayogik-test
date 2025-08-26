@@ -53,14 +53,7 @@ export const generalSchema = z.object({
   gender: z.string({ message: "Gender is required!" }),
   nationality: z.string().optional(),
   bio: z.string().min(50, { message: "Bio is must be at least 50 characters" }),
-  education: z
-      .array(
-        z.object({
-          degree: z.string().optional(),
-          major: z.string().optional(),
-          passingYear: z.string().optional(),
-        })
-      ).optional(),
+  education: z.array(z.string()).min(1, { message: "Education is required" }),
 });
 export const contactSchema = z.object({
   phoneNumber: z

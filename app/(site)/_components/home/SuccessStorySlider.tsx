@@ -75,7 +75,7 @@ const SuccessStorySlider = ({
                   {testimonial.text}
                 </p>
 
-                <hr className="mb-6" />
+                <hr className="mb-6"/>
                 {/* Profile Section */}
                 <div className="flex items-center gap-3 mt-auto">
                   <div className="relative aspect-square w-10 h-10">
@@ -84,7 +84,7 @@ const SuccessStorySlider = ({
                       alt={`${testimonial.name}'s profile picture`}
                       width={80}
                       height={80}
-                      quality={75}
+                      quality={85}
                       className="rounded-full object-cover w-full h-full"
                       loading="eager"
                       sizes="40px"

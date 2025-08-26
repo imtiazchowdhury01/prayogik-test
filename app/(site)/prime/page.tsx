@@ -1,16 +1,14 @@
-import React from "react";
-import OfferHero from "./_components/OfferHero";
-import PrimeIntro from "./_components/PrimeIntro";
-import SpecialLaunchingOffer from "./_components/SpecialLaunchingOffer";
-import PrimeBenefitsOverview from "./_components/PrimeBenefitsOverview";
-import CourseRoadmapOverView from "./_components/CourseRoadmapOverView";
-import StudentFeedback from "./_components/StudentFeedback";
-import MentorFeedback from "./_components/MentorFeedback";
-import FoundersVision from "./_components/FoundersVision";
-import PrimePlanFeatures from "./_components/PrimePlanFeatures";
-import MembershipBenefits from "./_components/MembershipBenefits";
-import OfferFaq from "./_components/OfferFaq";
-import { Metadata } from "next";
+//@ts-nocheck
+import type { Metadata } from "next";
+import PrimeCourseSection from "./_component/PrimeCourseSection";
+import PrimeFaqSection from "./_component/PrimeFaqSection";
+import PrimeHero from "./_component/PrimeHero";
+import PrimePricingSection from "./_component/PrimePricingSection";
+import PrimePromotionalSection from "./_component/PrimePromotionalSection";
+import PrimeVideoSection from "./_component/PrimeVideoSection";
+import WhyPrimeSection from "./_component/WhyPrimeSection";
+import { getSubscriptionDBCall } from "@/lib/data-access-layer/subscriptions";
+import { convertNumberToBangla } from "@/lib/convertNumberToBangla";
 
 export const metadata: Metadata = {
   title: "Unlock All Courses with One Subscription | Prayogik",
@@ -18,22 +16,29 @@ export const metadata: Metadata = {
     "Get unlimited access to all premium Bangla courses with a single subscription. Learn practical skills, grow your career, and enjoy new courses regularly—only on Prayogik.",
 };
 
-const page = () => {
+export default async function Subscription() {
+  const subscriptionsInfoArray = await getSubscriptionDBCall();
+
+  const primeSubscription = subscriptionsInfoArray?.find(
+    (sub: any) => sub.name === "প্রাইম"
+  );
+  const subscriptionInfo = {
+    name: primeSubscription?.name || "প্রাইম",
+    discountPercentage: convertNumberToBangla(
+      primeSubscription?.subscriptionDiscount?.discountPercentage || 0
+    ),
+    price: convertNumberToBangla(primeSubscription?.regularPrice || 0),
+  };
+  // console.log("subscriptionInfo result:", subscriptionInfo);
   return (
-    <div className="min-h-screen space-y-24">
-      <OfferHero />
-      <PrimeIntro />
-      <SpecialLaunchingOffer />
-      <PrimeBenefitsOverview />
-      {/* <CourseRoadmapOverView /> */}
-      <StudentFeedback />
-      <MentorFeedback />
-      <PrimePlanFeatures />
-      <MembershipBenefits />
-      <FoundersVision />
-      <OfferFaq />
+    <div className="bg-white scroll-smooth">
+      <PrimeHero subscriptionInfo={subscriptionInfo} />
+      <PrimePromotionalSection />
+      <PrimeVideoSection />
+      <PrimeCourseSection />
+      <WhyPrimeSection />
+      <PrimePricingSection subscriptionInfo={subscriptionInfo} />
+      <PrimeFaqSection />
     </div>
   );
-};
-
-export default page;
+}

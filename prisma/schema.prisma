@@ -35,9 +35,6 @@ enum VideoUploadingStatus {
 enum PurchaseType {
   SINGLE_COURSE
   MEMBERSHIP
-  SUBSCRIPTION
-  TRIAL
-  OFFER
 }
 
 enum CourseOwnership {
@@ -46,7 +43,6 @@ enum CourseOwnership {
 }
 
 enum SubscriptionType {
-  NONE
   MONTHLY
   YEARLY
 }
@@ -90,17 +86,6 @@ enum DifficultyLevel {
   ADVANCED
 }
 
-enum CourseMode {
-  RECORDED
-  LIVE
-}
-
-enum CourseType {
-  MINI
-  MICRO
-  SHORT
-}
-
 // Represents a user in the system, including students, teachers, and admins.
 model User {
   id                     String            @id @default(auto()) @map("_id") @db.ObjectId
@@ -138,6 +123,8 @@ model User {
   teacherProfile TeacherProfile?
   studentProfile StudentProfile?
 
+  bkashManualPayments BkashManualPayment[]
+
   createdAt DateTime? @default(now())
   updatedAt DateTime? @updatedAt
 }
@@ -174,9 +161,6 @@ model TeacherProfile {
 
   // Roadmap Courses
   courseRoadmap CourseRoadmap[] @relation("TeacherRoadmaps")
-
-  createdAt DateTime? @default(now())
-  updatedAt DateTime? @updatedAt
 }
 
 // Represents a rank for teachers based on number of sales.
@@ -195,25 +179,23 @@ model TeacherRank {
 
 // Represents a course created by a teacher.
 model Course {
-  id               String   @id @default(auto()) @map("_id") @db.ObjectId
-  title            String
-  slug             String   @unique
-  description      String?
-  imageUrl         String?
-  totalDuration    Int?
-  learningOutcomes String[]
-  requirements     String[]
-  whoFor           String[]
-  prices           Price[]
-  isPublished      Boolean  @default(false)
-  isUnderSubscription Boolean    @default(false)
-  courseType          CourseType @default(MINI)
-
-  // Course Mode is recorded or live
-  courseMode          CourseMode @default(RECORDED)
-  courseLiveLink      String?
-  courseLiveLinkPassword String?
-  courseLiveLinkScheduledAt DateTime?
+  id                  String               @id @default(auto()) @map("_id") @db.ObjectId
+  title               String
+  slug                String               @unique
+  description         String?
+  imageUrl            String?
+  totalDuration       Int?
+  learningOutcomes    String[]
+  requirements        String[]
+  whoFor              String[]
+  prices              Price[]
+  isPublished         Boolean              @default(false)
+  isUnderSubscription Boolean              @default(false)
+  // isMemberShipCourse          Boolean  @default(false)
+  // isMemberShipExclusiveCourse Boolean  @default(false)
+  // isFreeForMember       Boolean  @default(false)
+  // isDiscountedForMember Boolean  @default(false)
+  bkashManualPayments BkashManualPayment[]
 
   teacherProfileId String         @db.ObjectId
   teacherProfile   TeacherProfile @relation("TeacherCourses", fields: [teacherProfileId], references: [id])
@@ -227,6 +209,8 @@ model Course {
   category      Category?       @relation(fields: [categoryId], references: [id])
   feePercentage Float?
   feeAmount     Float?
+  // subscriptionDiscountId String?               @db.ObjectId
+  // subscriptionDiscount   SubscriptionDiscount? @relation(fields: [subscriptionDiscountId], references: [id])
 
   lessons           Lesson[]
   attachments       Attachment[]
@@ -240,15 +224,11 @@ model Course {
   comment           Comment[]
   enrolledStudents  EnrolledStudents[]
 
-  // M-2-1 relation to subscription plan
-  subscriptionPlan   SubscriptionPlan? @relation(fields: [subscriptionPlanId], references: [id])
-  subscriptionPlanId String?           @db.ObjectId
-
-  bkashPurchaseHistory BkashPurchaseHistory[]
-
-  createdAt DateTime? @default(now())
-  updatedAt DateTime? @updatedAt
-
+  // vdocipherVideos VdocipherUploads[]
+  createdAt       DateTime?          @default(now())
+  updatedAt       DateTime?          @updatedAt
+  // SubscriptionDiscount   SubscriptionDiscount? @relation(fields: [subscriptionDiscountId], references: [id])
+  // subscriptionDiscountId String?   @db.ObjectId
 }
 
 // Represents a category of a course.
@@ -286,24 +266,47 @@ model Lesson {
   courseId String @db.ObjectId
   course   Course @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  Progress Progress[]
+  Progress        Progress[]
+  // vdocipherVideos VdocipherUploads[]
 
   createdAt DateTime? @default(now())
   updatedAt DateTime? @updatedAt
 }
 
+// VIDEO UPLOAD TRACK WITH VDOCIPHER
+// model VdocipherUploads {
+//   id        String  @id @default(auto()) @map("_id") @db.ObjectId
+//   videoId   String?  @unique
+//   duration  Int
+//   courseId String @db.ObjectId
+//   course    Course  @relation(fields: [courseId], references: [id])
+
+//   lessonId String @db.ObjectId
+//   lesson   Lesson  @relation(fields: [lessonId], references: [id])
+
+//   videoStatus VideoUploadingStatus @default(PROCESSING)
+//   payload     Json?
+
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+// }
 model VdocipherUploads {
   id       String  @id @default(auto()) @map("_id") @db.ObjectId
   videoId  String? @unique
   duration Int
   courseId String  @db.ObjectId
-  lessonId String  @db.ObjectId
+  // course    Course  @relation(fields: [courseId], references: [id])
+
+  lessonId String @db.ObjectId
+  // lesson   Lesson  @relation(fields: [lessonId], references: [id])
 
   videoStatus VideoUploadingStatus @default(PROCESSING)
   payload     Json?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  // Course    Course   @relation(fields: [courseId], references: [id])
+  // Lesson    Lesson   @relation(fields: [lessonId], references: [id])
 }
 
 // Represents a rating given by a student for a course.
@@ -411,26 +414,26 @@ model MembershipPlan {
 }
 
 // Represents course purchase data from the AamarPay gateway.
-// model AamarPayData {
-//   id String @id @default(auto()) @map("_id") @db.ObjectId
+model AamarPayData {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 
-//   purchaseId String   @unique @db.ObjectId
-//   purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  purchaseId String   @unique @db.ObjectId
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-//   pg_txnid          String
-//   payment_type      String
-//   amount            String
-//   currency          String
-//   amount_bdt        String
-//   amount_currency   String
-//   rec_amount        String
-//   processing_ratio  String
-//   processing_charge String
-//   date_processed    DateTime
+  pg_txnid          String
+  payment_type      String
+  amount            String
+  currency          String
+  amount_bdt        String
+  amount_currency   String
+  rec_amount        String
+  processing_ratio  String
+  processing_charge String
+  date_processed    DateTime
 
-//   createdAt DateTime? @default(now())
-//   updatedAt DateTime? @updatedAt
-// }
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+}
 
 // Represents a purchase made by a student (course or membership).
 model Purchase {
@@ -452,7 +455,7 @@ model Purchase {
   purchaseDuration   Int?
   subscriptionId     String?           @db.ObjectId
   expiresAt          DateTime?
-  bkashData          Json?
+  aamarPayData       AamarPayData?
 
   TeacherRevenue TeacherRevenue[]
 
@@ -531,9 +534,6 @@ model StudentProfile {
   reviews           Review[]           @relation("UserReviews")
   comments          Comment[]          @relation("UserComments")
   subscription      Subscription?
-
-  createdAt DateTime? @default(now())
-  updatedAt DateTime? @updatedAt
 }
 
 // Represent a course progress for a student
@@ -569,36 +569,28 @@ model SubscriptionDiscount {
   isDefault          Boolean @default(false)
   discountPercentage Float   @default(0.0)
 
-  SubscriptionPlan SubscriptionPlan[]
+  // course       Course[]
+  // subscription Subscription[]
 
   createdAt DateTime? @default(now())
   updatedAt DateTime? @updatedAt
+
+  SubscriptionPlan SubscriptionPlan[]
 }
 
-// Represent individual plan for subscription   
+// Represent individual plan for subscription
 model SubscriptionPlan {
-  id           String           @id @default(auto()) @map("_id") @db.ObjectId
-  name         String           @unique
-  type         SubscriptionType?
-  regularPrice Float?
-  offerPrice             Float?  // Offer price for subscription
-  // Duration in details
-  durationInMonths Int? @default(1)
-  durationInYears  Int? @default(1)
-
-  isTrial             Boolean @default(false)
-  trialDurationInDays Int?    @default(30)
-
+  id                     String                @id @default(auto()) @map("_id") @db.ObjectId
+  name                   String                @unique
+  type                   SubscriptionType
+  regularPrice           Float
   isDefault              Boolean               @default(false)
   subscriptionDiscountId String                @db.ObjectId
   subscriptionDiscount   SubscriptionDiscount? @relation(fields: [subscriptionDiscountId], references: [id])
 
-  // one to many realtion to Course model
-  courses Course[]
-
-  subscription Subscription[]
-  Purchase     Purchase[]
-  bkashPurchaseHistory BkashPurchaseHistory[]
+  subscription        Subscription[]
+  Purchase            Purchase[]
+  bkashManualPayments BkashManualPayment[]
 
   createdAt DateTime? @default(now())
   updatedAt DateTime? @updatedAt
@@ -611,11 +603,7 @@ model Subscription {
   subscriptionPlan   SubscriptionPlan?   @relation(fields: [subscriptionPlanId], references: [id])
   expiresAt          DateTime
   status             SubscriptionStatus?
-
-  // Trial tracking
-  isTrial        Boolean   @default(false)
-  trialStartedAt DateTime?
-  trialEndsAt    DateTime?
+  // coursePurchaseCount Int?                @default(0)
 
   studentProfileId String         @unique @db.ObjectId
   studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id])
@@ -692,57 +680,30 @@ model BkashManualPayment {
   updatedAt     DateTime                 @updatedAt
   status        bkashManualPaymentStatus @default(PENDING)
 
-  // subscriptionPlanId String?           @db.ObjectId
-  // subscriptionPlan   SubscriptionPlan? @relation(fields: [subscriptionPlanId], references: [id])
-
-  // courseId String? @db.ObjectId
-  // course   Course? @relation(fields: [courseId], references: [id])
-  // title    String?
-  // userId   String  @db.ObjectId
-  // user     User    @relation(fields: [userId], references: [id])
-}
-
-model NewsletterSubscriber {
-  id        String         @id @default(auto()) @map("_id") @db.ObjectId
-  email     String         @unique
-  tag       NewsletterTag? @relation(fields: [tagId], references: [id]) // Now optional
-  tagId     String?        @db.ObjectId // Now nullable
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
-}
-
-model NewsletterTag {
-  id                    String                 @id @default(auto()) @map("_id") @db.ObjectId
-  name                  String                 @unique
-  leads                 Int                    @default(0)
-  newsletterSubscribers NewsletterSubscriber[]
-  createdAt             DateTime               @default(now())
-  updatedAt             DateTime               @updatedAt
-}
-
-
-model Bkash{
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-  auth_token String?
-  
-  updatedAt DateTime @updatedAt
-  createdAt DateTime @default(now())
-}
-
-model BkashPurchaseHistory{
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-  
-  bkashPaymentId String? 
-  email String
-  amount Float
-  subscriptionPlanId String? @db.ObjectId
-  subscriptionPlan SubscriptionPlan? @relation(fields: [subscriptionPlanId], references: [id])
+  subscriptionPlanId String?           @db.ObjectId
+  subscriptionPlan   SubscriptionPlan? @relation(fields: [subscriptionPlanId], references: [id])
 
   courseId String? @db.ObjectId
-  course Course? @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
-  purchaseType PurchaseType
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  course   Course? @relation(fields: [courseId], references: [id])
+  title    String?
+  userId   String  @db.ObjectId
+  user     User    @relation(fields: [userId], references: [id])
 }
+
+// model NewsletterSubscriber {
+//   id        String         @id @default(auto()) @map("_id") @db.ObjectId
+//   email     String         @unique
+//   tag       NewsletterTag? @relation(fields: [tagId], references: [id]) // Now optional
+//   tagId     String?        @db.ObjectId // Now nullable
+//   createdAt DateTime       @default(now())
+//   updatedAt DateTime       @updatedAt
+// }
+
+// model NewsletterTag {
+//   id                    String                 @id @default(auto()) @map("_id") @db.ObjectId
+//   name                  String                 @unique
+//   leads                 Int                    @default(0)
+//   newsletterSubscribers NewsletterSubscriber[]
+//   createdAt             DateTime               @default(now())
+//   updatedAt             DateTime               @updatedAt
+// }

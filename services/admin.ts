@@ -214,14 +214,12 @@ const subscriptionPlan = async (url: any, method: any, data: any) => {
     body: JSON.stringify(data),
   });
 
- const responseData = await response.json();
-
   if (!response.ok) {
-    throw new Error(responseData.message || "Failed to create or update subscription plan!");
+    throw new Error("Failed to create or update subscription plan!");
   }
 
   revalidatePath("/admin/subscription-plans");
-  return responseData;
+  return response.json();
 };
 
 const deleteSubscriptionPlan = async (deletingSubscriptionId: any) => {

@@ -19,7 +19,7 @@ const AdminCourseRoadmap = async () => {
     });
 
     data = convertData(response.body.data || []);
-    const teacherResponse = await clientApi.getTeacherProfiles({});
+    const teacherResponse = await clientApi.getVerifiedTeachers({});
     if (teacherResponse.status === 200) {
       teachers = teacherResponse.body;
     }

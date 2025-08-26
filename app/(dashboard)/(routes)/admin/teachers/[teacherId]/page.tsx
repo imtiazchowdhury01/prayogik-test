@@ -45,7 +45,7 @@ export default async function TeacherDetail({ params }: any) {
         Back to teachers
       </Link>
       <h4 className="text-lg font-semibold mb-5">
-        <span>{teacherData?.name}</span> - এর বিস্তারিত
+        Details of <span>{teacherData?.name}</span>
       </h4>
 
       <Card className="w-full md:w-full">

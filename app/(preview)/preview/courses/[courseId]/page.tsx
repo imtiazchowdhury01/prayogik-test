@@ -153,13 +153,13 @@ const CoursePreview = async ({ params }: { params: { courseId: string } }) => {
           <div className="flex flex-wrap items-center gap-4">
             {course?.enrolledStudents.length > 0 && (
               <>
-                <div className="flex items-center space-x-[6px]">
+                <div className="flex  space-x-[6px]">
                   <Image
-                    src="/icon/user.svg"
+                    src={"/icon/user.svg"}
                     alt="user-icon"
-                    width={15}
-                    height={15}
-                    className="w-4 h-4 object-contain"
+                    width={0}
+                    height={0}
+                    sizes="16px"
                   />
                   <p className="text-base text-fontcolor-description">
                     {convertNumberToBangla(course?.enrolledStudents.length)} জন
@@ -171,13 +171,12 @@ const CoursePreview = async ({ params }: { params: { courseId: string } }) => {
             )}
             {course?.totalDuration ? (
               <>
-                <div className="flex items-center space-x-[6px]">
+                <div className="flex  space-x-[6px]">
                   <Image
                     src={"/icon/clock.svg"}
                     alt="user-icon"
                     width={16}
                     height={16}
-                    className="w-4 h-4 object-contain"
                   />
                   <p className="text-base text-fontcolor-description">
                     {formatDuration(course?.totalDuration)}
@@ -187,18 +186,28 @@ const CoursePreview = async ({ params }: { params: { courseId: string } }) => {
               </>
             ) : null}
 
-            <div className="flex items-center space-x-[6px]">
+            <div className="flex space-x-[6px]">
               <Image
                 src={"/icon/book-gray.svg"}
                 alt="user-icon"
-                width={16}
-                height={16}
-                className="w-4 h-4 object-contain"
+                width={0}
+                height={0}
+                sizes="16px"
               />
               <p className="text-base text-fontcolor-description">
                 {convertNumberToBangla(course?.lessons.length)} টি লেসন
               </p>
             </div>
+            {/* <Separator className="w-[1px] h-4" orientation="vertical" /> */}
+            {/* <div className="flex  space-x-[6px]">
+              <Image
+                src={"/icon/certificate.svg"}
+                alt="user-icon"
+                width={16}
+                height={16}
+              />
+              <p className="text-base text-fontcolor-description">প্রফেশনাল সার্টিফিকেট </p>
+            </div> */}
           </div>
           <SectionNavigation course={course} />
           <CourseOverview course={course} />

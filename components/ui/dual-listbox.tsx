@@ -81,10 +81,10 @@ const DualListBox = ({ options, field, mode = "multiple" }) => {
   return (
     <FormItem>
       <FormControl>
-        <div className="flex gap-2 rounded-md bg-white">
+        <div className="flex gap-2 rounded-md">
           {/* Available Items */}
           <div className="w-1/2">
-            <div className="flex items-center border rounded-md rounded-b-none p-[2px] bg-white">
+            <div className="flex items-center border rounded-md rounded-b-none p-[2px]">
               <span className="pl-2">
                 <SearchIcon className="text-gray-500" size={16} />
               </span>
@@ -95,7 +95,7 @@ const DualListBox = ({ options, field, mode = "multiple" }) => {
                   }`}
                   value={searchAvailable}
                   onChange={(e) => setSearchAvailable(e.target.value)}
-                  className="rounded-md border-none outline-none !ring-0 focus-visible:ring-transparent pl-2 w-full"
+                  className="rounded-md border-none outline-none !ring-0 focus-visible:ring-transparent pl-2"
                 />
               </div>
             </div>
@@ -142,7 +142,7 @@ const DualListBox = ({ options, field, mode = "multiple" }) => {
                   }`}
                   value={searchSelected}
                   onChange={(e) => setSearchSelected(e.target.value)}
-                  className="rounded-md border-none outline-none !ring-0 focus-visible:ring-transparent pl-2 w-full"
+                  className="rounded-md border-none outline-none !ring-0 focus-visible:ring-transparent pl-2"
                 />
               </div>
             </div>

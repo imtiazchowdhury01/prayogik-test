@@ -15,7 +15,6 @@ export default function Testimonial({ item }) {
             src={item.img}
             className="block object-cover w-full h-full rounded-full"
             alt="testimonial-image"
-            quality={75}
           />
         </div>
         <div>

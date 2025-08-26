@@ -37,11 +37,11 @@ async function uploadToAwsS3(file, userId, uniqueFilename) {
   };
 
   const res = await s3Client.send(new PutObjectCommand(uploadParams));
-  // console.log(res);
+  console.log(res);
 
   // The URL for the uploaded file is directly accessible without presigned URL.
   const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${uniqueFilename}`;
-  // console.log({ fileUrl });
+  console.log({ fileUrl });
 
   return { uniqueFilename, fileUrl };
 }
@@ -103,15 +103,15 @@ export async function uploadUserAvatarToS3(formData, userAvatarId) {
 
 // Upload a course element (image, video, or document) to S3
 export async function uploadCourseElementToS3(formData, courseId) {
-  // console.log("Course Element uploading...");
+  console.log("Course Element uploading...");
 
   const { userId } = await getServerUserSession();
 
   try {
     const file = formData.get("courseSrc");
     const previousUrl = formData.get("previousUrl");
-    // console.log("Preset file: ", file);
-    // console.log("Previous Url: ", previousUrl);
+    console.log("Preset file: ", file);
+    console.log("Previous Url: ", previousUrl);
 
     if (!file) {
       throw new Error("No file provided");
@@ -127,7 +127,7 @@ export async function uploadCourseElementToS3(formData, courseId) {
 
     // Upload the new image to S3 under /courses/{courseId}/{uniqueFileName}
     const { fileUrl } = await uploadToAwsS3(file, userId, uniqueFilename);
-    // console.log(fileUrl);
+    console.log(fileUrl);
 
     // Update course imageUrl in the database
     // const response = await db.course.update({

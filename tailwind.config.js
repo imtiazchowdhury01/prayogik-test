@@ -256,8 +256,6 @@ module.exports = {
       },
       boxShadow: {
         custom: "0px 4px 12px 0px #010F0E14",
-        customInput: "0 4px 4px 0 #02161405",
-        customButton: "0 4px 4px 0 #04564E05",
       },
     },
   },

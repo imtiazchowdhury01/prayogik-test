@@ -2,26 +2,22 @@
 "use client";
 
 import ExpertCard from "@/components/ExpertCard";
-import { Loader, Search } from "lucide-react";
+import { Loader } from "lucide-react";
 import React, { useState, useEffect, useCallback } from "react";
 import debounce from "lodash/debounce";
-import { Button } from "@/components/ui/button";
 
-const AllTeachers = ({ initialTeachers, blurDataMap }) => {
-  const [teachers, setTeachers] = useState(initialTeachers || []);
+const AllTeachers = ({ initialTeachers }) => {
+  const [teachers, setTeachers] = useState(initialTeachers?.slice(0, 12) || []);
   const [isLoading, setIsLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(initialTeachers?.length === 12);
-  const [currentSkip, setCurrentSkip] = useState(12);
+  const [hasMore, setHasMore] = useState(initialTeachers?.length > 12) || [];
   const [searchTerm, setSearchTerm] = useState("");
 
   // Modified search function to only find teachers with createdCourses
   const debouncedSearch = useCallback(
     debounce(async (term) => {
       if (!term.trim()) {
-        // Reset to initial state when search is cleared
-        setTeachers(initialTeachers || []);
-        setHasMore(initialTeachers?.length === 12);
-        setCurrentSkip(12);
+        setTeachers(initialTeachers.slice(0, 12));
+        setHasMore(initialTeachers.length > 12);
         return;
       }
 
@@ -33,20 +29,10 @@ const AllTeachers = ({ initialTeachers, blurDataMap }) => {
           )}&hasCourses=true`
         );
         const searchResults = await response.json();
-
-        // Assuming search API returns same structure as pagination API
-        if (searchResults.data) {
-          setTeachers(searchResults.data);
-          setHasMore(searchResults.pagination?.hasMore || false);
-        } else {
-          // Fallback for old search API structure
-          setTeachers(searchResults);
-          setHasMore(false);
-        }
+        setTeachers(searchResults);
+        setHasMore(false);
       } catch (err) {
         console.error("Search failed:", err);
-        setTeachers([]);
-        setHasMore(false);
       } finally {
         setIsLoading(false);
       }
@@ -60,27 +46,19 @@ const AllTeachers = ({ initialTeachers, blurDataMap }) => {
   }, [searchTerm, debouncedSearch]);
 
   const fetchMoreTeachers = async () => {
-    if (isLoading || searchTerm || !hasMore) return;
+    if (isLoading || searchTerm) return;
 
     setIsLoading(true);
     try {
+      // Fetch next 12 teachers
       const response = await fetch(
-        `/api/teacher/experts/all-experts?skip=${currentSkip}&limit=12&hasCourses=true`
+        `/api/teacher/experts/all-experts?skip=${teachers.length}&limit=12&hasCourses=true`
       );
-      const result = await response.json();
-
-      if (result.data && result.pagination) {
-        setTeachers((prev) => [...prev, ...result.data]);
-        setHasMore(result.pagination.hasMore);
-        setCurrentSkip(currentSkip + result.pagination.limit);
-      } else {
-        // Fallback for unexpected response structure
-        console.error("Unexpected API response structure:", result);
-        setHasMore(false);
-      }
+      const newTeachers = await response.json();
+      setTeachers((prev) => [...prev, ...newTeachers]);
+      setHasMore(newTeachers.length === 12); // Expecting 12 more if there are more
     } catch (err) {
       console.error("Failed to load more:", err);
-      setHasMore(false);
     } finally {
       setIsLoading(false);
     }
@@ -91,9 +69,9 @@ const AllTeachers = ({ initialTeachers, blurDataMap }) => {
       <div className="app-container">
         <div className="flex flex-col items-center justify-between w-full mb-6 space-y-3 sm:space-y-0 sm:flex-row">
           <div>
-            <h2 className="font-bold md:text-left text-center text-3xl sm:text-4xl md:text-[40px]">
+            <h4 className="font-bold md:text-left text-center text-3xl sm:text-4xl md:text-[40px]">
               ফিল্ড এক্সপার্ট প্রশিক্ষক
-            </h2>
+            </h4>
             <p className="my-2 md:my-4 text-base text-fontcolor-subtitle text-center md:text-left">
               কোর্স করুন নিজ নিজ ক্ষেত্রে অভিজ্ঞ ও দক্ষ প্রশিক্ষকদের কাছ থেকে।
             </p>
@@ -102,7 +80,7 @@ const AllTeachers = ({ initialTeachers, blurDataMap }) => {
           <div className="md:flex flex-row items-center self-center gap-4 w-full sm:w-auto">
             <div className="h-10 pl-3 pr-2.5 py-2.5 bg-white border rounded-full flex items-center gap-2 overflow-hidden">
               <div data-svg-wrapper>
-                <Search className="w-4 h-4 text-gray-500" />
+                <img src="/icon/search.png" alt="Search Icon" />
               </div>
               <input
                 type="text"
@@ -120,42 +98,47 @@ const AllTeachers = ({ initialTeachers, blurDataMap }) => {
         {/* Experts Card */}
         {teachers.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {teachers.map((teacher) => {
-              const blurDataURL = teacher?.avatarUrl
-                ? blurDataMap[teacher.avatarUrl]
-                : null;
-              return (
-                <ExpertCard
-                  key={teacher.id}
-                  teacher={teacher}
-                  blurDataURL={blurDataURL}
-                />
-              );
-            })}
+            {teachers.map((teacher) => (
+              <ExpertCard key={teacher.id} teacher={teacher} />
+            ))}
           </div>
         ) : (
           <div className="mt-8 text-center border-2 border-gray-400 border-dashed rounded-lg p-14">
             <p className="text-xl text-center text-slate-500">
-              {isLoading ? "লোড হচ্ছে..." : "কোন শিক্ষক পাওয়া যায়নি"}
+              কোন শিক্ষক পাওয়া যায়নি
             </p>
           </div>
         )}
 
-        {/* Show "আরো দেখুন" button only if hasMore is true and no search is active */}
+        {/* Show "আরো দেখুন" button only if there are more teachers to load and no search is active */}
         {!searchTerm && hasMore && (
           <div className="flex items-center justify-center mt-5">
-            <Button
+            <button
               onClick={fetchMoreTeachers}
               disabled={isLoading}
-              variant={"outline"}
-              className="py-3 text-gray-500 min-w-[106px] relative"
+              className="items-center px-4 py-3 space-x-2 text-base font-semibold text-center text-white transition-all duration-300 rounded-lg cursor-pointer md:flex hover:opacity-70 bg-primary-brand"
             >
-              {isLoading ? (
-                <Loader className="animate-spin h-5 w-5" />
-              ) : (
-                "আরও দেখুন"
-              )}
-            </Button>
+              <span>
+                {isLoading ? (
+                  <div className="flex space-x-1 p-2">
+                    <div
+                      className="w-1 h-1 rounded-full bg-white animate-bounce"
+                      style={{ animationDelay: "0ms" }}
+                    ></div>
+                    <div
+                      className="w-1 h-1 rounded-full bg-white animate-bounce"
+                      style={{ animationDelay: "150ms" }}
+                    ></div>
+                    <div
+                      className="w-1 h-1 rounded-full bg-white animate-bounce"
+                      style={{ animationDelay: "300ms" }}
+                    ></div>
+                  </div>
+                ) : (
+                  "আরো দেখুন"
+                )}
+              </span>
+            </button>
           </div>
         )}
       </div>

@@ -11,16 +11,12 @@ import FreeLessonPreviewButton from "./FreeLessonPreviewButton";
 import { Clock, UserRound } from "lucide-react";
 import { formatDateToBangla } from "@/lib/utils/stringUtils";
 import { GradientBorderBadge } from "./ui/badge";
-import { CourseMode } from "@prisma/client";
-import { formatLiveCourseTime } from "@/lib/utils/formatLiveCourseTime";
-import LiveCourseIcon from "./LiveCourseIcon";
 
 const CourseCard = ({
   variant = "dark",
   course,
   className,
   instructor,
-  blurDataURL,
 }: {
   variant?: "light" | "dark";
   className?: string;
@@ -28,7 +24,6 @@ const CourseCard = ({
   instructor?: string;
   userId?: string;
   purchasedCourseIds?: string[];
-  blurDataURL?: string;
 }) => {
   const { slug, imageUrl, progress, lessons, nextLessonSlug = null } = course;
   const freeLesson = lessons?.find(
@@ -45,7 +40,7 @@ const CourseCard = ({
   return (
     <div
       className={twMerge(
-        `flex flex-col h-full min-h-[500px] relative overflow-hidden rounded-lg group transition-all border-[1px] border-[#E6E7E7] duration-300, ${className} ${
+        `flex flex-col h-full relative overflow-hidden rounded-lg group transition-all border-[1px] border-[#E6E7E7] duration-300, ${className} ${
           variant === "light"
             ? "bg-white shadow-custom"
             : "bg-[#133b37] shadow-custom"
@@ -68,13 +63,10 @@ const CourseCard = ({
             className="object-cover w-full h-full rounded-t-lg"
             sizes="(max-width: 768px) 100vw, 400px"
             priority
-            quality={75}
-            placeholder={blurDataURL ? "blur" : "empty"}
-            blurDataURL={blurDataURL || undefined}
+            quality={100}
           />
         )}
-        {/* Live course badge - positioned at top right */}
-        {course?.courseMode === CourseMode.LIVE && <LiveCourseIcon />}
+        {/* free lesson preview button */}
         <FreeLessonPreviewButton course={course} freeLesson={freeLesson} />
       </div>
 
@@ -109,77 +101,62 @@ const CourseCard = ({
             {getPlainTextFromHtml(course?.description, 125)}
           </div>
           {/* student count and duration */}
-          {course?.courseMode !== CourseMode.LIVE && (
-            <div className="flex items-center gap-4 ">
-              {/* student count */}
-              <div className="flex items-center gap-1">
-                <UserRound
+          <div className="flex items-center gap-4 ">
+            {/* student count */}
+            <div className="flex items-center gap-1">
+              <UserRound
+                size={16}
+                className={`${
+                  variant === "light" ? "text-[#414B4A]" : "text-greyscale-300"
+                }`}
+              />
+              <p
+                className={`${
+                  variant === "light" ? "text-[#414B4A]" : "text-greyscale-300"
+                }  text-sm mt-0.5`}
+              >
+                {convertNumberToBangla(
+                  course?._count?.enrolledStudents ||
+                    course?.enrolledStudents?.length
+                )}{" "}
+                শিক্ষার্থী
+              </p>
+            </div>
+            {/* time duration */}
+            {formattedDuration && (
+              <div className="flex items-center gap-1.5">
+                <Clock
                   size={16}
                   className={`${
                     variant === "light"
                       ? "text-[#414B4A]"
                       : "text-greyscale-300"
-                  }`}
+                  } `}
                 />
                 <p
                   className={`${
                     variant === "light"
                       ? "text-[#414B4A]"
                       : "text-greyscale-300"
-                  }  text-sm mt-0.5`}
+                  }  text-sm mt-0.3`}
                 >
-                  {convertNumberToBangla(
-                    course?._count?.enrolledStudents ||
-                      course?.enrolledStudents?.length
-                  )}{" "}
-                  শিক্ষার্থী
+                  {formattedDuration}
                 </p>
               </div>
-              {/* time duration */}
-              {formattedDuration && (
-                <div className="flex items-center gap-1.5">
-                  <Clock
-                    size={16}
-                    className={`${
-                      variant === "light"
-                        ? "text-[#414B4A]"
-                        : "text-greyscale-300"
-                    } `}
-                  />
-                  <p
-                    className={`${
-                      variant === "light"
-                        ? "text-[#414B4A]"
-                        : "text-greyscale-300"
-                    }  text-sm mt-0.3`}
-                  >
-                    {formattedDuration}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
       {/* bottom part */}
       <div className="px-4 pb-4 space-y-2 pt-5 mt-auto">
-        {/* prime badge only show for course mode recorded */}
+        {/* prime badge */}
         {course?.isUnderSubscription &&
-          course?.courseMode !== CourseMode.LIVE &&
           (progress == null || progress === "" || Number.isNaN(progress)) && (
             <GradientBorderBadge>প্রাইমের সাথে ফ্রি</GradientBorderBadge>
           )}
 
-        {/* price  and Time for live course*/}
-        {course?.courseMode === CourseMode.LIVE ? (
-          <>
-            <p className="text-[#FF6709]  text-[14px] font-semibold">
-              সময়: {formatLiveCourseTime(course?.courseLiveLinkScheduledAt)}
-            </p>
-          </>
-        ) : null}
-
+        {/* price */}
         {(progress == null || progress === "" || Number.isNaN(progress)) && (
           <p className="flex items-center space-x-2">
             {course?.prices[0]?.isFree ? (
@@ -197,7 +174,7 @@ const CourseCard = ({
             )}
 
             {/* !isDiscountExpired(course?.prices[0]?.discountExpiresOn) && */}
-            {course?.prices[0]?.discountedAmount ? (
+            {course?.prices[0]?.discountedAmount && (
               <span
                 className={`line-through ${
                   variant === "light" ? "text-[#414B4A]" : "text-greyscale-300"
@@ -205,10 +182,9 @@ const CourseCard = ({
               >
                 ৳ {convertNumberToBangla(course?.prices[0]?.regularAmount)}
               </span>
-            ) : null}
+            )}
           </p>
         )}
-
         {/* action button */}
         <SingleCardButton
           courseId={course.id}
@@ -217,7 +193,6 @@ const CourseCard = ({
           slug={slug}
           lessons={lessons}
           variant={variant}
-          courseMode={course?.courseMode}
         />
       </div>
     </div>

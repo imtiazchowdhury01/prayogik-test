@@ -6,5 +6,4 @@ export const clientApi = initClient(ApiContractV1, {
   baseHeaders: {
     "Content-Type": "application/json",
   },
-  
 });

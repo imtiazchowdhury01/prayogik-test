@@ -1,5 +1,4 @@
 import Image from "next/image";
-import storyimage from "public/images/about/ourstory.webp";
 
 const OurStory = () => {
   return (
@@ -34,14 +33,12 @@ const OurStory = () => {
       </div>
       <div className="relative self-end  w-full lg:w-auto mt-6 lg:mt-0">
         <Image
-          src={storyimage}
-          alt="our story image"
+          src="/images/about/ourstory.webp"
+          alt="vision"
           width={253.05}
           height={177.763}
           className="rounded-lg object-cover w-full lg:w-[253.05px] h-auto"
           sizes="(max-width: 1024px) 100vw, 253.05px"
-          placeholder="blur"
-          quality={75}
         />
       </div>
     </section>

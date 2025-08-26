@@ -3,21 +3,21 @@ import Link from "next/link";
 
 export function TeachersHero() {
   return (
-    <section className="w-full relative bg-brand">
-      {/* block image shape */}
+    <section className="w-full relative" data-testid="hero-section">
+      {/* Next.js Image component for optimized hero image */}
       <Image
-        src="/images/home/BG.svg"
+        src="/images/home/Hero.webp"
         alt="Prayogik Hero background"
         fill
         priority
         quality={75}
-        className="object-cover z-0 md:block hidden"
+        className="object-cover z-0"
         sizes="100vw"
       />
       <div className="container mx-auto px-0 md:px-5 lg:px-5 xl:px-4 2xl:px-4 py-10 lg:py-14 relative z-10">
         <div className="flex xl:flex-row 2xl:flex-row lg:flex-row md:flex-row flex-col md:gap-0 lg:gap-0 xl:gap-10 2xl:gap-10 items-center md:items-center lg:items-start mx-auto max-w-7xl p-6 py-10 lg:px-1">
           {/* Hero Details */}
-          <div className="w-full lg:mt-6 mt-0 relative">
+          <div className="w-full lg:mt-6 mt-0">
             <div className="bg-[#119D90] mb-6 w-fit mx-auto md:inline-block px-3 py-1 rounded text-white sm:font-thin font-light text-md">
               <p>শিখুন প্রফেশনাল স্টাইলে</p>
             </div>
@@ -35,17 +35,6 @@ export function TeachersHero() {
               >
                 প্রশিক্ষক হতে চাই
               </Link>
-            </div>
-            {/* star shape */}
-            <div className="absolute z-0 hidden lg:block lg:bottom-[-15%] lg:left-[70%] xl:bottom-[-15%] xl:left-[65%] w-[80px] h-[80px] xl:w-[110px] xl:h-[110px]">
-              <Image
-                src="/images/home/star.svg"
-                alt="background star image"
-                fill
-                loading="lazy"
-                quality={75}
-                className="object-contain"
-              />
             </div>
           </div>
           {/* image */}

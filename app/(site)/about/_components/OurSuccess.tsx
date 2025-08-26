@@ -39,7 +39,6 @@ const OurSuccess = () => {
               height={0}
               sizes="100vw"
               className="object-cover w-full h-full rounded-lg"
-              quality={75}
             />
           </div>
         </div>

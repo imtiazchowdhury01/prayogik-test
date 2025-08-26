@@ -23,7 +23,6 @@ const CreativeCourseCard = ({ data }: { data: CreativeCourseCardProps }) => {
           sizes="100vw"
           onError={imgErrorHandler}
           className="block object-cover w-full h-full"
-          quality={75}
         />
         <div className="absolute inset-0 px-4 py-5 bg-gradient-to-t from-black/0 to-black/100">
           <p className="text-2xl font-bold text-center text-white ">

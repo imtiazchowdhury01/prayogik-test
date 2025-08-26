@@ -152,9 +152,8 @@ export default function ContactFormClient() {
           <CardTitle className="mb-2 text-3xl font-bold text-fontcolor-title">
             যোগাযোগ
           </CardTitle>
-          <CardDescription className="text-base text-fontcolor-description">
-            যোগাযোগ করতে ফরমটি ব্যবহার করুন। আমরা সর্বোচ্চ চেষ্টা করি দ্রুত
-            উত্তর দিতে—সাধারণত ৪৮ ঘণ্টার মধ্যে।
+          <CardDescription className="text-sm text-fontcolor-description">
+            আপনার কোনো প্রশ্ন আছে? নীচের তথ্যগুলো দিয়ে আপনার প্রশ্নটি জমা দিন।
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0 mt-4">
@@ -303,7 +302,7 @@ export default function ContactFormClient() {
                     height="100%"
                   />
                 ) : (
-                  "সাবমিট করুন"
+                  "জমা দিন"
                 )}
               </Button>
             </form>

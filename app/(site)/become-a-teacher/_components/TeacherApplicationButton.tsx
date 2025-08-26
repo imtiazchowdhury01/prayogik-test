@@ -2,16 +2,14 @@
 "use client";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
 
 const TeacherApplicationButton = ({
   children,
   variant = "default",
   className = "",
 }) => {
+  // Check if the user is a teacher
   const { data: session, status } = useSession();
-  const router = useRouter();
-  const pathname = usePathname();
   const isTeacher = session?.user?.info?.teacherProfile?.id;
 
   // Base classes for both variants
@@ -33,13 +31,6 @@ const TeacherApplicationButton = ({
     variantClasses[variant]
   } ${hoverClasses} ${className} ${isTeacher ? disabledClasses : ""}`.trim();
 
-  const handleClick = (e) => {
-    if (status !== "authenticated") {
-      e.preventDefault();
-      router.push(`/signin?redirect=/apply-for-teaching`);
-    }
-  };
-
   if (isTeacher) {
     return (
       <button disabled className={finalClasses}>
@@ -49,11 +40,7 @@ const TeacherApplicationButton = ({
   }
 
   return (
-    <Link
-      href="/apply-for-teaching"
-      className={finalClasses}
-      onClick={handleClick}
-    >
+    <Link href="/apply-for-teaching" className={finalClasses}>
       {children}
     </Link>
   );

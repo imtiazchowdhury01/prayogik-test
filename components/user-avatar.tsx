@@ -14,7 +14,7 @@ const DBUserAvatar = ({ user }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   const MAX_FILE_SIZE_BYTES =
-    (Number(process.env.MAX_IMAGE_SIZE_MB) || 2) * 1024 * 1024;
+    (Number(process.env.MAX_FILE_SIZE_MB) || 5) * 1024 * 1024;
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];

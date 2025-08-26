@@ -89,13 +89,15 @@ const CourseCategories = async () => {
 
             return (
               <div key={parentCategory.id}>
+                {/* <Link href={`/courses?category=${parentCategory.slug}`}>
+                  <h3 className="text-xl font-bold mb-3 hover:text-primary transition-all cursor-pointer">
+                    {textLangChecker(parentCategory.name)}
+                  </h3>
+                </Link> */}
                 <ul className="space-y-1 text-base font-normal">
                   {/* Show parent category as first item */}
                   <li className="hover:text-primary transition-all cursor-pointer">
-                    <Link
-                      href={`/courses?category=${parentCategory.slug}`}
-                      prefetch={false}
-                    >
+                    <Link href={`/courses?category=${parentCategory.slug}`}>
                       <h3 className="text-lg font-bold mb-3 hover:text-primary transition-all cursor-pointer">
                         {textLangChecker(parentCategory.name)}
                       </h3>
@@ -108,10 +110,7 @@ const CourseCategories = async () => {
                       key={childCategory.id}
                       className="transition-all text-fontcolor-subtitle cursor-pointer  hover:text-primary-brand"
                     >
-                      <Link
-                        href={`/courses?category=${childCategory.slug}`}
-                        prefetch={false}
-                      >
+                      <Link href={`/courses?category=${childCategory.slug}`}>
                         {textLangChecker(childCategory.name)}
                       </Link>
                     </li>
@@ -131,10 +130,7 @@ const CourseCategories = async () => {
                     key={category.id}
                     className="hover:text-primary-brand transition-all cursor-pointer "
                   >
-                    <Link
-                      href={`/courses?category=${category.slug}`}
-                      prefetch={false}
-                    >
+                    <Link href={`/courses?category=${category.slug}`}>
                       {textLangChecker(category.name)}
                     </Link>
                   </li>
@@ -153,10 +149,7 @@ const CourseCategories = async () => {
                     key={category.id}
                     className="hover:text-primary transition-all cursor-pointer"
                   >
-                    <Link
-                      href={`/courses?category=${category.slug}`}
-                      prefetch={false}
-                    >
+                    <Link href={`/courses?category=${category.slug}`}>
                       {textLangChecker(category.name)}
                     </Link>
                   </li>

@@ -1,7 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import {
   FormControl,
   FormDescription,
@@ -9,7 +7,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Plus, X, Award } from "lucide-react";
 import toast from "react-hot-toast";
 
 // Certifications Input Component
@@ -18,177 +15,107 @@ interface CertificationsInputProps {
   onUpdateCertifications: (updatedCertifications: string[]) => void;
 }
 
-interface Certification {
-  name: string;
-  url: string;
-}
-
 const CertificationsInput = ({
   initialCertifications,
   onUpdateCertifications,
 }: CertificationsInputProps) => {
-  const [certifications, setCertifications] = useState<Certification[]>([
-    { name: "", url: "" },
-  ]);
-
-  // Parse initial certifications when component mounts
-  useEffect(() => {
-    if (initialCertifications && initialCertifications.length > 0) {
-      const parsedCertifications = initialCertifications.map((cert) => {
-        // Try to parse the existing certification string format "Name - URL"
-        const parts = cert.split(" - ");
-        return {
-          name: parts[0] || "",
-          url: parts[1] || cert, // If no separator found, treat as URL
-        };
-      });
-      setCertifications(parsedCertifications);
-    }
-  }, [initialCertifications]);
+  const [inputCertificateUrl, setInputCertificateUrl] = useState("");
+  const [certificates, setCertificates] = useState<string[]>(
+    initialCertifications
+  );
 
   // Custom URL validation function
   const isValidUrl = (url: string) => {
-    if (!url.trim()) return true; // Allow empty URLs
     try {
-      new URL(url);
+      new URL(url); // Use the browser's built-in URL parser
       return true;
     } catch (error) {
       return false;
     }
   };
 
-  // Add new certification entry
-  const addCertification = () => {
-    setCertifications([...certifications, { name: "", url: "" }]);
-  };
+  // Handle certificate change
+  const handleCertificateChange = (value: string) => {
+    if (value.endsWith(",")) {
+      const newCert = value.slice(0, -1).trim(); // Remove comma and trim whitespace
 
-  // Remove certification by index
-  const removeCertification = (index: number) => {
-    if (certifications.length > 1) {
-      const updatedCertifications = certifications.filter(
-        (_, i) => i !== index
-      );
-      setCertifications(updatedCertifications);
-      updateParentComponent(updatedCertifications);
-    }
-  };
-
-  // Update certification at specific index
-  const updateCertification = (
-    index: number,
-    field: "name" | "url",
-    value: string
-  ) => {
-    const updated = [...certifications];
-    updated[index][field] = value;
-    setCertifications(updated);
-    // Only update parent when there's a valid URL to avoid losing UI state while typing
-    if (field === "url" || updated[index].url.trim()) {
-      updateParentComponent(updated);
-    }
-  };
-
-  // Update parent component with formatted data
-  const updateParentComponent = (updatedCertifications: Certification[]) => {
-    // Only format certifications that have at least a URL (since that's what the original expected)
-    const formattedCertifications = updatedCertifications
-      .filter((cert) => cert.url.trim()) // Only include entries with URLs
-      .map((cert) => {
-        if (cert.name.trim() && cert.url.trim()) {
-          return `${cert.name.trim()} - ${cert.url.trim()}`;
+      if (newCert) {
+        if (isValidUrl(newCert)) {
+          // Check if the new certificate already exists
+          if (!certificates.includes(newCert)) {
+            const updatedCertificates = [...certificates, newCert];
+            setCertificates(updatedCertificates);
+            onUpdateCertifications(updatedCertificates); // Return updated list
+          } else {
+            toast.error("This URL is already added.");
+          }
         } else {
-          return cert.url.trim();
+          toast.error("Invalid URL format. Please enter a valid URL.");
         }
-      });
+      }
 
-    onUpdateCertifications(formattedCertifications);
+      setInputCertificateUrl(""); // Reset the input field after a comma
+    } else {
+      setInputCertificateUrl(value); // Update input field as user types
+    }
   };
 
-  // Validate URLs on blur
-  const validateUrl = (url: string, index: number) => {
-    if (url.trim() && !isValidUrl(url)) {
-      toast.error("Invalid URL format. Please enter a valid URL.");
-    }
+  // Remove certificate by index
+  const removeCertificate = (index: number) => {
+    const updatedCertificates = certificates.filter((_, i) => i !== index);
+    setCertificates(updatedCertificates);
+    onUpdateCertifications(updatedCertificates); // Return updated list
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <FormLabel className="flex items-center gap-2">
-          <span className="text-base font-medium">সার্টিফিকেশন</span>
-        </FormLabel>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={addCertification}
-          className="flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          যোগ করুন
-        </Button>
+    <div className="">
+      <div className="w-full">
+        <FormItem>
+          <FormControl>
+            <Input
+              placeholder="Enter Certifications"
+              value={inputCertificateUrl}
+              onChange={(e) => handleCertificateChange(e.target.value)}
+            />
+          </FormControl>
+          <FormDescription>
+            Write certifications with "," as separator
+          </FormDescription>
+          <FormMessage />
+        </FormItem>
       </div>
 
-      <div className="space-y-4">
-        {certifications.map((cert, index) => (
-          <div key={index} className="p-4 border rounded-lg bg-gray-50">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Award className="w-4 h-4 text-blue-600" />
-                <span className="font-medium text-sm">
-                  সার্টিফিকেশন {index + 1}
-                </span>
-              </div>
-              {certifications.length > 1 && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeCertification(index)}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor={`cert-name-${index}`}>সার্টিফিকেটের নাম</Label>
-                <Input
-                  id={`cert-name-${index}`}
-                  placeholder="যেমন: IELTS, TOEFL, Google Analytics"
-                  value={cert.name}
-                  onChange={(e) =>
-                    updateCertification(index, "name", e.target.value)
-                  }
+      {/* Display certificates with delete option */}
+      <div className="flex flex-wrap gap-2 mt-2">
+        {certificates.map((cert, index) => (
+          <div
+            key={index}
+            className="flex items-center gap-2 bg-gray-200 px-2 py-1 rounded text-sm"
+          >
+            <span>{cert}</span>
+            <button
+              type="button"
+              onClick={() => removeCertificate(index)}
+              className="text-red-500 hover:text-red-700"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
                 />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor={`cert-url-${index}`}>সার্টিফিকেট URL</Label>
-                <Input
-                  id={`cert-url-${index}`}
-                  placeholder="https://certificate-url.com"
-                  value={cert.url}
-                  onChange={(e) =>
-                    updateCertification(index, "url", e.target.value)
-                  }
-                  onBlur={(e) => {
-                    validateUrl(e.target.value, index);
-                    // Update parent component on blur to ensure final state is captured
-                    updateParentComponent(certifications);
-                  }}
-                />
-              </div>
-            </div>
+              </svg>
+            </button>
           </div>
         ))}
       </div>
-
-      <FormDescription className="text-sm text-gray-600">
-        আপনার প্রাসঙ্গিক সার্টিফিকেশন যোগ করুন।
-      </FormDescription>
     </div>
   );
 };

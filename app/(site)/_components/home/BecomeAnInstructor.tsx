@@ -18,7 +18,6 @@ const BecomeAnInstructor = ({ variant = "dark" }) => {
             height={0}
             sizes="100vw"
             className="object-cover w-full h-full"
-            quality={75}
           />
         </div>
         <div className="flex flex-col items-start justify-center w-full h-auto p-8 md:w-1/2 md:p-16 bg-primary-900">

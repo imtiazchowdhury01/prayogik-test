@@ -96,7 +96,6 @@ export default function SingleCourse({
               height={0}
               sizes="100vw"
               className="object-cover w-full h-full rounded-t-lg"
-              quality={75}
               priority={true}
             />
           )}

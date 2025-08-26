@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Hero from "./_components/Hero";
 import OurStory from "./_components/OurStory";
 import Misson from "./_components/Misson";
+import Team from "./_components/Team";
 import Vision from "./_components/Vision";
 
 export const metadata: Metadata = {

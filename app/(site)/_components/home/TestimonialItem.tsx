@@ -27,7 +27,6 @@ const TestimonialItem = ({
           height={0}
           sizes="100vw"
           className="object-cover rounded-full max-w-[50px] max-h-[50px]"
-          quality={75}
         />
         <div>
           <p className="text-lg font-bold sm:text-xl">{name}</p>

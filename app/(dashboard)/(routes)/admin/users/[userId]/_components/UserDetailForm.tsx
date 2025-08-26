@@ -58,15 +58,7 @@ const formSchema = z.object({
   email: z.string().min(1, { message: "Email is required" }),
   bio: z.string(),
   yearsOfExperience: z.string().optional(),
-  education: z
-    .array(
-      z.object({
-        degree: z.string().optional(),
-        major: z.string().optional(),
-        passingYear: z.string().optional(),
-      })
-    )
-    .optional(),
+  education: z.array(z.string()),
   dateOfBirth: z.date().optional(),
   gender: z.string().optional(),
   phoneNumber: z.string(),
@@ -104,27 +96,6 @@ const UserDetailForm = ({
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
-  // Parse existing education data if it exists
-  let parsedEducation = [
-    {
-      degree: "",
-      major: "",
-      passingYear: "",
-    },
-  ];
-
-  if (initialData?.education && initialData?.education.length > 0) {
-    parsedEducation = initialData?.education.map((edu) => {
-      // Try to parse the existing education string format "Degree - Major - Year"
-      const parts = edu.split(" - ");
-      return {
-        degree: parts[0] || "",
-        major: parts[1] || "",
-        passingYear: parts[2] || "",
-      };
-    });
-  }
-
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -134,7 +105,7 @@ const UserDetailForm = ({
       role: initialData.role || Role.STUDENT,
       accountStatus: initialData?.accountStatus || UserAccountStatus.ACTIVE,
       yearsOfExperience: initialData?.teacherProfile?.yearsOfExperience || "",
-      education: parsedEducation || [],
+      education: initialData?.education || [],
       dateOfBirth: initialData?.dateOfBirth
         ? new Date(initialData.dateOfBirth)
         : undefined,
@@ -168,6 +139,56 @@ const UserDetailForm = ({
       subscriptionListIds: initialData?.subscriptionList || [],
     },
   });
+
+  // useEffect(() => {
+  //   if (initialData) {
+  //     // Prepare data carefully to avoid undefined values
+  //     const formData = {
+  //       name: initialData.name || "",
+  //       email: initialData.email || "",
+  //       bio: initialData.bio || "",
+  //       role: initialData.role || Role.STUDENT,
+  //       accountStatus: initialData?.accountStatus || UserAccountStatus.ACTIVE,
+  //       yearsOfExperience: initialData?.teacherProfile?.yearsOfExperience || "",
+  //       education: initialData?.education || [],
+  //       dateOfBirth: initialData?.dateOfBirth
+  //         ? new Date(initialData.dateOfBirth)
+  //         : undefined,
+  //       gender: initialData?.gender || "",
+  //       phoneNumber: initialData?.phoneNumber || "",
+  //       city: initialData?.city || "",
+  //       state: initialData?.state || "",
+  //       country: initialData?.country || "",
+  //       zipCode: initialData?.zipCode || "",
+  //       nationality: initialData?.nationality || "",
+  //       facebook: initialData?.facebook || "",
+  //       linkedin: initialData?.linkedin || "",
+  //       twitter: initialData?.twitter || "",
+  //       youtube: initialData?.youtube || "",
+  //       website: initialData?.website || "",
+  //       others: initialData?.others || "",
+  //       subjectSpecializations:
+  //         initialData?.teacherProfile?.subjectSpecializations || [],
+  //       expertiseLevel:
+  //         initialData?.teacherProfile?.expertiseLevel ||
+  //         TeacherExpertiseLevel.ENTRY_LEVEL,
+  //       teacherRankId: initialData?.teacherProfile?.teacherRankId || "",
+  //       certifications: initialData?.teacherProfile?.certifications || [],
+  //       isAdmin: !!initialData?.isAdmin,
+  //       isSuperAdmin: !!initialData?.isSuperAdmin,
+  //       teacherStatus: initialData?.teacherProfile?.teacherStatus || "NONE",
+  //       enrolledCourseIds:
+  //         initialData?.studentProfile?.enrolledCourseIds?.map(
+  //           (ecourse) => ecourse.courseId
+  //         ) || [],
+  //     };
+
+  //     // Reset form with the prepared data
+  //     form.reset(formData);
+  //     router.refresh();
+  //   }
+  // }, [JSON.stringify(initialData), form]);
+  // console.log(initialData);
 
   const {
     formState: { isDirty },
@@ -219,19 +240,12 @@ const UserDetailForm = ({
         currentEnrolledCourseIds,
         previousEnrolledCourseIds
       );
-      // Format education data before sending
-      const formattedData = {
-        ...data,
-        education: data.education.map(
-          (edu) => `${edu.degree} - ${edu.major} - ${edu.passingYear}`
-        ),
-      };
-      // console.log("formattedData result:", formattedData);
+
       // --------------------------------------------------------
       const response = await fetch(`/api/admin/users/${userId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formattedData),
+        body: JSON.stringify(data),
       });
 
       if (!response.ok) throw new Error("Failed to save changes");
@@ -306,14 +320,14 @@ const UserDetailForm = ({
               {/* First Group */}
               <Card className="p-8">
                 <h4 className="text-base text-black/50 font-bold mb-8">
-                  ব্যক্তিগত
+                  Personal
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="col-span-2">
                     <DBUserAvatar user={initialData} />
                     {/* Username */}
                     <div className="inline-flex text-sm text-slate-500 text-left mt-2 bg-gray-50 border px-2 py-1 rounded-lg">
-                      ইউজার নাম: {initialData?.username}
+                      Username: {initialData?.username}
                     </div>
                   </div>
 
@@ -323,9 +337,9 @@ const UserDetailForm = ({
                     control={form.control}
                     render={({ field }) => (
                       <FormItem>
-                        <RequiredFieldStar labelText={"নাম"} />
+                        <RequiredFieldStar labelText={"Name"} />
                         <FormControl>
-                          <Input placeholder="John Doe" {...field} />
+                          <Input placeholder="Enter name" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -338,7 +352,7 @@ const UserDetailForm = ({
                     control={form.control}
                     render={({ field }) => (
                       <FormItem>
-                        <RequiredFieldStar labelText={"ইমেল"} />
+                        <RequiredFieldStar labelText={"Email"} />
                         <FormControl>
                           <Input
                             placeholder="Enter email"
@@ -357,7 +371,7 @@ const UserDetailForm = ({
                     control={form.control}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>জন্ম তারিখ</FormLabel>
+                        <FormLabel>Date of Birth</FormLabel>
                         <FormControl>
                           <Popover>
                             <PopoverTrigger asChild>
@@ -367,7 +381,7 @@ const UserDetailForm = ({
                               >
                                 {field.value
                                   ? format(field?.value, "PPP")
-                                  : "তারিখ নির্বাচন করুন"}
+                                  : "Pick a date"}
                                 <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                               </Button>
                             </PopoverTrigger>
@@ -400,7 +414,7 @@ const UserDetailForm = ({
                     control={form.control}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>লিঙ্গ</FormLabel>
+                        <FormLabel>Gender</FormLabel>
                         <FormControl>
                           <Select
                             onValueChange={field.onChange}
@@ -408,11 +422,12 @@ const UserDetailForm = ({
                             defaultValue=""
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder="লিঙ্গ নির্বাচন করুন" />
+                              <SelectValue placeholder="Select Gender" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="MALE">পুরুষ</SelectItem>
-                              <SelectItem value="FEMALE">মহিলা</SelectItem>
+                              <SelectItem value="MALE">Male</SelectItem>
+                              <SelectItem value="FEMALE">Female</SelectItem>
+                              <SelectItem value="OTHER">Other</SelectItem>
                             </SelectContent>
                           </Select>
                         </FormControl>
@@ -427,7 +442,7 @@ const UserDetailForm = ({
                     control={form.control}
                     render={({ field }) => (
                       <FormItem className="md:col-span-2">
-                        <FormLabel></FormLabel>
+                        <FormLabel>Education</FormLabel>
                         <FormControl>
                           <EducationsInput
                             initialEducations={field.value || []}
@@ -447,10 +462,10 @@ const UserDetailForm = ({
                     control={form.control}
                     render={({ field }) => (
                       <FormItem className="md:col-span-2">
-                        <FormLabel>জীবনী</FormLabel>
+                        <FormLabel>Bio</FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder="আপনার সম্পর্কে সংক্ষেপে কিছু বলুন"
+                            placeholder="Enter bio..."
                             rows={"8"}
                             {...field}
                           />
@@ -465,19 +480,19 @@ const UserDetailForm = ({
               {/* Second Group */}
               <Card className="p-8 mt-6">
                 <h4 className="text-base text-black/50 font-bold mb-8">
-                  যোগাযোগ
+                  Contact
                 </h4>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {/* Phone Number */}
                   <FormField
-                    name="+8801"
+                    name="phoneNumber"
                     control={form.control}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>ফোন নম্বর</FormLabel>
+                        <FormLabel>Phone Number</FormLabel>
                         <FormControl>
-                          <Input placeholder="+880 1XXX-XXXXXX" {...field} />
+                          <Input placeholder="Enter phone number" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -490,9 +505,9 @@ const UserDetailForm = ({
                     control={form.control}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>শহর</FormLabel>
+                        <FormLabel>City</FormLabel>
                         <FormControl>
-                          <Input placeholder="শহরের নাম" {...field} />
+                          <Input placeholder="Enter city" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -505,9 +520,9 @@ const UserDetailForm = ({
                     control={form.control}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>বিভাগ</FormLabel>
+                        <FormLabel>State</FormLabel>
                         <FormControl>
-                          <Input placeholder="বিভাগের নাম" {...field} />
+                          <Input placeholder="Enter state" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -520,9 +535,9 @@ const UserDetailForm = ({
                     control={form.control}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>দেশ</FormLabel>
+                        <FormLabel>Country</FormLabel>
                         <FormControl>
-                          <Input placeholder="বাংলাদেশ" {...field} />
+                          <Input placeholder="Enter country" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -535,9 +550,9 @@ const UserDetailForm = ({
                     control={form.control}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>পোস্ট কোড</FormLabel>
+                        <FormLabel>Zip Code</FormLabel>
                         <FormControl>
-                          <Input placeholder="1200" {...field} />
+                          <Input placeholder="Enter zip code" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -550,9 +565,9 @@ const UserDetailForm = ({
                     control={form.control}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>জাতীয়তা</FormLabel>
+                        <FormLabel>Nationality</FormLabel>
                         <FormControl>
-                          <Input placeholder="বাংলাদেশি" {...field} />
+                          <Input placeholder="Enter nationality" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -564,7 +579,7 @@ const UserDetailForm = ({
               {/* Third Group */}
               <Card className="mt-6 p-8">
                 <h4 className="text-base text-black/50 font-bold mb-8">
-                  সামাজিক যোগাযোগ
+                  Social
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {/* Facebook */}
@@ -573,9 +588,9 @@ const UserDetailForm = ({
                     control={form.control}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>ফেসবুক</FormLabel>
+                        <FormLabel>Facebook</FormLabel>
                         <FormControl>
-                          <Input placeholder="ফেসবুক প্রোফাইল URL" {...field} />
+                          <Input placeholder="Enter Facebook URL" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -588,12 +603,9 @@ const UserDetailForm = ({
                     control={form.control}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>লিঙ্কডইন</FormLabel>
+                        <FormLabel>LinkedIn</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="LinkedIn প্রোফাইল URL"
-                            {...field}
-                          />
+                          <Input placeholder="Enter LinkedIn URL" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -606,12 +618,9 @@ const UserDetailForm = ({
                     control={form.control}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>টুইটার</FormLabel>
+                        <FormLabel>Twitter</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="Twitter প্রোফাইল URL"
-                            {...field}
-                          />
+                          <Input placeholder="Enter Twitter URL" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -624,9 +633,9 @@ const UserDetailForm = ({
                     control={form.control}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>ইউটিউব</FormLabel>
+                        <FormLabel>YouTube</FormLabel>
                         <FormControl>
-                          <Input placeholder="চ্যানেল লিঙ্ক" {...field} />
+                          <Input placeholder="Enter YouTube URL" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -639,12 +648,9 @@ const UserDetailForm = ({
                     control={form.control}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>ওয়েবসাইট</FormLabel>
+                        <FormLabel>Website</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="https://yourwebsite.com"
-                            {...field}
-                          />
+                          <Input placeholder="Enter Website URL" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -657,12 +663,9 @@ const UserDetailForm = ({
                     control={form.control}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>অন্যান্য</FormLabel>
+                        <FormLabel>Others</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="অন্য কোনো প্রাসঙ্গিক লিংক"
-                            {...field}
-                          />
+                          <Input placeholder="Enter other links" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -675,7 +678,7 @@ const UserDetailForm = ({
               {initialData?.teacherStatus?.toLowerCase() === "verified" && (
                 <Card className="mt-6 p-8">
                   <h4 className="text-base text-black/50 font-bold mb-8">
-                    শিক্ষক প্রোফাইল
+                    Teaching Profile
                   </h4>
                   <div className="grid grid-cols-1 gap-8">
                     {/* Subject Specializations */}
@@ -685,7 +688,7 @@ const UserDetailForm = ({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
-                            বিশেষায়িত ক্ষেত্র{" "}
+                            Specialized Area{" "}
                             <span className="text-red-500">*</span>
                           </FormLabel>
                           <FormControl>
@@ -715,7 +718,7 @@ const UserDetailForm = ({
                       control={form.control}
                       render={({ field }) => (
                         <FormItem>
-                          <RequiredFieldStar labelText="অভিজ্ঞতার বছর" />
+                          <RequiredFieldStar labelText="Years of Experience" />
                           <FormControl>
                             <Select
                               onValueChange={field.onChange}
@@ -726,22 +729,22 @@ const UserDetailForm = ({
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="0-1 year">
-                                  ০-১ বছর
+                                  0-1 year
                                 </SelectItem>
                                 <SelectItem value="1-2 years">
-                                  ১-২ বছর
+                                  1-2 years
                                 </SelectItem>
                                 <SelectItem value="2-4 years">
-                                  ২-৪ বছর
+                                  2-4 years
                                 </SelectItem>
                                 <SelectItem value="4-6 years">
-                                  ৪-৬ বছর
+                                  4-6 years
                                 </SelectItem>
                                 <SelectItem value="6-10 years">
-                                  ৬-১০ বছর
+                                  6-10 years
                                 </SelectItem>
                                 <SelectItem value="10+ years">
-                                  ১০+ বছর
+                                  10+ years
                                 </SelectItem>
                               </SelectContent>
                             </Select>
@@ -757,7 +760,7 @@ const UserDetailForm = ({
                       control={form.control}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>সার্টিফিকেশন</FormLabel>
+                          <FormLabel>Certifications</FormLabel>
                           <FormControl>
                             <CertificationsInput
                               initialCertifications={field.value || []}
@@ -778,7 +781,7 @@ const UserDetailForm = ({
               {/* Fifth Group */}
               <Card className="p-8 mt-6">
                 <h4 className="text-base text-black/50 font-bold mb-8">
-                  অ্যাকাউন্ট
+                  Account
                 </h4>
                 <div className="grid grid-cols-1 gap-8">
                   {/* Role */}
@@ -787,7 +790,7 @@ const UserDetailForm = ({
                     control={form.control}
                     render={({ field }) => (
                       <FormItem>
-                        <RequiredFieldStar labelText="পদবী" />
+                        <RequiredFieldStar labelText="Role" />
                         <FormControl>
                           <Select
                             placeholder="Select Role"
@@ -817,7 +820,7 @@ const UserDetailForm = ({
                     control={form.control}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>একাউন্ট স্ট্যাটাস</FormLabel>
+                        <FormLabel>Account Status</FormLabel>
                         <FormControl>
                           <Select
                             placeholder="Select Account Status"
@@ -850,7 +853,7 @@ const UserDetailForm = ({
                     control={form.control}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>শিক্ষকতার জন্য আবেদনের অগ্রগতি</FormLabel>
+                        <FormLabel>Teacher Status</FormLabel>
                         <FormControl>
                           <Select
                             onValueChange={field.onChange}
@@ -886,9 +889,7 @@ const UserDetailForm = ({
                               onCheckedChange={(e) => field.onChange(e)}
                               className="h-4 w-4 border-gray-300 rounded"
                             />
-                            <FormLabel htmlFor="isAdmin">
-                              অ্যাডমিন হিসেবে নিযুক্ত
-                            </FormLabel>
+                            <FormLabel htmlFor="isAdmin">Is Admin</FormLabel>
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -911,7 +912,7 @@ const UserDetailForm = ({
                               className="h-4 w-4 border-gray-300 rounded"
                             />
                             <FormLabel htmlFor="isSuperAdmin">
-                              সুপার অ্যাডমিন হিসেবে নিযুক্ত
+                              Is Super Admin
                             </FormLabel>
                           </div>
                         </FormControl>

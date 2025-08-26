@@ -82,7 +82,7 @@ export default function CheckoutButton({
         }
       }
     } catch (error) {
-      // console.log("Error from checkout button:", error);
+      console.log("Error from checkout button:", error);
       if (error.response) {
         // Handle JSON error response
         if (error.response.data && error.response.data.message) {

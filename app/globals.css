@@ -15,6 +15,7 @@ body,
   --font-noto-serif-bengali-fallback: "Noto Serif Bengali Fallback";
 }
 
+
 body.fonts-loaded {
   visibility: visible;
 }
@@ -447,14 +448,18 @@ button:disabled {
   pointer-events: auto !important;
 }
 
-table {
-  background-color: #fff;
+/* Scrollbar width */
+::-webkit-scrollbar {
+  width: 12px; /* vertical scrollbar */
+  height: 12px; /* horizontal scrollbar */
 }
 
-/* Course content Iframe videos styles reset */
-@media (min-width: 768px) {
-  .prose iframe {
-    height: 500px !important;
-  }
+::-webkit-scrollbar-track {
+  background: #E7F4F3;
 }
 
+::-webkit-scrollbar-thumb {
+  background-color: #0D9488;
+  border-radius: 15px;
+  border: 2px solid #E7F4F3; 
+}

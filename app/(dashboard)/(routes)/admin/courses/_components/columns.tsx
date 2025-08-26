@@ -114,11 +114,7 @@ export const columns = [
       return value.includes(row.getValue(id));
     },
   },
-  {
-    accessorKey: "courseMode",
-    header: () => null,
-    cell: () => null,
-  },
+
   {
     accessorKey: "enrolledStudents",
     header: ({ column }) => (

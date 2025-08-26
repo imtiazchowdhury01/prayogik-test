@@ -24,14 +24,18 @@ export async function GET(request: Request) {
         },
         teacherProfile: {
           teacherStatus: "VERIFIED", // Only verified teachers
+          createdCourses: {
+            some: {
+              isPublished: true, // Must have at least one published course
+            },
+          },
         },
       },
       include: {
         teacherProfile: {
           include: {
             teacherRank: true,
-            createdCourses: {
-              // Include created courses in response
+            createdCourses: { // Include created courses in response
               where: {
                 isPublished: true,
               },

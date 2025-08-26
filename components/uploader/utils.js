@@ -11,7 +11,7 @@ export const getCredentials = async (lessonId, courseId) => {
   if (!data.clientPayload) {
     return {
       error: true,
-      message: "ত্রুটি হয়েছে, অনুগ্রহ করে রিফ্রেশ করুন।",
+      message: "Credential Error",
     };
   }
   return data;

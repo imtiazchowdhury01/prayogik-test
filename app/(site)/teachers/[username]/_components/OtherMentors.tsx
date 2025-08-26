@@ -3,21 +3,20 @@ import React from "react";
 import ExpertCard from "@/components/ExpertCard";
 import MoreBtn from "@/components/more-btn";
 
-export function OtherMentors({ allTeacher, blurDataMap }) {
+export function OtherMentors({ allTeacher }) {
   return (
-    <section className="w-full pb-16">
+    <section className="w-full pb-16 bg-background-gray">
       <div className="app-container">
         <div className="flex items-center justify-center w-full mb-6 md:justify-between">
           <div>
-            <h2 className="text-3xl font-bold text-center md:text-left">
+            <h4 className="text-3xl font-bold text-center md:text-left">
               অন্যান্য শিক্ষক
-            </h2>
+            </h4>
           </div>
           {allTeacher?.length > 4 && (
             <MoreBtn
               href="/teachers"
               title="আরো দেখুন"
-              variant="underline"
               className="hidden md:flex"
             />
           )}
@@ -26,16 +25,7 @@ export function OtherMentors({ allTeacher, blurDataMap }) {
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {allTeacher &&
             allTeacher.slice(0, 4)?.map((teacher, index) => {
-              const blurDataURL = teacher?.avatarUrl
-                ? blurDataMap[teacher.avatarUrl]
-                : null;
-              return (
-                <ExpertCard
-                  key={index}
-                  teacher={teacher}
-                  blurDataURL={blurDataURL}
-                />
-              );
+              return <ExpertCard key={index} teacher={teacher} />;
             })}
         </div>
         {allTeacher?.length > 4 && (
