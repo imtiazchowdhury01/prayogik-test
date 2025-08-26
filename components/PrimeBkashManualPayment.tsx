@@ -20,7 +20,7 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { SubscriptionCardHeader } from "@/app/(site)/prime/_component/SubscriptionCardHeader";
+import { SubscriptionCardHeader } from "@/app/(site)/preprime/_component/SubscriptionCardHeader";
 import { revalidatePage } from "@/actions/revalidatePage";
 
 interface ManualPaymentFormProps {
@@ -105,6 +105,7 @@ interface ManualPaymentFormProps {
   onFormReset?: () => void;
   title: string;
   subscriptionDiscountPercentage: string;
+  userId?: string;
 }
 
 // Declare global type for reCAPTCHA
@@ -167,6 +168,7 @@ function PrimeBkashManualPayment({
   onFormReset,
   title,
   subscriptionDiscountPercentage,
+  userId,
 }: ManualPaymentFormProps) {
   // Default labels
   const defaultLabels = {
@@ -619,12 +621,16 @@ function PrimeBkashManualPayment({
       )}
       {/* ---------without payment show this card---------- */}
       <div className="p-[1px] rounded-lg [background:linear-gradient(90deg,_#FF3A4D_0%,_#FF8538_100%)]">
-        <Card className="border-0 p-6 bg-white rounded-lg">
+        <Card
+          className={` ${userId ? "p-6" : "p-6"} border-0 bg-white rounded-lg`}
+        >
           {cardTitle && (
             <CardHeader className={cardHeaderClassName}>
               {cardTitle ? (
                 <CardTitle
-                  className="text-lg bg-gradient-to-r from-[#FF3A4D] to-[#FF8538] bg-clip-text text-transparent text-center"
+                  className={` ${
+                    userId ? "text-lg" : "text-[20px]"
+                  } bg-gradient-to-r from-[#FF3A4D] to-[#FF8538] bg-clip-text text-transparent text-center`}
                   style={dynamicStyles.title}
                 >
                   {cardTitle}
@@ -640,21 +646,26 @@ function PrimeBkashManualPayment({
                   ) : null}
                 </div>
               </div>
-              {cardTitle && <Separator className="mt-4" />}
+              {cardTitle && userId && <Separator className="mt-4" />}
             </CardHeader>
           )}
           <CardContent className={cardContentClassName}>
             {/* Payment Instructions */}
-            <div className="mt-4">
-              <div className="text-base" style={dynamicStyles.description}>
-                {paymentInstruction}
+            {userId && (
+              <div className="mt-4">
+                <div className="text-base" style={dynamicStyles.description}>
+                  {paymentInstruction}
+                </div>
+                <div className="font-bold text-lg pl-4">{bkashNumber}</div>
               </div>
-              <div className="font-bold text-lg pl-4">{bkashNumber}</div>
-            </div>
+            )}
             {/* Step 1 */}
             <div className="space-y-2">
-              <div className="text-base">{defaultLabels.step1}</div>
-              <form onSubmit={handleSubmit} className="space-y-4 pl-4">
+              {userId && <div className="text-base">{defaultLabels.step1}</div>}
+              <form
+                onSubmit={handleSubmit}
+                className={` ${!userId ? "mt-2 pl-0" : "pl-4"} space-y-4`}
+              >
                 {!showTrxIdInput ? (
                   <>
                     <Button
@@ -662,22 +673,11 @@ function PrimeBkashManualPayment({
                       disabled={preview}
                       variant="default"
                       className={cn(
-                        "w-full rounded-[6px] text-md hover:opacity-90 transition-opacity  bg-gradient-to-r from-[#FF3A4D] to-[#FF8538]  hover:from-[#FF3A4D] hover:to-[#FF8538]",
+                        "w-full rounded-[6px] text-md hover:opacity-90 transition-opacity bg-gradient-to-r from-[#FF3A4D] to-[#FF8538] hover:from-[#FF3A4D] hover:to-[#FF8538]",
+                        !userId && "h-12 font-semibold",
                         "hover:bg-primary-brand hover:text-white",
                         buttonSubmitTailwindcss
                       )}
-                      // className={cn(
-                      //   "w-full rounded-[6px] text-md border border-[#FF3A4D] hover:bg-primary-brand text-transparent bg-gradient-to-r from-[#FF3A4D] to-[#FF8538] bg-clip-text hover:bg-none transition-opacity",
-                      //   "hover:bg-primary-brand hover:text-white",
-                      //   buttonSubmitTailwindcss
-                      // )}
-                      // style={{
-                      //   backgroundImage:
-                      //     "linear-gradient(90deg, #FF3A4D 0%, #FF8538 100%)",
-                      //   backgroundClip: "text",
-                      //   WebkitBackgroundClip: "text",
-                      //   WebkitTextFillColor: "transparent",
-                      // }}
                       onClick={handleStartWritingTrxIdButton}
                     >
                       <span className="text-white">
@@ -818,18 +818,20 @@ function PrimeBkashManualPayment({
               </form>
             </div>
             {/* Step 2 */}
-            <div className="space-y-1">
-              <div className="text-base">{defaultLabels.step2}</div>
-              <div className="flex items-center gap-2 pl-4">
-                <Phone
-                  className="h-4 w-4 text-gray-700"
-                  // style={{ color: buttonBackgroundColor }}
-                />
-                <span className="text-base" style={dynamicStyles.description}>
-                  {supportNumber}
-                </span>
+            {userId && (
+              <div className="space-y-1">
+                <div className="text-base">{defaultLabels.step2}</div>
+                <div className="flex items-center gap-2 pl-4">
+                  <Phone
+                    className="h-4 w-4 text-gray-700"
+                    // style={{ color: buttonBackgroundColor }}
+                  />
+                  <span className="text-base" style={dynamicStyles.description}>
+                    {supportNumber}
+                  </span>
+                </div>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -34,29 +34,18 @@ export const ImageForm = ({ initialData, courseId }: ImageFormProps) => {
   const [isUploading, setIsUploading] = useState(false);
 
   const MAX_FILE_SIZE_BYTES =
-    (Number(process.env.MAX_FILE_SIZE_MB) || 5) * 1024 * 1024;
+    (Number(process.env.MAX_IMAGE_SIZE_MB) || 2) * 1024 * 1024;
 
   const toggleEdit = () => setIsEditing((current) => !current);
 
   const router = useRouter();
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    // try {
-    //   await axios.patch(`/api/courses/${courseId}`, values);
-    //   toast.success("Course updated");
-    //   setIsUploading(false);
-    //   toggleEdit();
-
-    //   router.refresh();
-    // } catch {
-    //   toast.error("Something went wrong");
-    // }
-
     await updateCourse({
       courseId,
       values,
       toggleEdit,
-      setIsUploading,
+      setLoading: setIsUploading,
       router,
     });
   };
@@ -92,6 +81,7 @@ export const ImageForm = ({ initialData, courseId }: ImageFormProps) => {
         setIsEditing(false);
       }
     } catch (error) {
+      console.log(error);
       toast.error(
         "Error uploading file: " + (error?.message || "Unknown error")
       );

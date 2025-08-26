@@ -6,23 +6,24 @@ import { CourseProgress } from "./course-progress";
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Loader } from "lucide-react";
+import { CourseMode } from "@prisma/client";
 
 export const SingleCardButton = ({
   courseId,
-  progress,
+  progress = null,
   nextLessonSlug,
   slug,
   lessons,
   variant,
+  courseMode
 }) => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const pathname = usePathname();
   return (
     <div className="">
-      {progress !== null && pathname !== "/prayogik-home" ? (
+      {courseMode === CourseMode.RECORDED && progress !== null  ? (
         <div className="flex flex-col gap-2">
-          {pathname !== "/prayogik-home" && (
+          {
             <div className="">
               <CourseProgress
                 variant={progress === 100 ? "success" : "default"}
@@ -31,7 +32,7 @@ export const SingleCardButton = ({
                 cardVariant={variant}
               />
             </div>
-          )}
+          }
 
           {nextLessonSlug ? (
             <Link href={`/courses/${slug}/${nextLessonSlug}`}>

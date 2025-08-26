@@ -1,4 +1,5 @@
 import Image from "next/image";
+import missionimage from "public/images/about/ourmission.webp";
 
 const Mission = () => {
   return (
@@ -33,12 +34,14 @@ const Mission = () => {
       </div>
       <div className="relative self-end  w-full lg:w-auto mt-6 lg:mt-0">
         <Image
-          src="/images/about/ourmission.webp"
+          src={missionimage}
           alt="vision"
           width={253.05}
           height={177.763}
           className="rounded-lg object-cover w-full lg:w-[253.05px] h-auto"
           sizes="(max-width: 1024px) 100vw, 253.05px"
+          placeholder="blur"
+          quality={75}
         />
       </div>
     </section>

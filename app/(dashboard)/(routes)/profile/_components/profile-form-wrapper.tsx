@@ -2,13 +2,14 @@
 "use client";
 
 import RequiredFieldText from "@/components/common/requiredFieldText";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Urls } from "@/constants/urls";
 import { PersonalInfoForm } from "./personal-info-form";
 import { ContactInfoForm } from "./contact-info-form";
 import { TeacherInfoForm } from "./teacher-info-form";
 import { ResetProfileUserPass } from "./reset-profile-user-pass";
+import { parseEducationData } from "@/lib/utils/parseEducationData";
 
 interface ProfileClientProps {
   initialProfileData: any;
@@ -51,11 +52,17 @@ export default function ProfileFormWrapper({
     form: "",
     submitted: false,
   });
+
   const [formData, setFormData] = useState(initialProfileData);
   const [teacherFormData, setTeacherFormData] = useState(
     initialProfileData.teacherProfile || {}
   );
   const [categories] = useState(initialCategories);
+
+  // Parse education data once when component mounts
+  const parsedEducation = useMemo(() => {
+    return parseEducationData(formData?.education);
+  }, [formData?.education]);
 
   const refreshProfileData = async () => {
     try {
@@ -79,7 +86,7 @@ export default function ProfileFormWrapper({
       setIsSubmitting({ form: "", submitted: false });
     }
   };
-
+  // console.log("parsedEducation result:", parsedEducation);
   return (
     <div className="min-h-screen">
       <div className="max-w-5xl mx-auto">
@@ -89,8 +96,9 @@ export default function ProfileFormWrapper({
         <PersonalInfoForm
           onSubmit={(data) => handleSubmit(data, "personal")}
           defaultValues={formData}
-          isLoading={false} // No initial loading since data is pre-fetched
+          isLoading={false}
           isSubmitting={isSubmitting}
+          parsedEducation={parsedEducation}
         />
 
         {/* Contact information form */}

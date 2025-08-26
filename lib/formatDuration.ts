@@ -2,11 +2,11 @@ import { convertNumberToBangla } from "./convertNumberToBangla";
 
 export const formatDuration = (duration: any) => {
   const hours = Math.floor(duration / 3600);
-  const minutes =  Math.floor((duration % 3600) / 60);
+  const minutes = Math.floor((duration % 3600) / 60);
 
   const parts = [];
-  if (hours > 0) parts.push(`${convertNumberToBangla(hours)}ঘণ্টা`);
-  if (minutes > 0) parts.push(`${convertNumberToBangla(minutes)}মিনিট`);
+  if (hours > 0) parts.push(`${convertNumberToBangla(hours)} ঘণ্টা`);
+  if (minutes > 0) parts.push(`${convertNumberToBangla(minutes)} মিনিট`);
 
   return parts.length > 0 ? parts.join(" ") : null;
 };

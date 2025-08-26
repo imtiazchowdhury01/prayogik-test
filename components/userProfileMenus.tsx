@@ -10,7 +10,8 @@ import {
 
 import { signOut } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+
 import {
   ChevronDown,
   CirclePower,
@@ -26,22 +27,38 @@ import { convertNumberToBangla } from "@/lib/convertNumberToBangla";
 import { Badge } from "./ui/badge";
 import { cn } from "@/lib/utils";
 import { formatDateToBangla } from "@/lib/utils/stringUtils";
+import { useRouter } from "next/navigation";
+import { Button } from "./ui/button";
 
-export default function UserProfileMenus({ session, subscription }) {
+export default function UserProfileMenus({ session, subscription, pathName }) {
   const router = useRouter();
   const displayName = session?.user?.name;
-  const isSubscribed =
-    session?.user?.info?.studentProfile?.subscription?.status === "ACTIVE";
-  const subscriptionName = subscription?.name || "প্রায়োগিক প্রাইম";
-  const userSubscription = session?.user?.info?.studentProfile?.subscription;
+  // console.log("subscription result:", subscription);
+  const isSubscribed = subscription?.status === "ACTIVE";
+  const isTrial = subscription?.isTrial;
+  const isExpired = subscription?.status === "EXPIRED";
+
+  const subscriptionName =
+    subscription?.subscriptionPlan?.name || "সাবস্ক্রিপশন";
+
   // Prevent menu from closing when clicking on text elements
   const handleTextClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
   };
 
+  // Handle navigation and close menu
+  const handleNavigation = (path) => {
+    // Menu will close automatically due to onSelect
+    router.push(path);
+  };
+
   return (
-    <Menubar className="border-none">
+    <Menubar
+      className={`${
+        pathName === "/offer" ? "bg-transparent text-white" : ""
+      } border-none`}
+    >
       <MenubarMenu>
         <MenubarTrigger className="gap-1.5 text-base cursor-pointer ring-0 hover:bg-transparent pr-0">
           <Avatar className="w-8 h-8">
@@ -69,82 +86,120 @@ export default function UserProfileMenus({ session, subscription }) {
               সাইন ইন করেছেন
             </p>
             <p
-              className="text-xs font-medium select-text cursor-text"
+              className="text-xs font-medium select-text cursor-text break-all"
               onClick={handleTextClick}
             >
               {session?.user?.email}
             </p>
           </MenubarItem>
+
           <MenubarSeparator />
+
+          {/* Subscription Item - Menu closes on click */}
           <MenubarItem
-            className={cn(
-              "space-x-1 flex items-start group focus:bg-transparent",
-              !isSubscribed && "cursor-pointer"
-            )}
-            onSelect={(e) => {
-              if (!isSubscribed) {
-                router.push("/prime");
-              } else {
-                router.push("/dashboard");
+            className={cn("space-x-1 flex items-start group")}
+            onSelect={() => {
+              if (isSubscribed) {
+                handleNavigation("/prime");
               }
             }}
           >
-            <div className="space-y-1" onClick={handleTextClick}>
-              <div className="flex gap-1">
-                <ShieldEllipsis size={16} className="text-[#408B85]" />
-                <p
-                  className={cn(
-                    !isSubscribed && "group-hover:text-primary-brand",
-                    "select-text"
-                  )}
-                >
-                  {subscriptionName}
-                </p>
-              </div>
-
-              {isSubscribed ? (
-                <>
-                  <Badge className="ml-4 bg-[#408B85] hover:bg-[#408B85]">
-                    সাবস্ক্রাইবড
-                  </Badge>
-                  {userSubscription?.expiresAt ? (
-                    <p className="text-[.7rem] font-normal text-gray-500 select-text pl-4">
-                      *মেয়াদ শেষ{" "}
-                      {formatDateToBangla(
-                        new Date(userSubscription?.expiresAt)
-                      )}
-                    </p>
-                  ) : null}
-                </>
-              ) : (
-                <div>
-                  <p className="text-xs font-normal text-gray-500 select-text">
-                    প্রায়োগিক প্রাইম সাবস্ক্রাইব করে আনলিমিটেড ফ্রি কোর্স
-                    এক্সেস করুন
+            <div className="w-full p-0">
+              <div className="space-y-1">
+                <div className="flex gap-1">
+                  <ShieldEllipsis size={16} className="text-[#408B85]" />
+                  <p
+                    className={cn(
+                      !isSubscribed && "group-hover:text-primary-brand",
+                      "select-text"
+                    )}
+                  >
+                    {`প্রাইম - ${subscriptionName} `}
                   </p>
                 </div>
-              )}
+
+                {/* Show badge for both active and expired subscriptions */}
+                {(isSubscribed || isExpired) && (
+                  <>
+                    <Badge
+                      className={`ml-4 ${
+                        isExpired
+                          ? "bg-red-500 hover:bg-red-600"
+                          : "bg-[#408B85] hover:bg-[#408B85]"
+                      }`}
+                    >
+                      {isExpired ? "মেয়াদ শেষ" : "সাবস্ক্রাইবড"}
+                    </Badge>
+
+                    {subscription?.expiresAt ? (
+                      <p
+                        className="text-xs font-normal text-gray-500 select-text pl-4"
+                        onClick={handleTextClick}
+                      >
+                        *মেয়াদ শেষ{" "}
+                        {formatDateToBangla(new Date(subscription?.expiresAt))}
+                      </p>
+                    ) : null}
+
+                    {/* Show upgrade link for trial OR renew link for non-trial expired */}
+                    <Link href="/prime">
+                      <span className="bg-transparent text-brand underline text-xs ml-4 cursor-pointer mt-1">
+                        {isTrial
+                          ? "প্ল্যান আপগ্রেড করুন"
+                          : isExpired && !subscription.type ==='TRIAL'
+                          ? "রিনিউ করুন"
+                          : "প্ল্যান আপগ্রেড করুন"}
+                      </span>
+                    </Link>
+                  </>
+                )}
+
+                {/* Show default message when no subscription */}
+                {!isSubscribed && !isExpired && (
+                  <div>
+                    <p
+                      className="text-xs font-normal text-gray-500 select-text"
+                      onClick={handleTextClick}
+                    >
+                      প্রায়োগিকে সাবস্ক্রাইব করে আনলিমিটেড ফ্রি কোর্স এক্সেস
+                      করুন
+                    </p>
+                    <Link href="/prime">
+                      <span className="bg-transparent text-brand underline text-xs ml-1 mt-1">
+                        প্ল্যান আপগ্রেড করুন
+                      </span>
+                    </Link>
+                  </div>
+                )}
+              </div>
             </div>
           </MenubarItem>
+
           <MenubarSeparator />
+
+          {/* Dashboard Item - Now properly handles navigation */}
           <MenubarItem
-            className="cursor-pointer p-2 flex items-center gap-2"
-            onSelect={() => router.push("/dashboard")}
+            className="cursor-pointer flex items-center gap-2 py-2"
+            onSelect={() => handleNavigation("/dashboard")}
           >
             <LayoutDashboard size={16} className="text-[#408B85]" />
             <span>ড্যাশবোর্ড</span>
           </MenubarItem>
+
+          {/* Profile Item - Now properly handles navigation */}
           <MenubarItem
-            className="cursor-pointer p-2 flex items-center gap-2"
-            onSelect={() => router.push("/profile")}
+            className="cursor-pointer flex items-center gap-2 py-2"
+            onSelect={() => handleNavigation("/profile")}
           >
             <User size={16} className="text-[#408B85]" />
             <span>প্রোফাইল</span>
           </MenubarItem>
 
           <MenubarSeparator />
+
+          {/* Logout - Keep as is since it's not navigation */}
           <MenubarItem
-            className="cursor-pointer p-2 flex items-center gap-2"
+            className="cursor-pointer flex items-center gap-2 py-2"
             onSelect={() => signOut({ callbackUrl: "/" })}
           >
             <LogOut size={16} className="text-red-400" />

@@ -13,6 +13,7 @@ import React, { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import qs from "query-string";
 import { clientApi } from "@/lib/utils/openai/client";
+import { CourseMode } from "@prisma/client";
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
@@ -109,6 +110,17 @@ export function DataTableToolbar<TData>({
             column={table.getColumn("authorId")}
             title="Author"
             options={isAuthors}
+          />
+        )}
+
+        {table.getColumn("courseMode") && (
+          <DataTableFacetedFilter
+            column={table.getColumn("courseMode")}
+            title="Mode"
+            options={[
+              { label: CourseMode.LIVE, value: CourseMode.LIVE },
+              { label: CourseMode.RECORDED, value: CourseMode.RECORDED },
+            ]}
           />
         )}
 

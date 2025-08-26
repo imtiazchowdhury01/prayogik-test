@@ -1,3 +1,4 @@
+
 // @ts-nocheck
 "use client";
 
@@ -21,11 +22,16 @@ import {
 import { updateCourse } from "@/lib/course/updateCourse";
 
 const formSchema = z.object({
-  requirements: z.array(
-    z.string().min(1, { message: "Requirement is required" }).max(100, {
-      message: "Max 100 characters",
-    })
-  ),
+  requirements: z
+    .array(
+      z.string().max(100, {
+        message: "Max 100 characters",
+      })
+    )
+    .transform((requirements) =>
+      // Filter out empty strings before saving
+      requirements.filter((requirement) => requirement.trim().length > 0)
+    ),
 });
 
 interface CourseRequirementsFormProps {
@@ -46,7 +52,10 @@ export const CourseRequirementsForm = ({
     resolver: zodResolver(formSchema),
     mode: "onChange", // Enable real-time validation
     defaultValues: {
-      requirements: initialData?.requirements || [""],
+      requirements:
+        initialData?.requirements?.length > 0
+          ? initialData.requirements
+          : [],
     },
   });
 
@@ -81,6 +90,19 @@ export const CourseRequirementsForm = ({
     }
   }, [fields.length, isEditing]);
 
+  // Function to handle removing all fields
+  const handleRemoveAll = () => {
+    // Remove all fields first
+    for (let i = fields.length - 1; i >= 0; i--) {
+      remove(i);
+    }
+  };
+
+  // Function to add first field when none exist
+  const addFirstField = () => {
+    append("");
+  };
+
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
@@ -98,7 +120,7 @@ export const CourseRequirementsForm = ({
 
       {!isEditing ? (
         <div className="text-sm mt-2">
-          {!initialData.requirements.length ? (
+          {!initialData.requirements?.length ? (
             <span className="text-slate-500">No requirements</span>
           ) : (
             initialData.requirements.map((requirement, index) => (
@@ -113,39 +135,17 @@ export const CourseRequirementsForm = ({
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
             {fields.length === 0 && (
-              <div className="w-full flex flex-row justify-between gap-3">
-                <FormField
-                  control={control}
-                  name={`requirements.0`}
-                  render={({ field }) => (
-                    <FormItem className="flex-grow">
-                      <FormControl>
-                        <input
-                          {...field}
-                          className="font-normal w-full border border-gray-300 rounded"
-                          placeholder="Enter course requirement"
-                          onChange={(e) => {
-                            field.onChange(e);
-                            // Trigger validation for this specific field
-                            trigger(`requirements.0`);
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
+              <div className="w-full flex flex-col gap-3">
+                <p className="text-sm text-slate-500">No requirements added yet.</p>
                 <Button
-                  className={`w-10 px-0`}
                   type="button"
-                  onClick={() => {
-                    append("");
-                  }}
+                  onClick={addFirstField}
                   disabled={isSubmitting}
                   variant="outline"
+                  className="w-fit"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Requirement
                 </Button>
               </div>
             )}
@@ -184,7 +184,7 @@ export const CourseRequirementsForm = ({
                   type="button"
                   variant="outline"
                   onClick={() => remove(index)}
-                  disabled={fields.length === 1 || isSubmitting}
+                  disabled={isSubmitting}
                 >
                   <Minus className="h-4 w-4" />
                 </Button>
@@ -210,6 +210,16 @@ export const CourseRequirementsForm = ({
                     "Save"
                   )}
                 </Button>
+                {fields.length > 0 && (
+                  <Button
+                    type="button"
+                    onClick={handleRemoveAll}
+                    disabled={isSubmitting}
+                    variant="ghost"
+                  >
+                    Clear All
+                  </Button>
+                )}
               </div>
             </div>
           </form>

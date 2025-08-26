@@ -120,6 +120,8 @@ export async function GET(req: NextRequest) {
             title: true,
             description: true,
             slug: true,
+            courseMode: true,
+            courseLiveLinkScheduledAt: true,
             totalDuration: true,
             purchases: true,
             teacherProfile: {
@@ -156,6 +158,7 @@ export async function GET(req: NextRequest) {
                 isPublished: true,
                 isFree: true,
                 videoUrl: true,
+                videoStatus: true,
                 Progress: true,
                 position: true,
               },
@@ -180,6 +183,8 @@ export async function GET(req: NextRequest) {
           slug: true,
           totalDuration: true,
           purchases: true,
+          courseMode: true,
+          courseType: true,
           teacherProfile: {
             select: {
               user: {
@@ -214,6 +219,7 @@ export async function GET(req: NextRequest) {
               isPublished: true,
               isFree: true,
               videoUrl: true,
+              videoStatus: true,
               Progress: true,
               position: true,
             },

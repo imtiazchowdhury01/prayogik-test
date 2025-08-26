@@ -4,9 +4,18 @@ import { BookOpen, ArrowRight, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
+import SectionTitle from "@/components/common/SectionTitle";
+import { convertNumberToBangla } from "@/lib/convertNumberToBangla";
 
 // Course Card Component
-export const CourseCard = ({ course }: { course: any }) => {
+export const CourseCard = ({
+  course,
+  blurDataMap,
+}: {
+  course: any;
+  blurDataMap: any;
+}) => {
   if (!course) {
     return (
       <div className="bg-transparent p-4 h-28 flex items-center justify-center">
@@ -16,19 +25,28 @@ export const CourseCard = ({ course }: { course: any }) => {
   }
 
   const hasValidCourseLink = course?.courseLink;
+  const avatarUrl = course?.teacher?.user?.avatarUrl;
+  const blurDataURL = avatarUrl ? blurDataMap[avatarUrl] : null;
 
   return (
     <div className="bg-transparent p-4 min-h-28 w-full flex items-start gap-3">
       {/* Instructor Image */}
       <div className="w-[118px] h-[118px] rounded-lg overflow-hidden flex-shrink-0">
-        <img
-          src={
-            course?.teacher?.user?.avatarUrl ||
-            "/placeholder.svg?height=116&width=116"
-          }
-          alt={course?.teacher?.user?.name || "Instructor"}
-          className="w-full h-full object-cover"
-        />
+        <div className="relative w-[118px] h-[118px] rounded-lg overflow-hidden flex-shrink-0">
+          <Image
+            src={avatarUrl || "/placeholder.svg?height=116&width=116"}
+            alt={course?.teacher?.user?.name || "Instructor"}
+            fill
+            sizes="118px"
+            className="object-cover"
+            placeholder={blurDataURL ? "blur" : "empty"}
+            blurDataURL={blurDataURL || undefined}
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = "/placeholder.svg?height=116&width=116";
+            }}
+          />
+        </div>
       </div>
 
       {/* Content in flex-col (vertical) */}
@@ -59,7 +77,6 @@ export const CourseCard = ({ course }: { course: any }) => {
           {hasValidCourseLink ? (
             <Link
               href={course.courseLink}
-              target={"_blank"}
               className="text-white text-xs transition-colors whitespace-nowrap px-2 py-1 rounded bg-teal-600 hover:bg-teal-700"
             >
               কোর্সটি দেখুন
@@ -79,13 +96,17 @@ export const CourseCard = ({ course }: { course: any }) => {
 export const CourseColumn = ({
   courses,
   title,
+  description,
   showAllCoursesButton = false,
   columnBg,
+  blurDataMap,
 }: {
   courses: any[];
   title: string;
+  description: string;
   showAllCoursesButton?: boolean;
   columnBg?: string;
+  blurDataMap: Record<string, string | null>;
 }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const coursesPerPage = 4;
@@ -118,23 +139,26 @@ export const CourseColumn = ({
   // Animation variants for pagination only
   const pageVariants = {
     initial: { opacity: 0, x: 30 },
-    animate: { 
-      opacity: 1, 
+    animate: {
+      opacity: 1,
       x: 0,
-      transition: { duration: 0.3, ease: "easeOut" }
+      transition: { duration: 0.3, ease: "easeOut" },
     },
-    exit: { 
-      opacity: 0, 
-      x: -30, 
-      transition: { duration: 0.2, ease: "easeIn" }
-    }
+    exit: {
+      opacity: 0,
+      x: -30,
+      transition: { duration: 0.2, ease: "easeIn" },
+    },
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-h-[52rem]">
       {/* Column Header */}
       <div className={`p-4 ${columnBg} border-b border-gray-100`}>
         <h3 className="text-lg font-bold text-gray-900">{title}</h3>
+        <p className="text-sm text-gray-500">
+          {convertNumberToBangla(courses?.length)} টি কোর্স {description}{" "}
+        </p>
       </div>
 
       {/* Column Content */}
@@ -156,7 +180,7 @@ export const CourseColumn = ({
                       key={course?.id || index}
                       className="border-b border-gray-200 last:border-b-0"
                     >
-                      <CourseCard course={course} />
+                      <CourseCard course={course} blurDataMap={blurDataMap} />
                     </div>
                   ))}
                 </motion.div>
@@ -182,6 +206,7 @@ export const CourseColumn = ({
                       ? "bg-transparent !cursor-not-allowed"
                       : "bg-[#E6E7E7]"
                   }`}
+                  aria-label="previous slide"
                   disabled={currentPage === 0}
                 >
                   <ArrowLeft
@@ -200,6 +225,7 @@ export const CourseColumn = ({
                       ? "bg-transparent !cursor-not-allowed"
                       : "bg-[#E6E7E7]"
                   }`}
+                  aria-label="next slide"
                   disabled={currentPage === totalPages - 1}
                 >
                   <ArrowRight
@@ -232,23 +258,43 @@ export const CourseRoadmapClient = ({
   liveNowCourses,
   wipCourses,
   plannedCourses,
+  blurDataMap,
+  updatedAt,
+  showSectionHeader = true,
 }: {
   liveNowCourses: any[];
   wipCourses: any[];
   plannedCourses: any[];
+  blurDataMap: Record<string, string | null>;
+  updatedAt: any;
+  showSectionHeader?: boolean;
 }) => {
+  // console.log('updatedAt result:', convertDateTimeToBanglaTime(updatedAt));
   return (
-    <section className="bg-white py-10 md:py-16">
+    <section className={`bg-white  ${showSectionHeader ? "pb-4" : ""} `}>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-7">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 font-primary">
-            কোর্স আপডেট
-          </h2>
-          <p className="text-gray-600">
-            সম্পন্ন, চলমান ও পরিকল্পনায় থাকা কোর্সসমূহ একনজরে
-          </p>
-        </div>
+        {showSectionHeader && (
+          <>
+            <SectionTitle
+              title="কোর্স আপডেট"
+              description="সম্পন্ন, চলমান ও পরিকল্পনায় থাকা কোর্সসমূহ একনজরে"
+              containerClassName="pb-2"
+            />
+            <div className="text-center text-nowrap pb-8">
+              <p className="text-sm md:text-base">
+                <span className="font-semibold">শেষ আপডেট: </span>
+                <span className="text-gray-700 font-normal">
+                  {new Date(updatedAt).toLocaleDateString("bn-BD", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </span>
+              </p>
+            </div>
+          </>
+        )}
 
         {/* Course Grid Container - Three Separate Cards */}
         <div
@@ -260,8 +306,10 @@ export const CourseRoadmapClient = ({
             <CourseColumn
               courses={liveNowCourses}
               title="যেসব কোর্স এখনই পাচ্ছেন"
+              description="তৈরি হয়েছে"
               showAllCoursesButton={true}
               columnBg="bg-brand-primary-light"
+              blurDataMap={blurDataMap}
             />
           </div>
 
@@ -270,7 +318,9 @@ export const CourseRoadmapClient = ({
             <CourseColumn
               courses={wipCourses}
               title="শীঘ্রই আসছে যেসব কোর্স"
+              description="তৈরি হচ্ছে"
               columnBg="bg-secondary-brand-accent-light"
+              blurDataMap={blurDataMap}
             />
           </div>
 
@@ -279,7 +329,9 @@ export const CourseRoadmapClient = ({
             <CourseColumn
               courses={plannedCourses}
               title="ভবিষ্যতে যেসব কোর্স পাবেন"
+              description="প্লানে আছে"
               columnBg="bg-green-deep-light"
+              blurDataMap={blurDataMap}
             />
           </div>
         </div>

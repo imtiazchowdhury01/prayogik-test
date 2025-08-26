@@ -116,7 +116,6 @@ import {
   SelectTrigger,
   SelectValue,
   SelectContent,
-  SelectItem,
 } from "@/components/ui/select";
 
 const FILTER_TYPES = ["recent", "prime"] as const;
@@ -128,6 +127,26 @@ const FILTER_OPTIONS: Record<FilterType, { label: string }> = {
   // older: { label: "পুরাতন" },
   prime: { label: "প্রাইম" },
 };
+
+// Custom SelectItem that wraps Link
+interface CustomSelectItemProps {
+  href: string;
+  children: React.ReactNode;
+  isActive: boolean;
+}
+
+function CustomSelectItem({ href, children, isActive }: CustomSelectItemProps) {
+  return (
+    <Link
+      href={href}
+      className={`relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 font-secondary ${
+        isActive ? "text-brand" : ""
+      }`}
+    >
+      {children}
+    </Link>
+  );
+}
 
 // Component 1: For general filter pages (/courses/category/recent, /courses/category/older, etc.)
 // Always routes to /courses/category/{newFilter} (replaces current filter)
@@ -144,30 +163,27 @@ export function GeneralFilterSelect() {
       : undefined;
 
   return (
-    <div className="relative">
-      <Select value={currentFilter || ""}>
-        <SelectTrigger className="w-[140px] sm:w-[120px] bg-white rounded-3xl focus:ring-0 focus:ring-offset-0 shadow-custom p-3">
-          <SelectValue placeholder="ফিল্টার করুন" className="font-secondary" />
-        </SelectTrigger>
-        <SelectContent className="bg-white">
-          {Object.entries(FILTER_OPTIONS).map(([value, { label }]) => {
-            const isActive = currentFilter === value;
-            return (
-              <Link key={value} href={`/courses/category/${value}`}>
-                <SelectItem
-                  value={value}
-                  className={`font-secondary cursor-pointer hover:bg-gray-50 ${
-                    isActive ? "text-brand" : ""
-                  }`}
-                >
-                  {label}
-                </SelectItem>
-              </Link>
-            );
-          })}
-        </SelectContent>
-      </Select>
-    </div>
+    <Select value={currentFilter ? FILTER_OPTIONS[currentFilter].label : "ফিল্টার করুন"}>
+      <SelectTrigger className="w-[140px] sm:w-[120px] bg-white rounded-3xl focus:ring-0 focus:ring-offset-0 shadow-custom p-3">
+        <SelectValue placeholder="ফিল্টার করুন" className="font-secondary">
+          {currentFilter ? FILTER_OPTIONS[currentFilter].label : "ফিল্টার করুন"}
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent className="bg-white">
+        {Object.entries(FILTER_OPTIONS).map(([value, { label }]) => {
+          const isActive = currentFilter === value;
+          return (
+            <CustomSelectItem
+              key={value}
+              href={`/courses/category/${value}`}
+              isActive={isActive}
+            >
+              {label}
+            </CustomSelectItem>
+          );
+        })}
+      </SelectContent>
+    </Select>
   );
 }
 
@@ -190,32 +206,26 @@ export function CategoryFilterSelect({
     : undefined;
 
   return (
-    <div className="relative">
-      <Select value={currentFilter || ""}>
-        <SelectTrigger className="w-[140px] sm:w-[120px] bg-white rounded-3xl focus:ring-0 focus:ring-offset-0 shadow-custom p-3">
-          <SelectValue placeholder="ফিল্টার করুন" className="font-secondary" />
-        </SelectTrigger>
-        <SelectContent className="bg-white">
-          {Object.entries(FILTER_OPTIONS).map(([value, { label }]) => {
-            const isActive = currentFilter === value;
-            return (
-              <Link
-                key={value}
-                href={`/courses/category/${categorySlug}/${value}`}
-              >
-                <SelectItem
-                  value={value}
-                  className={`font-secondary cursor-pointer hover:bg-gray-50 ${
-                    isActive ? "text-brand" : ""
-                  }`}
-                >
-                  {label}
-                </SelectItem>
-              </Link>
-            );
-          })}
-        </SelectContent>
-      </Select>
-    </div>
+    <Select value={currentFilter ? FILTER_OPTIONS[currentFilter].label : "ফিল্টার করুন"}>
+      <SelectTrigger className="w-[140px] sm:w-[120px] bg-white rounded-3xl focus:ring-0 focus:ring-offset-0 shadow-custom p-3">
+        <SelectValue placeholder="ফিল্টার করুন" className="font-secondary">
+          {currentFilter ? FILTER_OPTIONS[currentFilter].label : "ফিল্টার করুন"}
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent className="bg-white">
+        {Object.entries(FILTER_OPTIONS).map(([value, { label }]) => {
+          const isActive = currentFilter === value;
+          return (
+            <CustomSelectItem
+              key={value}
+              href={`/courses/category/${categorySlug}/${value}`}
+              isActive={isActive}
+            >
+              {label}
+            </CustomSelectItem>
+          );
+        })}
+      </SelectContent>
+    </Select>
   );
 }

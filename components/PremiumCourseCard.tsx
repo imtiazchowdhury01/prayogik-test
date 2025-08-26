@@ -102,6 +102,7 @@ const PremiumCourseCard = ({
               sizes="100vw"
               onError={imgErrorHandler}
               className="object-cover w-full h-full rounded-t-lg"
+              quality={75}
               priority={true}
             />
           )}

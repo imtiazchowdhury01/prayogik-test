@@ -34,6 +34,7 @@ export default async function Hero() {
                   width={83}
                   height={83}
                   priority
+                  quality={75}
                 />
               </div>
             </div>
@@ -46,6 +47,7 @@ export default async function Hero() {
                 width={600}
                 height={600}
                 priority
+                quality={75}
               />
             </div>
             <div className="flex flex-row gap-4">
@@ -55,6 +57,7 @@ export default async function Hero() {
                   src={Instructor1}
                   className="absolute inset-0 -z-10 w-full h-full object-cover"
                   priority
+                  quality={75}
                 />
                 <div className="absolute inset-0 -z-10 bg-gradient-to-t from-gray-900 via-gray-900/40" />
                 <div className="absolute inset-0 -z-10 rounded-2xl ring-1 ring-inset ring-gray-900/10" />
@@ -72,6 +75,7 @@ export default async function Hero() {
                   src={Instructor1}
                   className="absolute inset-0 -z-10 w-full h-full object-cover"
                   layout="fill"
+                  quality={75}
                 />
                 <div className="absolute inset-0 -z-10 bg-gradient-to-t from-gray-900 via-gray-900/40" />
                 <div className="absolute inset-0 -z-10 rounded-2xl ring-1 ring-inset ring-gray-900/10" />

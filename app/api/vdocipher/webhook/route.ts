@@ -65,9 +65,9 @@ export async function POST(request: NextRequest) {
             payload: body.payload,
           },
         });
-        console.log(
-          `Updated vdocpherVideo record for video ${videoId} with duration ${duration}`
-        );
+        // console.log(
+        //   `Updated vdocpherVideo record for video ${videoId} with duration ${duration}`
+        // );
       } else {
         console.warn(`No vdocpherVideo record found for video ${videoId}`);
       }

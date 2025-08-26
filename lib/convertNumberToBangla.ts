@@ -30,26 +30,6 @@ export function convertNumberToBangla(input: number | string): string {
   return convertedInteger + convertedDecimal;
 }
 
-// export function convertNumberToBangla(input: number | string): string | null {
-//   const banglaNumeralMap = ["০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯"];
-//   const englishNumeralRegex = /^[0-9]+$/;
-//   const banglaNumeralRegex = /^[০-৯]+$/;
-
-//   const inputStr = input?.toString() || "";
-
-//   if (banglaNumeralRegex.test(inputStr)) {
-//     return inputStr;
-//   }
-
-//   if (englishNumeralRegex.test(inputStr)) {
-//     return inputStr
-//       .split("")
-//       .map((char) => (/[0-9]/.test(char) ? banglaNumeralMap[parseInt(char)] : char))
-//       .join("");
-//   }
-//   return null;
-// }
-
 export function getPlainTextFromHtml(htmlString: string, maxLength = 100) {
   // Check if we're in a browser environment
   if (typeof document === 'undefined') {

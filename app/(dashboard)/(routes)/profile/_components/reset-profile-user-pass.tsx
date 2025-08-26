@@ -87,7 +87,7 @@ export function ResetProfileUserPass() {
   return (
     <div className="bg-white border p-6 rounded-lg mt-8 shadow-md">
       <div className="flex items-start gap-4 justify-between">
-        <h1 className="text-2xl font-bold">Change Password</h1>
+        <h1 className="text-2xl font-bold">পাসওয়ার্ড পরিবর্তন করুন</h1>
       </div>
       <hr className="border-gray-200 my-2" />
 
@@ -103,7 +103,7 @@ export function ResetProfileUserPass() {
                   <Label htmlFor="oldPassword" className="text-right">
                     <RequiredFieldStar
                       className={"text-left mb-1"}
-                      labelText={"Old Password"}
+                      labelText={"পুরোনো পাসওয়ার্ড "}
                     />
                   </Label>
                   <FormControl>
@@ -112,6 +112,7 @@ export function ResetProfileUserPass() {
                       type="password"
                       {...field}
                       className="col-span-3"
+                      aria-label="old password"
                     />
                   </FormControl>
                   <FormMessage />
@@ -128,7 +129,7 @@ export function ResetProfileUserPass() {
                   <Label htmlFor="password" className="text-right">
                     <RequiredFieldStar
                       className={"text-left mb-1"}
-                      labelText={"New Password"}
+                      labelText={"নতুন পাসওয়ার্ড"}
                     />
                   </Label>
                   <FormControl>
@@ -137,6 +138,7 @@ export function ResetProfileUserPass() {
                       type="password"
                       {...field}
                       className="col-span-3"
+                      aria-label="new password"
                     />
                   </FormControl>
                   <FormMessage />
@@ -153,7 +155,7 @@ export function ResetProfileUserPass() {
                   <Label htmlFor="confirmPassword" className="text-right">
                     <RequiredFieldStar
                       className={"text-left mb-1"}
-                      labelText={"Confirm Password"}
+                      labelText={"নতুন পাসওয়ার্ড নিশ্চিত করুন"}
                     />
                   </Label>
                   <FormControl>
@@ -162,6 +164,7 @@ export function ResetProfileUserPass() {
                       type="password"
                       {...field}
                       className="col-span-3"
+                      aria-label="confirm password"
                     />
                   </FormControl>
                   <FormMessage />

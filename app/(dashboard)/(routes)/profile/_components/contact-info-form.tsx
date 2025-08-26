@@ -68,7 +68,7 @@ export const ContactInfoForm = ({
 
   return (
     <div className="bg-white p-6 border rounded-lg shadow-md mt-8">
-      <h1 className="text-2xl font-bold">Contact</h1>
+      <h1 className="text-2xl font-bold">যোগাযোগ</h1>
       <hr className="border-gray-200 mt-3 mb-6" />
       {/* {isLoading ? null : ( // <ProfileFormSkeleton /> */}
       <FormProvider {...contactInfoForm}>
@@ -85,9 +85,9 @@ export const ContactInfoForm = ({
                 name="phoneNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <RequiredFieldStar labelText="Phone Number" />
+                    <RequiredFieldStar labelText="ফোন নম্বর" />
                     <FormControl>
-                      <Input placeholder="Phone Number" {...field} />
+                      <Input placeholder="ফোন নম্বর" {...field} />
                     </FormControl>
                     <FormMessage>
                       {contactInfoErrors.phoneNumber?.message}
@@ -103,9 +103,9 @@ export const ContactInfoForm = ({
                 name="city"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>City</FormLabel>
+                    <FormLabel>শহর</FormLabel>
                     <FormControl>
-                      <Input placeholder="City" {...field} />
+                      <Input placeholder="শহর" {...field} />
                     </FormControl>
                     <FormMessage>{contactInfoErrors.city?.message}</FormMessage>
                   </FormItem>
@@ -123,9 +123,9 @@ export const ContactInfoForm = ({
                 name="state"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>State</FormLabel>
+                    <FormLabel>বিভাগ</FormLabel>
                     <FormControl>
-                      <Input placeholder="State" {...field} />
+                      <Input placeholder="বিভাগ" {...field} />
                     </FormControl>
                     <FormMessage>
                       {contactInfoErrors.state?.message}
@@ -141,9 +141,9 @@ export const ContactInfoForm = ({
                 name="country"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Country</FormLabel>
+                    <FormLabel>দেশ</FormLabel>
                     <FormControl>
-                      <Input placeholder="Country" {...field} />
+                      <Input placeholder="দেশ" {...field} />
                     </FormControl>
                     <FormMessage>
                       {contactInfoErrors.country?.message}
@@ -159,9 +159,9 @@ export const ContactInfoForm = ({
                 name="zipCode"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Zip Code</FormLabel>
+                    <FormLabel>পোস্ট কোড</FormLabel>
                     <FormControl>
-                      <Input placeholder="Zip Code" {...field} />
+                      <Input placeholder="পোস্ট কোড" {...field} />
                     </FormControl>
                     <FormMessage>
                       {contactInfoErrors.zipCode?.message}
@@ -181,9 +181,9 @@ export const ContactInfoForm = ({
                 name="facebook"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Facebook</FormLabel>
+                    <FormLabel>ফেসবুক</FormLabel>
                     <FormControl>
-                      <Input placeholder="profile URL" {...field} />
+                      <Input placeholder="প্রোফাইল লিংক" {...field} />
                     </FormControl>
                     <FormMessage>
                       {contactInfoErrors.facebook?.message}
@@ -199,9 +199,9 @@ export const ContactInfoForm = ({
                 name="linkedin"
                 render={({ field }) => (
                   <FormItem>
-                    <RequiredFieldStar labelText="LinkedIn" />
+                    <RequiredFieldStar labelText="লিঙ্কডইন" />
                     <FormControl>
-                      <Input placeholder="profile URL" {...field} />
+                      <Input placeholder="প্রোফাইল লিংক" {...field} />
                     </FormControl>
                     <FormMessage>
                       {contactInfoErrors.linkedin?.message}
@@ -221,9 +221,9 @@ export const ContactInfoForm = ({
                 name="twitter"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Twitter(X)</FormLabel>
+                    <FormLabel>টুইটার(X)</FormLabel>
                     <FormControl>
-                      <Input placeholder="profile URL" {...field} />
+                      <Input placeholder="প্রোফাইল লিংক" {...field} />
                     </FormControl>
                     <FormDescription>Twitter</FormDescription>
                     <FormMessage>
@@ -240,9 +240,9 @@ export const ContactInfoForm = ({
                 name="youtube"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>YouTube</FormLabel>
+                    <FormLabel>ইউটিউব</FormLabel>
                     <FormControl>
-                      <Input placeholder="Channel URL" {...field} />
+                      <Input placeholder="চ্যানেল লিংক" {...field} />
                     </FormControl>
                     <FormMessage>
                       {contactInfoErrors.youtube?.message}
@@ -262,9 +262,9 @@ export const ContactInfoForm = ({
                 name="website"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Website</FormLabel>
+                    <FormLabel>ওয়েবসাইট</FormLabel>
                     <FormControl>
-                      <Input placeholder="Website URL" {...field} />
+                      <Input placeholder="ওয়েবসাইট লিংক" {...field} />
                     </FormControl>
                     <FormMessage>
                       {contactInfoErrors.website?.message}
@@ -280,9 +280,9 @@ export const ContactInfoForm = ({
                 name="others"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Others</FormLabel>
+                    <FormLabel>অন্যান্য</FormLabel>
                     <FormControl>
-                      <Input placeholder="URL" {...field} />
+                      <Input placeholder="অন্যান্য লিংক" {...field} />
                     </FormControl>
                     <FormMessage>
                       {contactInfoErrors.others?.message}

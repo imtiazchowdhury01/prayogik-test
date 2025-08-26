@@ -82,7 +82,7 @@ export default async function UserDetail({ params }: { params: any }) {
       <div className="w-full">
         <CardContent>
           <p className="text-sm text-gray-700">
-            Profile: {userData?.name}({userData?.email})
+            প্রোফাইল: {userData?.name}({userData?.email})
           </p>
           <UserDetailForm
             initialData={userData}

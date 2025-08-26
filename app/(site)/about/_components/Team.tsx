@@ -14,6 +14,7 @@ const Team = () => {
             width={300}
             height={300}
             className="rounded-lg object-cover w-full h-[200px] sm:h-[250px] lg:h-[300px]"
+            quality={75}
           />
         </div>
         <div className="relative">
@@ -23,6 +24,7 @@ const Team = () => {
             width={300}
             height={300}
             className="rounded-lg object-cover w-full h-[200px] sm:h-[250px] lg:h-[300px]"
+            quality={75}
           />
         </div>
         <div className="relative">
@@ -32,6 +34,7 @@ const Team = () => {
             width={300}
             height={300}
             className="rounded-lg object-cover w-full h-[200px] sm:h-[250px] lg:h-[300px]"
+            quality={75}
           />
         </div>
         <div className="relative">
@@ -41,6 +44,7 @@ const Team = () => {
             width={300}
             height={300}
             className="rounded-lg object-cover w-full h-[200px] sm:h-[250px] lg:h-[300px]"
+            quality={75}
           />
         </div>
       </div>

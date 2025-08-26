@@ -7,6 +7,7 @@ import { ArrowRight, CheckCircle, Search } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import courseCategoryImage from "public/course-proposals/category-section.webp";
 
 const TopicsSection = () => {
   const [activeCategory, setActiveCategory] = useState("digital-marketing");
@@ -170,16 +171,19 @@ const TopicsSection = () => {
         {/* Category Image and Topics */}
         <div className="grid gap-4 sm:gap-6 md:gap-8 mb-8 sm:mb-10 md:mb-12 lg:grid-cols-5">
           {/* Left side - Category Image */}
-          <div className="relative overflow-hidden border-2 shadow-lg rounded-xl lg:col-span-3 order-2 lg:order-1">
+          <div className="relative overflow-hidden rounded-xl lg:col-span-3 order-2 lg:order-1">
             <div className="w-full h-[250px] sm:h-[300px] md:h-[350px] lg:h-[400px] relative">
               <Image
-                src={"/course-proposals/category-section.webp"}
+                src={courseCategoryImage}
                 alt={activeCategory_obj?.name || "Category image"}
                 fill
-                className="object-cover"
+                className="object-cover z-0"
+                placeholder="blur"
+                quality={75}
+                priority
               />
               <div className="absolute left-0 bottom-0 right-0 bg-gradient-to-t from-tertiary-950/70 to-transparent h-[40%]"></div>
-              <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 text-white">
+              <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 text-white z-20">
                 <div className="inline-block mb-2">
                   <span className="font-medium text-sm sm:text-base md:text-lg">
                     {activeCategory_obj?.name}
@@ -218,7 +222,7 @@ const TopicsSection = () => {
                     return (
                       <div
                         key={index}
-                        className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 transition-colors bg-white text-brand border rounded-full cursor-pointer border-brand/20 hover:bg-brand hover:text-white"
+                        className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 transition-colors bg-white text-brand border rounded-full  border-brand/20 hover:bg-brand hover:text-white "
                       >
                         <p>{textLangChecker(topic)}</p>
                       </div>

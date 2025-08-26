@@ -18,11 +18,14 @@ import { SubscriptionCheck } from "./home/SubscriptionCheck";
 import OfferHeader from "./OfferHeader";
 import { clientApi } from "@/lib/utils/openai/client";
 import UserProfileMenus from "@/components/userProfileMenus";
+import { Badge } from "@/components/ui/badge";
 
 const navigation = [
   { name: "কোর্স সমূহ", href: "/courses" },
   { name: "প্রাইম", href: "/prime" },
+  { name: "লাইভ কোর্স", href: "/live" },
   { name: "কোর্স রোডম্যাপ", href: "/course-roadmap" },
+  { name: "শেখাতে চাই", href: "/become-a-teacher" },
   // { name: "টেস্টিমোনিয়াল", href: "/testimonial" },
   // { name: "যোগাযোগ", href: "/contact" },
   // { name: "ব্লগ", href: "/blog" },
@@ -33,66 +36,37 @@ export default function Header() {
   const searchParams = useSearchParams();
   const searchParamValue = searchParams.get("search") || "";
 
-  const [subscription, setsubscription] = useState(null);
+  const [subscription, setSubscription] = useState(null);
 
   useEffect(() => {
     (async () => {
-      const response = await clientApi.getAllSubscriptionPlans();
-
+      const response = await clientApi.getSession();
       if (response.status === 200) {
-        setsubscription(response.body[0] || null);
+        const sub =
+          response.body?.user?.info?.studentProfile?.subscription || null;
+        setSubscription(sub);
       }
     })();
   }, []);
 
+  
   const [searchTerm, setSearchTerm] = useState<string>(
     slugToReadable(searchParamValue)
   );
 
   const path = usePathname();
   const router = useRouter();
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   const { data: session, status } = useSession();
-
-  useEffect(() => {
-    // Only apply search params effect when already on the courses page
-    if (
-      path === "/courses" &&
-      debouncedSearchTerm !== searchParams.get("search")
-    ) {
-      const params = new URLSearchParams(searchParams.toString());
-
-      if (debouncedSearchTerm.length > 0) {
-        const searchSlug = debouncedSearchTerm;
-        params.set("search", searchSlug);
-        params.delete("category");
-      } else {
-        params.delete("search");
-      }
-
-      // Use replace instead of push to avoid adding to navigation history
-      router.replace(`/courses?${params.toString()}`, { scroll: false });
-    }
-  }, [debouncedSearchTerm, router, searchParams, path]);
 
   const searchHandler = (e) => {
     e.preventDefault();
     setMobileMenuOpen(false);
 
     if (searchTerm.trim()) {
-      const searchSlug = searchTerm;
-
-      // If already on courses page, update URL without full navigation
-      if (path === "/courses") {
-        const params = new URLSearchParams(searchParams.toString());
-        params.set("search", searchSlug);
-        params.delete("category");
-        router.replace(`/courses?${params.toString()}`, { scroll: false });
-      } else {
-        // Only do full navigation if not already on courses page
-        router.push(`/courses?search=${searchSlug}`);
-      }
+      const searchQuery = encodeURIComponent(searchTerm.trim());
+      router.push(`/courses/search/${searchQuery}`);
+      setSearchTerm("");
     }
   };
 
@@ -101,8 +75,8 @@ export default function Header() {
       {/* {(path === "/home" || path === "/prayogik-home") && <OfferHeader />} */}
       <header
         className={`${
-          path === "/"
-            ? "fixed bg-black/10 backdrop-blur-xl"
+          path === "/offer"
+            ? "fixed bg-brand backdrop-blur-xl border-b border-[#4AAFA6]"
             : "sticky bg-white"
         } top-0 z-50 w-full shadow-sm  `}
       >
@@ -112,28 +86,43 @@ export default function Header() {
           className="flex items-center justify-between h-[72px] app-container gap-x-6 "
           aria-label="Global"
         >
-          <div className="flex items-center space-x-8">
-            <Link href="/">
+          <div className="flex items-center space-x-12">
+            <Link href="/" className="relative">
+              {/* Main Logo */}
               <Image
                 src={
-                  path === "/" ? "/logo-light.svg" : "/prayogik-nav-logo.svg"
+                  path === "/offer"
+                    ? "/Prayogik-nav-logo-white.svg"
+                    : "/prayogik-nav-logo.svg"
                 }
-                width={152}
-                height={40}
-                className="w-[152px] h-[40px]"
+                width={900}
+                height={900}
+                className="w-[152px] h-[80px]"
                 alt="prayogik logo"
                 priority
               />
+              {/* Beta Tag */}
+              <Image
+                src="/beta.svg"
+                width={50}
+                height={50}
+                quality={75}
+                alt="beta"
+                className="absolute top-[25px] -right-[43px] z-10 w-[42px] h-[20px]"
+                loading="eager"
+              />
             </Link>
+            {/* menu items */}
             <div className="hidden mr-4 xl:flex">
               {navigation.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
                   id={item.href}
+                  prefetch={true}
                   className={`text-base font-medium px-4 py-2 rounded-md leading-6 ${
-                    path === "/"
-                      ? "text-white hover:bg-fontcolor-title"
+                    path === "/offer"
+                      ? "text-white hover:bg-teal-500/25"
                       : "text-fontcolor-title hover:bg-[#F1F5F9]"
                   } transition-all duration-300`}
                 >
@@ -150,12 +139,14 @@ export default function Header() {
             <form
               onSubmit={searchHandler}
               className={`${
-                path === "/" ? "border-greyscale-600" : "border-[#E2E8F0]"
+                path === "/offer"
+                  ? "border-gray-400/85 hidden"
+                  : "border-[#E2E8F0]"
               } border-[1px] rounded-md px-3 w-[280px] py-3 flex items-center space-x-1`}
             >
               <CiSearch
                 className={`${
-                  path === "/" ? "text-white" : "text-slate-600"
+                  path === "/offer" ? "text-white" : "text-slate-600"
                 } text-xl`}
               />
               <input
@@ -164,7 +155,7 @@ export default function Header() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className={`flex-1 p-0 text-sm ${
-                  path === "/"
+                  path === "/offer"
                     ? "placeholder:text-white caret-white text-white"
                     : "text-slate-600"
                 } bg-transparent border-none outline-none focus-visible:ring-0`}
@@ -176,21 +167,21 @@ export default function Header() {
                 <UserProfileMenus
                   session={session}
                   subscription={subscription}
+                  pathName={path}
                 />
               </>
             ) : (
               <>
                 <Link
                   href="/signin"
-                  className="block rounded-md px-5 py-3 transition-all duration-300 hover:bg-greyscale-900 bg-[#1B2537]/40 text-white  shadow-sm font-medium text-sm"
+                  // className="block rounded-md px-5 py-3 transition-all duration-300 font-medium text-sm"
+                  className={` ${
+                    path === "/offer"
+                      ? " bg-white "
+                      : "bg-brand hover:bg-teal-700 text-white"
+                  }  block rounded-md px-5 py-3 transition-all duration-300   shadow-sm font-medium text-sm`}
                 >
                   লগইন
-                </Link>
-                <Link
-                  href="/signup"
-                  className="block px-5 py-3 text-sm font-medium text-white transition-all duration-300 rounded-md shadow-sm bg-primary-brand hover:bg-primary-700"
-                >
-                  সাইন আপ
                 </Link>
               </>
             )}
@@ -199,7 +190,7 @@ export default function Header() {
             <button
               type="button"
               className={`inline-flex items-center justify-center ${
-                path === "/" ? "text-white" : "text-slate"
+                path === "/offer" ? "text-white" : "text-slate"
               } rounded-md`}
               onClick={() => setMobileMenuOpen(true)}
             >
@@ -291,12 +282,12 @@ export default function Header() {
                       >
                         লগইন
                       </Link>
-                      <Link
+                      {/* <Link
                         href="/signup"
                         className="block px-5 py-3 text-sm font-medium text-white transition-all duration-300 rounded-md shadow-sm bg-primary-brand hover:bg-primary-700"
                       >
                         সাইন আপ
-                      </Link>
+                      </Link> */}
                     </div>
                   )}
                 </div>

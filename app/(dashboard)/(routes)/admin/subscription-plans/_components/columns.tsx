@@ -55,14 +55,59 @@ export const columns = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Type" />
     ),
-    cell: ({ row }) => <div className="">{row.getValue("type")}</div>,
+    cell: ({ row }) => (
+      <div className="">
+        {row.original.isTrial ? "TRIAL" : row.original.type}
+      </div>
+    ),
   },
+  {
+    accessorKey: "duration",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Duration" />
+    ),
+    cell: ({ row }) => (
+      <div className="">
+        {row.original.type === "MONTHLY"
+          ? `${row.original.durationInMonths} ${
+              row.original.durationInMonths > 1 ? "Months" : "Month"
+            }`
+          : row.original.isTrial
+          ? `${row.original.trialDurationInDays} ${
+              row.original.trialDurationInDays > 1 ? "Days" : "Day"
+            }`
+          : `${row.original.durationInYears} ${
+              row.original.durationInYears > 1 ? "Years" : "Year"
+            }`}
+      </div>
+    ),
+  },
+  // {
+  //   accessorKey: "trial",
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader column={column} title="Trial" />
+  //   ),
+  //   cell: ({ row }) => (
+  //     <div>
+  //       {row.original.isTrial
+  //         ? `${row.original.trialDurationInDays} Days`
+  //         : "No Trial"}
+  //     </div>
+  //   ),
+  // },
   {
     accessorKey: "regularPrice",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Regular Price" />
     ),
     cell: ({ row }) => <div className="">{row.getValue("regularPrice")}</div>,
+  },
+  {
+    accessorKey: "offerPrice",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Offer Price" />
+    ),
+    cell: ({ row }) => <div className="">{row.getValue("offerPrice") ?? 0}</div>,
   },
   {
     accessorKey: "subscriptionDiscount_discountPercentage",

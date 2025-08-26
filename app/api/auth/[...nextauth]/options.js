@@ -38,8 +38,14 @@ export const authOptions = {
               throw new Error("Email is not verified.");
             }
             return true;
+          } else {
+            // Temporarily disable new user creation for Google sign-in
+            // Redirect back to sign-in page with error message
+           return "/signin?error=অ্যাকাউন্ট%20পাওয়া%20যায়নি.";
           }
 
+          // COMMENTED OUT: New user creation code temporarily disabled
+          /*
           let username = generateUsername(name);
 
           let usernameExists = await db.user.findUnique({
@@ -69,6 +75,7 @@ export const authOptions = {
           });
 
           return newUser;
+          */
         }
       } catch (error) {
         console.error("An error occurred:", error);
@@ -207,7 +214,7 @@ export const authOptions = {
           }
 
           if (!user.emailVerified) {
-            throw new Error("ইমেল ভেরিফাইড হয়নি");
+            throw new Error("ইমেল ভেরিফাইড হয়নি");
           }
 
           // Account suspanded
@@ -223,7 +230,7 @@ export const authOptions = {
             user.password = null;
             return user;
           } else {
-            throw new Error("ইমেইল অথবা পাসওয়ার্ড ভুল হয়েছে।");
+            throw new Error("ইমেইল অথবা পাসওয়ার্ড ভুল হয়েছে।");
           }
         } else {
           throw new Error("Invalid credentials.");

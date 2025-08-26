@@ -168,7 +168,7 @@ export async function PUT(
       }
       // Case 2: Has subscription IDs
       else {
-        console.log("FROM ELSE - Has subscription IDs");
+        // console.log("FROM ELSE - Has subscription IDs");
         const subscriptionPlanId = subscriptionListIds[0];
 
         const subscriptionPlan = await db.subscriptionPlan.findUnique({
@@ -183,13 +183,48 @@ export async function PUT(
         }
 
         // Calculate expiration
-        const currentDate = new Date();
-        let expiresAt: Date = currentDate;
+        const now = new Date();
+        let expiresAt = new Date(now);
+        let trialEndsAt = null;
+        let trialStartedAt = null;
 
+        // UPGRADE LOGIC: Add remaining time from current subscription
+        if (
+          existingSubscription &&
+          existingSubscription.status === "ACTIVE" &&
+          new Date(existingSubscription.expiresAt) > now
+        ) {
+          // Calculate remaining time from current subscription
+          const remainingTime =
+            new Date(existingSubscription.expiresAt).getTime() - now.getTime();
+          const remainingDays = Math.ceil(
+            remainingTime / (1000 * 60 * 60 * 24)
+          );
+
+          // Start from current expiry date instead of now
+          expiresAt = new Date(existingSubscription.expiresAt);
+
+          console.log(
+            `Upgrade detected: Adding ${remainingDays} days from current subscription`
+          );
+        }
+
+        // Add new subscription duration
         if (subscriptionPlan.type === "MONTHLY") {
-          expiresAt = addMonths(currentDate, 1);
+          expiresAt.setMonth(
+            expiresAt.getMonth() + (subscriptionPlan.durationInMonths || 1)
+          );
         } else if (subscriptionPlan.type === "YEARLY") {
-          expiresAt = addYears(currentDate, 1);
+          expiresAt.setFullYear(
+            expiresAt.getFullYear() + (subscriptionPlan.durationInYears || 1)
+          );
+          console.log("FROM ELSE IF:", subscriptionPlan.type, expiresAt);
+        } else {
+          trialStartedAt = new Date();
+          trialEndsAt = new Date();
+          trialEndsAt.setDate(
+            trialEndsAt.getDate() + (subscriptionPlan.trialDurationInDays || 30)
+          );
         }
 
         // Update existing or create new
@@ -198,8 +233,13 @@ export async function PUT(
             where: { id: existingSubscription.id },
             data: {
               subscriptionPlanId,
-              expiresAt,
               status: "ACTIVE",
+              expiresAt,
+              isTrial: existingSubscription.isTrial
+                ? true
+                : subscriptionPlan?.isTrial,
+              trialStartedAt,
+              trialEndsAt,
             },
           });
         } else {
@@ -209,6 +249,9 @@ export async function PUT(
               subscriptionPlanId,
               expiresAt,
               status: "ACTIVE",
+              isTrial: subscriptionPlan?.isTrial,
+              trialStartedAt,
+              trialEndsAt,
             },
           });
         }
@@ -308,7 +351,7 @@ export async function DELETE(
   req: Request,
   { params }: { params: { userId: string } }
 ) {
-  console.log("DELETE API HITTED");
+  // console.log("DELETE API HITTED");
   const { userId } = params;
 
   try {

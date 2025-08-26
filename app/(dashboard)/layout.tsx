@@ -38,7 +38,7 @@ export default function DashboardLayout({
   // Safely handle session and avoid accessing undefined session properties
   if (status === "authenticated" && session) {
     return (
-      <div className="h-full">
+      <div className="min-h-screen bg-gray-50">
         <div className="h-[80px] md:pl-56 fixed inset-y-0 w-full z-50">
           <Navbar session={session} status={status} />
         </div>
@@ -46,13 +46,13 @@ export default function DashboardLayout({
           <Sidebar />
         </div>
         <main className="md:pl-56 pt-[80px] h-full">
-          <div className="w-full p-4 md:p-12">
-            {session?.user?.info?.teacherProfile?.teacherStatus ===
+          <div className="w-full h-full  p-4 md:px-8">
+            {/* {session?.user?.info?.teacherProfile?.teacherStatus ===
               "PENDING" && (
               <div className="pb-6">
                 <Banner label="Your teaching application is pending for admin approval!" />
               </div>
-            )}
+            )} */}
             <NextTopLoader showSpinner={false} color="#0F9886" />
             <>{children}</>
           </div>

@@ -39,7 +39,7 @@ export const Actions = ({
   const router = useRouter();
   const confetti = useConfettiStore();
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const onClick = async () => {
     try {
       setIsLoading(true);
@@ -73,7 +73,6 @@ export const Actions = ({
       } else {
         router.replace(`/teacher/courses`);
       }
-      router.refresh();
     } catch (error) {
       if (error.response && error.response.status === 400) {
         toast.error(error.response.data); // Show the error message returned from the API

@@ -12,6 +12,7 @@ const TeacherExperience = () => {
             height={0}
             sizes="100vw"
             className="object-cover w-full h-auto max-h-[400px] rounded-t-xl rounded-b-none md:rounded-xl md:rounded-br-none md:max-h-max"
+            quality={85}
           />
         </div>
         <div className="w-full  md:w-1/2  lg:w-[60%] xl:w-[65%] px-6 lg:px-16 py-10 xl:py-20 bg-primary-700 self-center md:self-end rounded-b-2xl md:rounded-bl-none md:rounded-r-2xl space-y-5">

@@ -65,6 +65,7 @@ const convertData = (data) => {
       ? item?.enrolledStudents.length
       : 0,
     isPublished: item?.isPublished,
+    courseMode: item?.courseMode,
     isUnderSubscription: item.isUnderSubscription,
     author: item?.teacherProfile?.user?.name || "N/A",
     authorId: item?.teacherProfile?.user?.id || "N/A",

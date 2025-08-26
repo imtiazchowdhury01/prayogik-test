@@ -1,6 +1,5 @@
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
@@ -10,15 +9,27 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: "Forbidden" }, { status: 403 });
   }
 
-  const { name, type, regularPrice, subscriptionDiscountId } = await req.json();
+  const body = await req.json();
+
+  const trialPlan = await db.subscriptionPlan.findFirst({
+    where: {
+      isTrial: true,
+    },
+  });
 
   try {
+    if (body.isTrial && trialPlan) {
+      // Trial subscription plan exists
+      return NextResponse.json(
+        {
+          message: "A trial subscription plan is already available.",
+        },
+        { status: 409 }
+      );
+    }
     const subscription = await db.subscriptionPlan.create({
       data: {
-        name,
-        type,
-        regularPrice,
-        subscriptionDiscountId,
+        ...body,
       },
     });
 

@@ -17,6 +17,7 @@ const fetchCategories = cache(async (): Promise<Category[]> => {
       next: {
         tags: ["categories"],
       },
+      cache: "force-cache",
     });
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);

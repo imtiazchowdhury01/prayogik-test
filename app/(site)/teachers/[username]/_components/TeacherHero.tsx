@@ -6,10 +6,10 @@ import { BadgeCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { textLangChecker } from "@/lib/utils/textLangChecker";
 import { fetchCategories } from "@/services";
+import { getCategoriesDBCall } from "@/lib/data-access-layer/categories";
 
-export async function TeacherHero({ teacher }) {
-  const categories = await fetchCategories();
-
+export async function TeacherHero({ teacher, blurDataURL }) {
+  const categories = await getCategoriesDBCall();
   return (
     <section
       className="relative w-full px-5 py-16 overflow-hidden"
@@ -33,6 +33,10 @@ export async function TeacherHero({ teacher }) {
             height={0}
             sizes="300px"
             className="w-[250px] h-[250px] rounded-lg object-cover"
+            priority
+            quality={75}
+            placeholder={blurDataURL ? "blur" : "empty"}
+            blurDataURL={blurDataURL || undefined}
           />
           <div className="flex flex-col items-start justify-center flex-1">
             <div className="self-stretch w-full text-white">

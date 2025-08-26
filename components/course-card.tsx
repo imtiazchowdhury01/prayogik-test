@@ -34,6 +34,7 @@ export const CourseCard = ({
             className="object-cover"
             alt={title}
             src={imageUrl}
+            quality={75}
             priority
           />
         </div>

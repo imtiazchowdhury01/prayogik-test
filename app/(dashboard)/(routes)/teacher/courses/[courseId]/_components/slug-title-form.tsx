@@ -1,12 +1,10 @@
 "use client";
 
 import * as z from "zod";
-import axios from "axios";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
-import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import {
   Form,
@@ -17,8 +15,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader } from "lucide-react"; // Import Loader
-import { revalidatePage } from "@/actions/revalidatePage";
+import { Loader } from "lucide-react";
 import { updateCourse } from "@/lib/course/updateCourse";
 
 interface SlugTitleFormProps {
@@ -37,7 +34,8 @@ const formSchema = z.object({
     })
     .regex(/^[a-zA-Z0-9-]+$/, {
       message: "Slug can only contain English letters, numbers, and hyphens",
-    }),
+    })
+    .transform((val) => val.toLowerCase()), // Auto convert to lowercase
 });
 
 export const SlugTitleForm = ({
@@ -99,6 +97,11 @@ export const SlugTitleForm = ({
                       disabled={isSubmitting}
                       placeholder="e.g. 'advanced-web-dev'"
                       {...field}
+                      onChange={(e) => {
+                        // Convert to lowercase as user types
+                        const lowercaseValue = e.target.value.toLowerCase();
+                        field.onChange(lowercaseValue);
+                      }}
                     />
                   </FormControl>
                   <FormMessage />

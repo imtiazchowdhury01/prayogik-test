@@ -125,7 +125,7 @@ export default function ComingSoon() {
 
           {/* Description */}
           <p
-            className="text-lg md:text-xl leading-relaxed max-w-lg mx-auto"
+            className="text-md sm:text-lg md:text-xl leading-relaxed max-w-lg mx-auto"
             style={{ color: "#ccfbf7" }}
           >
             অনলাইন শিক্ষার নতুন অভিজ্ঞতা নিয়ে আমরা ফিরে আসছি। আরও উন্নত কোর্স
@@ -155,7 +155,7 @@ export default function ComingSoon() {
                     control={form.control}
                     name="email"
                     render={({ field }) => (
-                      <FormItem className="min-w-[250px]">
+                      <FormItem className="md:min-w-[250px] min-w-full">
                         <FormControl>
                           <Input
                             type="email"
@@ -201,8 +201,8 @@ export default function ComingSoon() {
       </Card>
 
       {/* Footer */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-        <p className="text-sm" style={{ color: "#0d9488" }}>
+      <div className="fixed bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 w-max z-50">
+        <p className="text-sm text-[#0d9488]">
           © ২০২৫ প্রায়োগিক। সকল অধিকার সংরক্ষিত।
         </p>
       </div>

@@ -134,7 +134,7 @@ export async function PUT(
     const { status, subscriptionExpiresAt, subscriptionCreatedAt } = body;
 
     // Validate that subscription exists with more detailed logging
-    console.log(`Attempting to find subscription with ID: ${id}`);
+    // console.log(`Attempting to find subscription with ID: ${id}`);
     const existingSubscription = await db.subscription.findUnique({
       where: { id },
       include: {
@@ -144,14 +144,14 @@ export async function PUT(
     });
 
     if (!existingSubscription) {
-      console.log(`Subscription not found for ID: ${id}`);
+      // console.log(`Subscription not found for ID: ${id}`);
       return NextResponse.json(
         { message: "Subscription not found" },
         { status: 404 }
       );
     }
 
-    console.log(`Found subscription:`, existingSubscription);
+    // console.log(`Found subscription:`, existingSubscription);
 
     // Prepare update data
     const updateData: { [key: string]: any } = {};
@@ -175,7 +175,7 @@ export async function PUT(
     // Always update the updatedAt field
     updateData.updatedAt = new Date();
 
-    console.log(`Update data:`, updateData);
+    // console.log(`Update data:`, updateData);
 
     // Update the subscription with transaction for safety
     const updatedSubscription = await db.$transaction(async (prisma) => {

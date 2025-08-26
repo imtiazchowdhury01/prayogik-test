@@ -31,6 +31,10 @@ import { Actions } from "../../../teacher/courses/[courseId]/_components/actions
 import { CoAuthorForm } from "../../../teacher/courses/[courseId]/_components/co-author-form";
 import { AuthorForm } from "./_components/author-form";
 import { useTeacherProfile } from "@/hooks/useTeacherProfile";
+import { CourseTypeForm } from "../../../teacher/courses/[courseId]/_components/course-type-form";
+import { CourseModeForm } from "../../../teacher/courses/[courseId]/_components/course-mode-form";
+import { LiveLinkForm } from "../../../teacher/courses/[courseId]/_components/live-course-details";
+import { CourseMode } from "@prisma/client";
 
 async function getCourseById(courseId: string) {
   try {
@@ -107,7 +111,7 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
     course.prices.some((price: any) => price.regularAmount) ||
       course.prices[0]?.isFree,
     course.categoryId,
-    course.lessons.some((chapter: any) => chapter.isPublished),
+    // course.lessons.some((chapter: any) => chapter.isPublished),
   ];
 
   // Calculate course setup progress
@@ -202,6 +206,15 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
               />
             </div>
 
+            {/* Course Mode Form */}
+            <div>
+              <div className="flex items-center gap-x-2">
+                <IconBadge icon={CircleDollarSign} />
+                <h2 className="text-xl">Course Mode</h2>
+              </div>
+              <CourseModeForm initialData={course} courseId={course.id} />
+            </div>
+
             <div>
               <div className="flex items-center gap-x-2">
                 <IconBadge icon={ListChecks} />
@@ -213,6 +226,16 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
                 admin={true}
               />
             </div>
+
+            {/* Course Type Form */}
+            <div>
+              <div className="flex items-center gap-x-2">
+                <IconBadge icon={CircleDollarSign} />
+                <h2 className="text-xl">Course Type</h2>
+              </div>
+              <CourseTypeForm initialData={course} courseId={course.id} />
+            </div>
+
             <div>
               <div className="flex items-center gap-x-2">
                 <IconBadge icon={CircleDollarSign} />
@@ -220,15 +243,21 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
               </div>
               <MultiplePriceForm initialData={course} courseId={course.id} />
             </div>
-            {!course?.prices[0]?.isFree && (
-              <div>
-                <div className="flex items-center gap-x-2">
-                  <IconBadge icon={CircleDollarSign} />
-                  <h2 className="text-xl">Subscription</h2>
+
+            {course?.courseMode === CourseMode.RECORDED &&
+              !course?.prices[0]?.isFree && (
+                <div>
+                  <div className="flex items-center gap-x-2">
+                    <IconBadge icon={CircleDollarSign} />
+                    <h2 className="text-xl">Subscription</h2>
+                  </div>
+                  <SubscriptionStatus
+                    initialData={course}
+                    courseId={course.id}
+                  />
                 </div>
-                <SubscriptionStatus initialData={course} courseId={course.id} />
-              </div>
-            )}
+              )}
+
             <div>
               <div className="flex items-center gap-x-2">
                 <IconBadge icon={File} />

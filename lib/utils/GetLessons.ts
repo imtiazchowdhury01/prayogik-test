@@ -21,14 +21,6 @@ export const getLesson = async (
       };
     }
 
-    // Add request ID for debugging
-    const requestId = Math.random().toString(36).substr(2, 9);
-    console.log(`[${requestId}] Fetching lesson:`, {
-      courseSlug,
-      lessonSlug,
-      userId,
-    });
-
     const response = await fetch(url, {
       method: "POST",
       headers: {
@@ -51,11 +43,6 @@ export const getLesson = async (
     }
 
     const data = await response.json();
-
-    console.log(`[${requestId}] Lesson fetched successfully:`, {
-      lessonSlug: data.lesson?.slug,
-      courseSlug: data.course?.slug,
-    });
 
     return {
       error: false,

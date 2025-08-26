@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 
 export async function PUT(req, { params }) {
   const { id } = params; // Extracting the subscription ID from the request parameters
-  const { name, type, regularPrice, subscriptionDiscountId } = await req.json(); // Extracting the request body
+  const body = await req.json(); // Extracting the request body
 
   try {
     const session = await getServerUserSession();
@@ -14,14 +14,24 @@ export async function PUT(req, { params }) {
     if (!session && !session.isAdmin) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
-
+    const trialPlan = await db.subscriptionPlan.findFirst({
+      where: {
+        isTrial: true,
+      },
+    });
+    if (body.isTrial && trialPlan) {
+      // Trial subscription plan exists
+      return NextResponse.json(
+        {
+          message: "A trial subscription plan is already available.",
+        },
+        { status: 409 }
+      );
+    }
     const subscription = await db.subscriptionPlan.update({
       where: { id: id },
       data: {
-        name,
-        type,
-        regularPrice,
-        subscriptionDiscountId,
+        ...body, // Spread the body to update the subscription with the provided data
       },
     });
 

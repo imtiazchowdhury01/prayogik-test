@@ -1,25 +1,24 @@
 //@ts-nocheck
 "use client";
-
 import { Button } from "@/components/ui/button";
 import { useRef, useState } from "react";
 import SuccessStorySlider from "./SuccessStorySlider";
-
 const SuccessStoryClient = ({ testimonials }) => {
   const swiperRef = useRef(null);
   const [isBeginning, setIsBeginning] = useState(true);
   const [isEnd, setIsEnd] = useState(false);
-
   return (
     <>
       {/* section tile and navigations */}
-      <div className="mb-8 flex justify-between items-center">
+      <div className="mb-8 flex justify-between items-start">
         <div>
-          <h4 className="font-bold text-left text-2xl sm:text-4xl md:text-[40px]">
-            স্টুডেন্টদের সাফল্যের কথা
-          </h4>
+          <h2 className="font-bold text-left text-2xl sm:text-4xl md:text-[40px]">
+            লার্নারদের মন্তব্য
+          </h2>
           <p className="mt-2 md:mt-4 md:my-4 text-[14px] sm:text-base text-fontcolor-subtitle text-left">
-            সাধারণ থেকে অসাধারণ হয়ে ওঠার এক অভিনব সফলতার গল্প।
+            পূর্ববর্তী শিক্ষার্থীদের আমাদের কোর্স সম্পর্কে দেয়া অভিজ্ঞতা থেকে
+            জেনে নিন, তারা কীভাবে শিখে উপকৃত হয়েছেন এবং ক্যারিয়ারে নতুন সুযোগ
+            তৈরি করেছেন।
           </p>
         </div>
         {/* Navigation Buttons */}
@@ -27,6 +26,7 @@ const SuccessStoryClient = ({ testimonials }) => {
           <Button
             variant="default"
             size="icon"
+            aria-label="Previous Slide"
             disabled={isBeginning}
             className={`sm:h-11 sm:w-11 w-8 h-8 bg-zinc-200 rounded border-0 hover:bg-zinc-300 transition-all duration-300 ${
               isBeginning ? "cursor-not-allowed opacity-50" : ""
@@ -61,6 +61,7 @@ const SuccessStoryClient = ({ testimonials }) => {
           <Button
             variant="default"
             size="icon"
+            aria-label="Next Slide"
             disabled={isEnd}
             className={`sm:h-11 sm:w-11 w-8 h-8 border-0 rounded bg-zinc-300 hover:bg-zinc-300 transition-all duration-300 ${
               isEnd ? "cursor-not-allowed opacity-50" : ""
@@ -94,7 +95,6 @@ const SuccessStoryClient = ({ testimonials }) => {
           </Button>
         </div>
       </div>
-
       {/* Testimonials Slider */}
       <SuccessStorySlider
         testimonials={testimonials}
@@ -105,5 +105,4 @@ const SuccessStoryClient = ({ testimonials }) => {
     </>
   );
 };
-
 export default SuccessStoryClient;

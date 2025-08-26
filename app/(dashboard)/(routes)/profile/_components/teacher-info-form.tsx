@@ -182,6 +182,11 @@ export const TeacherInfoForm = ({
                         >
                           <div className="flex gap-4 items-center">
                             {Object.keys(TeacherExpertiseLevel).map((level) => {
+                              const banglaLabels = {
+                                ENTRY_LEVEL: "নতুন",
+                                MID_LEVEL: "মধ্যম",
+                                EXPERT: "বিশেষজ্ঞ",
+                              };
                               return (
                                 <FormItem
                                   key={level}
@@ -190,16 +195,17 @@ export const TeacherInfoForm = ({
                                   <FormControl>
                                     <RadioGroupItem
                                       value={level}
-                                      label={level}
+                                      label={banglaLabels[level] || level}
                                     />
                                   </FormControl>
                                   <FormLabel className="font-normal text-sm">
-                                    {String(level?.split("_")[0])
-                                      .charAt(0)
-                                      .toUpperCase() +
+                                    {banglaLabels[level] ||
                                       String(level?.split("_")[0])
-                                        .slice(1)
-                                        .toLowerCase()}
+                                        .charAt(0)
+                                        .toUpperCase() +
+                                        String(level?.split("_")[0])
+                                          .slice(1)
+                                          .toLowerCase()}
                                   </FormLabel>
                                 </FormItem>
                               );

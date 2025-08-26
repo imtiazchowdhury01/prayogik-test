@@ -1,28 +1,37 @@
-import { useState } from "react";
+import React from "react";
+import { useFieldArray, Control } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import toast from "react-hot-toast";
-import * as React from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Plus, X, BookOpen } from "lucide-react";
+import RequiredFieldStar from "@/components/common/requiredFieldStar";
 
-interface EducationsInputProps {
-  initialEducations: string[]; // Array of education strings (degree - major)
-  onUpdateEducations: (updatedEducations: string[]) => void; // Callback to update educations array
+interface EducationFormData {
+  education: {
+    degree: string;
+    major: string;
+    passingYear: string;
+  }[];
 }
 
-// Enhanced Degrees (including Bangladesh-specific degrees)
+interface EducationFormProps {
+  control: Control<EducationFormData>;
+}
+
 const degrees = [
   { value: "PSC", label: "PSC - Primary School Certificate" },
   {
@@ -106,7 +115,6 @@ const majors = [
       { value: "Sociology", label: "Sociology" },
       { value: "Political Science", label: "Political Science" },
       { value: "Philosophy", label: "Philosophy" },
-      { value: "Islamic Studies", label: "Islamic Studies" },
       { value: "Fine Arts", label: "Fine Arts" },
     ],
   },
@@ -163,7 +171,6 @@ const majors = [
   {
     label: "Social Sciences",
     options: [
-      { value: "Economics", label: "Economics" },
       { value: "Psychology", label: "Psychology" },
       { value: "Anthropology", label: "Anthropology" },
       { value: "Public Administration", label: "Public Administration" },
@@ -195,183 +202,178 @@ const majors = [
   },
 ];
 
-const EducationsInput = ({
-  initialEducations,
-  onUpdateEducations,
-}: EducationsInputProps) => {
-  const [degree, setDegree] = useState<string>("");
-  const [major, setMajor] = useState<string>("");
-  const [educations, setEducations] = useState<string[]>(initialEducations);
+const EducationForm: React.FC<EducationFormProps> = ({ control }) => {
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "education",
+  });
 
+  // Add initial education row if none exists
   React.useEffect(() => {
-    if (initialEducations.length > 0) {
-      setEducations(initialEducations);
+    if (fields.length === 0) {
+      append({
+        degree: "",
+        major: "",
+        passingYear: "",
+      });
     }
-  }, [initialEducations]);
+  }, []);
 
-  // Handle Add button
-  const handleAddEducation = () => {
-    if (degree) {
-      // If no major is selected, use an empty string for major
-      const newEducation = major ? `${degree} - ${major}` : `${degree}`; // Use "N/A" if no major is selected
-      const updatedEducations = [...educations, newEducation];
-      setEducations(updatedEducations);
-      onUpdateEducations(updatedEducations); // Return updated list to the parent
-      setDegree(""); // Reset degree input
-      setMajor(""); // Reset major input
-    } else {
-      toast.error("Please select a degree");
-    }
+  const addEducation = () => {
+    append({
+      degree: "",
+      major: "",
+      passingYear: "",
+    });
   };
 
-  // Remove education by index
-  const removeEducation = (index: number) => {
-    const updatedEducations = educations.filter((_, i) => i !== index);
-    setEducations(updatedEducations);
-    onUpdateEducations(updatedEducations); // Return updated list to the parent
-  };
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 50 }, (_, i) => currentYear - i);
 
   return (
-    <div className="space-y-4">
-      <div className="flex gap-4 flex-wrap">
-        {/* Degree Combobox */}
-        <div className="flex-grow">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="w-full justify-between">
-                {degree
-                  ? degrees.find((d) => d.value === degree)?.label
-                  : "Select Degree"}
-                <ChevronsUpDown className="opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-full">
-              <Command>
-                <CommandInput placeholder="Search degree..." className="h-9" />
-                <CommandList>
-                  <CommandEmpty>No degree found.</CommandEmpty>
-                  <CommandGroup>
-                    {degrees
-                      .filter(
-                        (d) => !educations.some((e) => e.startsWith(d.value))
-                      )
-                      .map((degreeOption) => (
-                        <CommandItem
-                          key={degreeOption.value}
-                          value={degreeOption.value}
-                          onSelect={(currentValue) => {
-                            setDegree(
-                              currentValue === degree ? "" : currentValue
-                            );
-                          }}
-                        >
-                          {degreeOption.label}
-                          <Check
-                            className={`ml-auto ${
-                              degree === degreeOption.value
-                                ? "opacity-100"
-                                : "opacity-0"
-                            }`}
-                          />
-                        </CommandItem>
-                      ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
-        </div>
-
-        {/* Major Combobox */}
-        <div className="flex-grow">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="w-full justify-between">
-                {major
-                  ? majors
-                      .flatMap((group) => group.options)
-                      .find((m) => m.value === major)?.label
-                  : "Select Major"}
-                <ChevronsUpDown className="opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-full">
-              <Command>
-                <CommandInput placeholder="Search major..." className="h-9" />
-                <CommandList>
-                  <CommandEmpty>No major found.</CommandEmpty>
-                  {majors.map((majorGroup) => (
-                    <CommandGroup key={majorGroup.label}>
-                      <div className="font-semibold">{majorGroup.label}</div>
-                      {majorGroup.options.map((majorOption) => (
-                        <CommandItem
-                          key={majorOption.value}
-                          value={majorOption.value}
-                          onSelect={(currentValue) => {
-                            setMajor(
-                              currentValue === major ? "" : currentValue
-                            );
-                          }}
-                        >
-                          {majorOption.label}
-                          <Check
-                            className={`ml-auto ${
-                              major === majorOption.value
-                                ? "opacity-100"
-                                : "opacity-0"
-                            }`}
-                          />
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  ))}
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
-        </div>
-
-        {/* Add Button */}
-        <div className="flex items-center justify-center">
-          <Button
-            variant={!degree ? "outline" : "default"}
-            disabled={!degree}
-            type="button"
-            onClick={handleAddEducation}
-          >
-            Add
-          </Button>
-        </div>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <RequiredFieldStar
+          labelText={"শিক্ষাগত যোগ্যতা"}
+          className={"text-base font-medium"}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={addEducation}
+          className="flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          ডিগ্রি যোগ করুন
+        </Button>
       </div>
 
-      {/* Display added educations */}
-      <div className="flex gap-2 flex-wrap items-start">
-        {educations.map((education, index) => (
+      <div className="space-y-4">
+        {fields.map((field, index) => (
           <div
-            key={index}
-            className="flex items-center gap-2 bg-gray-200 px-2 py-1 rounded text-sm"
+            key={field.id}
+            className="p-4 border rounded-lg bg-gray-50/50 space-y-4"
           >
-            <span>{education}</span>
-            <button
-              type="button"
-              onClick={() => removeEducation(index)}
-              className="text-red-500 hover:text-red-700"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-blue-600" />
+                <span className="font-medium text-sm">ডিগ্রি {index + 1}</span>
+              </div>
+              {fields.length > 1 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => remove(index)}
+                  className="text-red-500 hover:text-red-700 h-8 w-8 p-0"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Degree Field */}
+              <FormField
+                control={control}
+                name={`education.${index}.degree`}
+                render={({ field }) => (
+                  <FormItem>
+                    <RequiredFieldStar
+                      labelText={"ডিগ্রির ধরন"}
+                      className={"text-base font-medium"}
+                    />
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="ডিগ্রি নির্বাচন করুন" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {degrees.map((degree) => (
+                          <SelectItem key={degree.value} value={degree.value}>
+                            {degree.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Major Field */}
+              <FormField
+                control={control}
+                name={`education.${index}.major`}
+                render={({ field }) => (
+                  <FormItem>
+                    <RequiredFieldStar
+                      labelText={"বিষয়"}
+                      className={"text-base font-medium"}
+                    />
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="বিষয় নির্বাচন করুন" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="max-h-[300px]">
+                        {majors.map((group) => (
+                          <div key={group.label}>
+                            <div className="px-2 py-1.5 text-sm font-semibold text-gray-600">
+                              {group.label}
+                            </div>
+                            {group.options.map((major) => (
+                              <SelectItem key={major.value} value={major.value}>
+                                {major.label}
+                              </SelectItem>
+                            ))}
+                          </div>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Passing Year Field */}
+              <FormField
+                control={control}
+                name={`education.${index}.passingYear`}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>পাশের সাল</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="সাল নির্বাচন করুন" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="max-h-[200px]">
+                        {years.map((year) => (
+                          <SelectItem key={year} value={year.toString()}>
+                            {year}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
         ))}
       </div>
@@ -379,4 +381,4 @@ const EducationsInput = ({
   );
 };
 
-export default EducationsInput;
+export default EducationForm;

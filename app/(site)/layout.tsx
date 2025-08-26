@@ -1,6 +1,8 @@
+import ThriveDesk from "@/components/thrivedesk";
 import type { Metadata } from "next";
-import Header from "./_components/Header";
 import Footer from "./_components/Footer";
+import Header from "./_components/Header";
+import ThirdPartyScripts from "@/components/ThirdPartyScripts";
 
 export const metadata: Metadata = {
   title: "ডিজিটাল মার্কেটিং বিশেষজ্ঞ তৈরি কোর্স | অনলাইন শিক্ষা  | প্রায়োগিক",
@@ -17,7 +19,9 @@ export default function SiteLayout({
     <div>
       <Header />
       <div className="bg-white">{children}</div>
+      <ThriveDesk />
       <Footer />
+      <ThirdPartyScripts />
     </div>
   );
 }

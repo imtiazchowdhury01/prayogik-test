@@ -150,7 +150,7 @@ export async function GET(req: Request) {
     // Fetch paginated courses
     const courses = await db.course.findMany({
       where: whereClause,
-      orderBy: { createdAt: sort },
+      orderBy: { updatedAt: sort },
       skip,
       take: limit,
       select: {
@@ -160,6 +160,10 @@ export async function GET(req: Request) {
         description: true,
         totalDuration: true,
         isUnderSubscription: true,
+        courseMode: true,
+        courseType: true,
+        courseLiveLinkScheduledAt: true,
+        courseLiveLink: true,
         lessons: {
           where: {
             isFree: true,

@@ -46,8 +46,7 @@ import {
   courseRoadmapSchema,
 } from "./types";
 import { initContract } from "@ts-rest/core";
-import { cookies } from "next/headers";
-import { BkashManualPaymentType } from "@prisma/client";
+import { BkashManualPaymentType, PurchaseType } from "@prisma/client";
 
 const c = initContract();
 
@@ -1357,7 +1356,37 @@ export const ApiContractV1 = c.router({
       500: z.object({ error: z.string() }),
     },
   },
-
+  // bkash payment post
+  postBkashPayment: {
+    method: "POST",
+    path: "/api/bkash/payment",
+    body: z.object({
+      email: z.string(),
+      subscriptionPlanId: z.string(),
+      courseId: z.string(),
+      amount: z.number(),
+      type: z.enum([
+        PurchaseType.TRIAL,
+        PurchaseType.SUBSCRIPTION,
+        PurchaseType.SINGLE_COURSE,
+        PurchaseType.MEMBERSHIP,
+        PurchaseType.OFFER,
+      ]),
+    }),
+    responses: {
+      200: z.object({
+        msg: z.string(),
+        data: z.object({
+          success: z.boolean(),
+          message: z.string(),
+        }),
+      }),
+      500: z.object({
+        error: z.boolean(),
+        message: z.string(),
+      }),
+    },
+  },
   // get bkash manual payment by id
   getBkashManualSinglePayment: {
     method: "GET",

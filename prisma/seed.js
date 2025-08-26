@@ -1,45 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, SubscriptionType } from "@prisma/client";
 const db = new PrismaClient();
-
-// ------------------ Seed Category ------------------
-// const categoryData = [
-//   { name: "এসইও", slug: "seo" },
-//   { name: "ডিজিটাল মার্কেটিং", slug: "digital-marketing" },
-//   { name: "গ্রাফিক্স ডিজাইন", slug: "graphics-design" },
-//   { name: "ওয়েব ডিজাইন ও ডেভেলপমেন্ট", slug: "web-design-development" },
-//   { name: "কনটেন্ট স্ট্রাটেজি", slug: "content-strategy" },
-//   { name: "UI/UX ডিজাইন", slug: "uiux-design" },
-//   { name: "এন্ড্রোইড ডেভেলপমেন্ট", slug: "android-development" },
-//   { name: "সোশ্যাল মিডিয়া", slug: "social-media" },
-//   { name: "কন্টেন্ট মার্কেটিং", slug: "content-marketing" },
-//   { name: "ই-কমার্স", slug: "ecommerce" },
-//   { name: "বিজনেস", slug: "business" },
-//   { name: "ডাটা অ্যানালিটিক্স", slug: "data-analytics" },
-// ];
-
-// export async function seedCategory() {
-//   console.log("Seeding categories...");
-
-//   try {
-//     // Loop through the data and upsert each category
-//     for (const category of categoryData) {
-//       await db.category.upsert({
-//         where: { slug: category.slug }, // Use `slug` as the unique identifier
-//         update: { name: category.name }, // Update the name if the category exists
-//         create: category, // Create the category if it doesn't exist
-//       });
-
-//       console.log(`Upserted category with slug: ${category.slug}`);
-//     }
-
-//     console.log("✔ Categories seeded successfully!🔥");
-//   } catch (error) {
-//     console.error("Error seeding the database categories", error);
-//     throw error; // Re-throw the error to handle it in the seed.ts file
-//   } finally {
-//     await db.$disconnect();
-//   }
-// }
 
 const categoryData = [
   // 1. Digital Marketing (Parent)
@@ -252,6 +212,11 @@ const discountData = [
     discountPercentage: 70,
     isDefault: true,
   },
+  {
+    name: "Trial Discount",
+    discountPercentage: 0,
+    isDefault: false,
+  },
 ];
 
 export async function seedDiscount() {
@@ -278,64 +243,51 @@ export async function seedDiscount() {
   }
 }
 
-// ------------------ Seed Subscription Plan ------------------
-// const subscriptionPlanData = [
-//   {
-//     name: "প্রাইম",
-//     type: "YEARLY",
-//     regularPrice: 3500,
-//     isDefault: true,
-//   },
-// ];
-
-// export async function seedSubscriptionPlan() {
-//   console.log("Seeding subscription plans...");
-
-//   try {
-//     // Find the "Default" discount first
-//     const defaultDiscount = await db.subscriptionDiscount.findFirst({
-//       where: { isDefault: true },
-//     });
-
-//     if (!defaultDiscount) {
-//       throw new Error("Default discount not found in the database.");
-//     }
-
-//     // Loop through the data and upsert each subscription plan
-//     for (const plan of subscriptionPlanData) {
-//       const createdOrUpdatedPlan = await db.subscriptionPlan.upsert({
-//         where: { name: plan.name }, // Use the plan name directly
-//         update: {
-//           type: plan.type,
-//           regularPrice: plan.regularPrice,
-//           isDefault: plan.isDefault,
-//           subscriptionDiscountId: defaultDiscount.id,
-//         },
-//         create: {
-//           ...plan,
-//           subscriptionDiscountId: defaultDiscount.id,
-//         },
-//       });
-
-//       console.log({ createdOrUpdatedPlan });
-//       console.log(`Upserted subscription plan with name: ${plan.name}`);
-//     }
-
-//     console.log("✔ Subscription plans seeded successfully!🔥");
-//   } catch (error) {
-//     console.error("Error seeding the database subscription plans", error);
-//     throw error; // Re-throw the error to handle it in the seed.ts file
-//   } finally {
-//     await db.$disconnect();
-//   }
-// }
-
 const subscriptionPlanData = [
   {
-    name: "প্রাইম",
-    type: "YEARLY",
-    regularPrice: 3500,
+    name: "Trial",
+    type: SubscriptionType.NONE,
+    regularPrice: 0,
+    offerPrice: 0,
+    durationInMonths: 1,
+    durationInYears: 1,
+    isTrial: true,
+    trialDurationInDays: 30,
+    isDefault: false,
+  },
+  {
+    name: "1 Year Plan",
+    type: SubscriptionType.YEARLY,
+    regularPrice: 10000,
+    offerPrice: 8000,
+    durationInMonths: 1,
+    durationInYears: 1,
+    isTrial: false,
+    trialDurationInDays: 30,
     isDefault: true,
+  },
+  {
+    name: "2 Year Plan",
+    type: SubscriptionType.YEARLY,
+    regularPrice: 15000,
+    offerPrice: 12000, // Example offer price
+    durationInMonths: 1,
+    durationInYears: 2,
+    isTrial: false,
+    trialDurationInDays: 30,
+    isDefault: false,
+  },
+
+  {
+    name: "3 Year Plan",
+    type: SubscriptionType.YEARLY,
+    regularPrice: 20000,
+    offerPrice: 15000,
+    durationInMonths: 1,
+    durationInYears: 3,
+    isTrial: false,
+    trialDurationInDays: 30,
+    isDefault: false,
   },
 ];
 
@@ -346,44 +298,72 @@ export async function seedSubscriptionPlan() {
     const defaultDiscount = await db.subscriptionDiscount.findFirst({
       where: { isDefault: true },
     });
+
+    const trialDiscount = await db.subscriptionDiscount.findFirst({
+      where: {
+        discountPercentage: 0,
+      },
+    });
+    console.log({ trialDiscount });
+
     if (!defaultDiscount) {
       console.log("⚠ No default discount found");
       return;
     }
 
-    // Find the default subscription plan if it exists
-    const defaultPlan = subscriptionPlanData.find((plan) => plan.isDefault);
+    // Process each subscription plan from the data array
+    for (const planData of subscriptionPlanData) {
+      try {
+        // Check if plan already exists by name
+        const existingPlan = await db.subscriptionPlan.findFirst({
+          where: { name: planData.name },
+        });
 
-    // Alternative approach: Use findFirst + create/update pattern
-    const existingPlan = await db.subscriptionPlan.findFirst({
-      where: { isDefault: true },
-    });
+        let createdOrUpdatedPlan;
 
-    let createdOrUpdatedPlan;
+        if (existingPlan) {
+          // Update existing plan
+          createdOrUpdatedPlan = await db.subscriptionPlan.update({
+            where: { id: existingPlan.id },
+            data: {
+              type: planData.type,
+              regularPrice: planData.regularPrice,
+              offerPrice: planData.offerPrice,
+              durationInMonths: planData.durationInMonths,
+              durationInYears: planData.durationInYears,
+              isTrial: planData.isTrial,
+              trialDurationInDays: planData.trialDurationInDays,
+              isDefault: planData.isDefault,
+              subscriptionDiscountId:
+                planData.type === "NONE"
+                  ? trialDiscount?.id
+                  : defaultDiscount.id,
+            },
+          });
+          console.log(`✔ Updated subscription plan: ${planData.name}`);
+        } else {
+          // Create new plan (exclude the hardcoded subscriptionDiscountId from planData)
+          const { subscriptionDiscountId, ...planDataWithoutDiscountId } =
+            planData;
 
-    if (existingPlan) {
-      // Update existing plan
-      createdOrUpdatedPlan = await db.subscriptionPlan.update({
-        where: { id: existingPlan.id },
-        data: {
-          name: defaultPlan.name,
-          type: defaultPlan.type,
-          regularPrice: defaultPlan.regularPrice,
-          subscriptionDiscountId: defaultDiscount.id,
-        },
-      });
-    } else {
-      // Create new plan
-      createdOrUpdatedPlan = await db.subscriptionPlan.create({
-        data: {
-          ...defaultPlan,
-          subscriptionDiscountId: defaultDiscount.id,
-        },
-      });
+          createdOrUpdatedPlan = await db.subscriptionPlan.create({
+            data: {
+              ...planDataWithoutDiscountId,
+              subscriptionDiscountId:
+                planData.type === "NONE"
+                  ? trialDiscount?.id
+                  : defaultDiscount.id,
+            },
+          });
+          console.log(`✔ Created subscription plan: ${planData.name}`);
+        }
+      } catch (planError) {
+        console.error(`Error processing plan ${planData.name}:`, planError);
+        // Continue with other plans instead of stopping
+        continue;
+      }
     }
 
-    console.log({ createdOrUpdatedPlan });
-    console.log(`Upserted subscription plan with name: ${defaultPlan.name}`);
     console.log("✔ Subscription plans seeded successfully!🔥");
   } catch (error) {
     console.error("Error seeding the database subscription plans", error);
@@ -392,74 +372,6 @@ export async function seedSubscriptionPlan() {
     await db.$disconnect();
   }
 }
-
-// ------------------ Seed Users ------------------
-// const userData = [
-//   {
-//     name: process.env.E2E_TEACHER_NAME,
-//     username: process.env.E2E_TEACHER_USERNAME,
-//     email: process.env.E2E_TEACHER_EMAIL,
-//     emailVerified: true,
-//     isAdmin: false,
-//     isSuperAdmin: false,
-//     role: "TEACHER",
-//     accountStatus: "ACTIVE",
-//     password: process.env.E2E_USER_PASSWORD, // 123456
-//   },
-//   {
-//     name: process.env.E2E_STUDENT_NAME,
-//     username: process.env.E2E_STUDENT_USERNAME,
-//     email: process.env.E2E_STUDENT_EMAIL,
-//     emailVerified: true,
-//     isAdmin: false,
-//     isSuperAdmin: false,
-//     role: "STUDENT",
-//     accountStatus: "ACTIVE",
-//     password: process.env.E2E_USER_PASSWORD, // 123456
-//   },
-//   {
-//     name: process.env.E2E_ADMIN_NAME,
-//     username: process.env.E2E_ADMIN_USERNAME,
-//     email: process.env.E2E_ADMIN_EMAIL,
-//     emailVerified: true,
-//     isAdmin: true,
-//     isSuperAdmin: false,
-//     role: "ADMIN",
-//     accountStatus: "ACTIVE",
-//     password: process.env.E2E_USER_PASSWORD, // 123456
-//   },
-// ];
-
-// export async function seedUsers() {
-//   console.log("Seeding users...");
-
-//   try {
-//     // Loop through the data and upsert each user
-//     for (const user of userData) {
-//       await db.user.upsert({
-//         where: { email: user.email },
-//         update: {
-//           ...user,
-//           updatedAt: new Date(),
-//         },
-//         create: {
-//           ...user,
-//           createdAt: new Date(),
-//           updatedAt: new Date(),
-//         },
-//       });
-
-//       console.log(`Upserted user with email: ${user.email}`);
-//     }
-
-//     console.log("✔ Users seeded successfully!🔥");
-//   } catch (error) {
-//     console.error("Error seeding users", error);
-//     throw error;
-//   } finally {
-//     await db.$disconnect();
-//   }
-// }
 
 // Seed All
 async function seedAll() {

@@ -1,10 +1,11 @@
 import ActionBanner from "@/components/common/ActionBanner";
 import type { Metadata } from "next";
-import OurCourses from "../_components/home/OurCourses";
 import OurExperts from "../_components/home/OurExperts";
 import PrayogikHero from "../_components/home/PrayogikHero";
 import SuccessStory from "../_components/home/SuccessStory";
 import UpcomingEvents from "../_components/home/UpcomingEvents";
+import HomeCourses from "./_components/HomeCourses";
+import LiveCourses from "./_components/LiveCourses";
 
 export const metadata: Metadata = {
   title: "Prayogik – Practical Courses in Bangla for Career Skills",
@@ -12,32 +13,25 @@ export const metadata: Metadata = {
     "Learn real-world skills in Bangla with micro, mini & short courses. Join thousands of learners in Bangladesh upgrading their careers with Prayogik.",
 };
 
-export const revalidate = 3600;
-
-export default async function HomePage() {
+export default function HomePage() {
   return (
     <div>
       <PrayogikHero />
-      <OurCourses />
-      <ActionBanner
-        title="কোর্স রোডম্যাপ"
-        description="জেনে নিন, কোন কোর্স গুলো তৈরি হয়েছে, কোন কোর্স গুলো নিয়ে কাজ চলছে  আর  ভবিষ্যতে কোন কোর্স গুলো আমাদের পরিকল্পনায় আছে।"
-        buttonText="কোর্স রোডম্যাপ দেখুন"
-        buttonLink="/course-roadmap"
-        backgroundImage="/images/teacher/teacher-cta-bg.webp"
-      />
+      <HomeCourses />
+      <LiveCourses />
+      <UpcomingEvents />
+      <SuccessStory />
       <OurExperts />
       <div className="pt-28">
         <ActionBanner
-          title="শেখাতে আগ্রহী?"
+          title="অভিজ্ঞ প্রফেশনাল?"
           description="আপনার দক্ষতা ও নলেজ শেয়ার করুন। আমাদের প্ল্যাটফর্মে কোর্স, লাইভ ট্রেনিং, ওয়ার্কশপ বা ক্যারিয়ার মেন্টর হিসেবে যোগ দিন!"
-          buttonText="এখানে বিস্তারিত জানুন"
+          buttonText="বিস্তারিত জানুন"
           buttonLink="/become-a-teacher"
           backgroundImage="/images/teacher/teacher-cta-bg.webp"
+          className="mb-0 xl:mb-28"
         />
       </div>
-      <UpcomingEvents />
-      <SuccessStory />
     </div>
   );
 }

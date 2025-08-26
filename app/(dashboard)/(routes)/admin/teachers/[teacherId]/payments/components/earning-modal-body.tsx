@@ -67,7 +67,7 @@ export default function EarningModalBody({ earningId, row, setDialogVisible }) {
 
   // Handle form submission
   async function onSubmit(formData) {
-    console.log("formdata:", formData);
+    // console.log("formdata:", formData);
     setLoading(true);
     try {
       const response = await fetch("/api/admin/teachers/earnings/pay", {

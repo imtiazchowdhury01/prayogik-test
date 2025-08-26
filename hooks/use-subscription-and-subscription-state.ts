@@ -64,7 +64,7 @@ export const useAuthAndSubscriptionState =
             subscriptions: [],
             userSubscription: null,
             hasActiveSubscription: false,
-            paymentStatus: "FAILED",
+            paymentStatus: "",
           };
           setSubscriptionData(unauthenticatedData);
           fetchedRef.current = true;

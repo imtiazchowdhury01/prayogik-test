@@ -41,6 +41,11 @@ const convertData = (data: (SubscriptionPlan & SubscriptionDiscount)[]) => {
       subscriptionDiscount_createdAt: subscriptionDiscount.createdAt,
       subscriptionDiscount_updatedAt: subscriptionDiscount.updatedAt,
       subscribers_count: item._count.subscription,
+      durationInMonths: item.durationInMonths || 1,
+      durationInYears: item.durationInYears || 1,
+      isTrial: item.isTrial || false,
+      trialDurationInDays: item.trialDurationInDays || 30,
+      regularPrice: item.regularPrice || 0,
     };
   });
 };
