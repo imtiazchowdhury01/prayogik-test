@@ -1,7 +1,8 @@
 "use client";
+import CoursesSidebar from "@/app/(course)/courses/_components/CoursesSidebar";
+import SidebarSheetComponent from "@/app/(course)/courses/_components/SidebarSheetComponent";
 import React, { useState } from "react";
-import CoursesSidebar from "../../_components/CoursesSidebar";
-import SidebarSheetComponent from "../../_components/SidebarSheetComponent";
+
 
 const CategorySidebar = ({ categories }: any) => {
   const [showSidebar, setShowSidebar] = useState<boolean>(false);
