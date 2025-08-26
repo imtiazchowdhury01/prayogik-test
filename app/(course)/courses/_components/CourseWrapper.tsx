@@ -160,7 +160,6 @@
 // ------------------v2------------------------
 "use client";
 import CourseCard from "@/components/CourseCard";
-import { useUpdateQueryParam } from "@/hooks/useUpdateQueryParam";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import CoursesSidebar from "./CoursesSidebar";
@@ -187,9 +186,6 @@ const CourseWrapper = ({ initalData, categories, pagination }: any) => {
   const [paginationData, setPaginationData] = useState(pagination);
   const path = usePathname();
   const searchParams = useSearchParams();
-  const categoryParam = searchParams.get("category");
-  const searchParam = searchParams.get("search");
-
 
   const loadMoreCourseHandler = async () => {
     setIsLoading(true);
@@ -202,14 +198,6 @@ const CourseWrapper = ({ initalData, categories, pagination }: any) => {
         limit: paginationData.limit.toString(),
         sort: sort,
       });
-
-      if (categoryParam) {
-        queryParams.append("category", categoryParam);
-      }
-
-      if (searchParam) {
-        queryParams.append("title", searchParam);
-      }
 
       // Fetch more courses from your existing API
       const response = await fetch(`/api/courses?${queryParams.toString()}`);
@@ -238,7 +226,7 @@ const CourseWrapper = ({ initalData, categories, pagination }: any) => {
     setCourses(initalData || []);
     setCurrentPage(1);
     setPaginationData(pagination);
-  }, [initalData, pagination, categoryParam, searchParam]);
+  }, [initalData, pagination]);
 
   useEffect(() => {
     if (!searchParams.get("limit")) {
@@ -246,9 +234,6 @@ const CourseWrapper = ({ initalData, categories, pagination }: any) => {
     }
   }, [sort, path, searchParams]);
 
-  const selectedCategory = categories.find(
-    (category: any) => category.slug === categoryParam
-  );
 
   return (
     <section className="min-h-[50vh]">
@@ -271,9 +256,6 @@ const CourseWrapper = ({ initalData, categories, pagination }: any) => {
               <BreadcrumbSeparator />
               <BreadcrumbItem>কোর্স</BreadcrumbItem>
               <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                {selectedCategory ? selectedCategory.name : "সকল কোর্স"}
-              </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
         </div>
@@ -293,7 +275,7 @@ const CourseWrapper = ({ initalData, categories, pagination }: any) => {
           {/* title for small screen */}
           <div className="block mb-3 xm:mb-0 lg:hidden">
             <p className="text-black font-secondary font-semibold">
-              {selectedCategory ? selectedCategory.name : "সকল কোর্স"}
+               সকল কোর্স
             </p>
           </div>
 
@@ -309,7 +291,7 @@ const CourseWrapper = ({ initalData, categories, pagination }: any) => {
               {/* title for large screen */}
               <div className="hidden lg:block ">
                 <p className="text-black font-semibold text-2xl">
-                  {selectedCategory ? selectedCategory.name : "সকল কোর্স"}
+                 সকল কোর্স
                 </p>
               </div>
             </div>

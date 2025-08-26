@@ -30,7 +30,6 @@ export async function GET(request: Request) {
         updatedAt: "desc",
       },
     });
-    console.log(categories, "categories");
     return NextResponse.json(categories);
   } catch (error) {
     console.error("Error fetching categories:", error);

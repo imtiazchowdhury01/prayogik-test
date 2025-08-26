@@ -1,8 +1,7 @@
-// // This makes the page static at build time
-// export const dynamic = 'force-static';
+
 // import CourseWrapper from "./_components/CourseWrapper";
 // import type { Metadata } from "next";
-// import { fetchCategories } from "@/services";
+// import { getCategoriesDBCall } from "@/lib/data-access-layer/categories";
 // import { getCoursesDbCall } from "@/lib/data-access-layer/course";
 
 // export const metadata: Metadata = {
@@ -31,7 +30,7 @@
 //       sort: searchParams.sort,
 //       limit: Number(searchParams.limit) || 24,
 //     }),
-//     fetchCategories(),
+//     getCategoriesDBCall(),
 //   ]);
 //   const courses = response?.courses;
 //   return (
@@ -46,12 +45,11 @@
 // export default AllCourses;
 
 // ------------------------------------
-// This makes the page static at build time
-// export const dynamic = "force-static";
+
 import CourseWrapper from "./_components/CourseWrapper";
 import type { Metadata } from "next";
 import { getCoursesDbCall } from "@/lib/data-access-layer/course";
-import { getCategories } from "@/lib/utils/GetCategories";
+import { getCategoriesDBCall } from "@/lib/data-access-layer/categories";
 
 export const metadata: Metadata = {
   title: "New Online Courses | Learn Practical Skills in Bangla | Prayogik",
@@ -65,7 +63,7 @@ const AllCourses = async () => {
       sort: "desc",
       limit: 24,
     }),
-    getCategories(),
+    getCategoriesDBCall(),
   ]);
   const courses = response?.courses;
   return (
