@@ -7,15 +7,15 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   reactStrictMode: true,
-  productionBrowserSourceMaps: false,
-  transpilePackages: [],
-
-  experimental: {
-    optimizePackageImports: ["plaiceholder"],
-    optimizeCss: true,
-  },
-
-  // CRITICAL: Enhanced images configuration - THIS IS THE KEY FIX
+  productionBrowserSourceMaps: false, // Enable only when needed for debugging
+  transpilePackages: [], // Add problematic ESM packages here if needed
+  // serverRuntimeConfig: {
+  //   // Server-side configuration
+  //   bodyParser: {
+  //     sizeLimit: process.env.BODY_PARSER_MAX_LIMIT,
+  //   },
+  // },
+  // Your existing images configuration
   images: {
     remotePatterns: [
       {
@@ -31,18 +31,12 @@ const nextConfig = {
         hostname: "**",
       },
     ],
-    minimumCacheTTL: 86400,
-    formats: ["image/avif", "image/webp"], // AVIF first for 30% better compression
-    dangerouslyAllowSVG: true,
-    contentDispositionType: "attachment",
-
-    // THESE ARE THE CRITICAL ADDITIONS:
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384, 512, 640, 750],
-    // quality: 75, // Optimal quality/size balance
+    minimumCacheTTL: 86400, // 24 hours cache
+    formats: ["image/webp"], // Auto-convert to modern formats
   },
 
   webpack: (config, { buildId, dev, isServer }) => {
+    // Your existing HTML loader
     config.module.rules.push({
       test: /\.html$/,
       use: {
@@ -50,18 +44,21 @@ const nextConfig = {
       },
     });
 
+    // Add SVG handling (recommended addition)
     config.module.rules.push({
       test: /\.svg$/i,
       issuer: /\.[jt]sx?$/,
       use: ["@svgr/webpack"],
     });
 
+    // Improved module aliasing
     config.resolve.alias = {
       ...config.resolve.alias,
       "@": path.resolve(__dirname, "src"),
       "@components": path.resolve(__dirname, "src/components"),
     };
 
+    // Environment variables injection
     config.plugins.push(
       new webpack.EnvironmentPlugin({
         BUILD_ID: buildId,
@@ -69,12 +66,15 @@ const nextConfig = {
       })
     );
 
+    // Production-only optimizations
     if (!dev) {
+      // Improved chunk splitting
       config.optimization.splitChunks = {
         chunks: "all",
-        maxSize: 244 * 1024,
+        maxSize: 244 * 1024, // 244KB chunk size
       };
 
+      // Remove console logs in production
       config.optimization.minimizer.forEach((plugin) => {
         if (plugin.constructor.name === "TerserPlugin") {
           plugin.options.terserOptions = {
