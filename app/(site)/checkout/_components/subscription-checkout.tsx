@@ -21,8 +21,15 @@ import { ArrowLeft, Check, CheckCircle } from "lucide-react";
 import CheckMarkIcon from "@/components/common/CheckMarkIcon";
 import FireIcon from "@/components/common/FireIcon";
 import CrownIcon from "@/components/common/CrownIcon";
+import PaymentMessage from "./payment-message";
 
-export default async function SubscriptionCheckout({ cartData }: any) {
+export default async function SubscriptionCheckout({
+  cartData,
+  errorMessage,
+  isPaymentSuccessful,
+  transactionId,
+  amount,
+}: any) {
   const plan = await getSubscriptionPlanByIdDBCall(cartData?.items[0]?.planId);
   if (!plan) {
     redirect("/prime"); // If no plan in cookies, send user back
@@ -45,6 +52,14 @@ export default async function SubscriptionCheckout({ cartData }: any) {
         </div>
         {/* divider */}
         <hr className="my-4 border-gray-200" />
+
+        {/* message for success or failed */}
+        <PaymentMessage
+          errorMessage={errorMessage}
+          isPaymentSuccessful={isPaymentSuccessful}
+          transactionId={transactionId}
+          amount={amount}
+        />
 
         {/* grid component */}
         <div className="grid lg:grid-cols-2 gap-10 pt-2">
@@ -158,6 +173,7 @@ export default async function SubscriptionCheckout({ cartData }: any) {
             plan={plan}
             activeSubscription={activeSubscription}
             hasUsedTrial={hasUsedTrial}
+            isPaymentSuccessful={isPaymentSuccessful}
           />
           {/* MOBILE screen */}
           <div className="w-fit lg:hidden block">

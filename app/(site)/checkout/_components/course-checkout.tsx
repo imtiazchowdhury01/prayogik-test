@@ -19,8 +19,15 @@ import { getServerUserSession } from "@/lib/getServerUserSession";
 import { PurchaseType } from "@prisma/client";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import PaymentMessage from "./payment-message";
 
-const CourseCheckout = async ({ cartData }: any) => {
+const CourseCheckout = async ({
+  cartData,
+  errorMessage,
+  isPaymentSuccessful,
+  transactionId,
+  amount,
+}: any) => {
   const userSubscription = await getUserSubscription();
   const { courseSlug, checkoutType } = cartData?.items[0];
   const course = await getCourseDBCall(courseSlug);
@@ -71,6 +78,13 @@ const CourseCheckout = async ({ cartData }: any) => {
         </div>
         {/* divider */}
         <hr className="my-4 border-gray-200" />
+        {/* message for success or failed */}
+        <PaymentMessage
+          errorMessage={errorMessage}
+          isPaymentSuccessful={isPaymentSuccessful}
+          transactionId={transactionId}
+          amount={amount}
+        />
         <div className="flex lg:flex-row flex-col justify-between gap-10 pt-2">
           {/* Left Side - Course Details */}
           <div className="lg:w-[45%] w-full">
@@ -172,6 +186,7 @@ const CourseCheckout = async ({ cartData }: any) => {
               defaultSelectedPlan={defaultSelectedPlan}
               isSignedIn={!!userId}
               userSubscription={userSubscription}
+              isPaymentSuccessful={isPaymentSuccessful}
             />
           </div>
           {/* MOBILE screen */}

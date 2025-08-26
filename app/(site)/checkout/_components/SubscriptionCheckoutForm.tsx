@@ -58,6 +58,7 @@ const SubscriptionCheckoutForm = ({
   plan,
   activeSubscription,
   hasUsedTrial,
+  isPaymentSuccessful,
 }) => {
   const { data: session } = useSession();
   const router = useRouter();
@@ -235,8 +236,7 @@ const SubscriptionCheckoutForm = ({
         if (res?.data?.url) {
           router.push(res?.data?.url);
         } else {
-          console.log(formData, "formdata");
-          toast.success("পেমেন্ট সফলভাবে সম্পন্ন হয়েছে");
+          toast.success("ট্রায়াল নেয়া হয়েছে");
           router.refresh();
           CheckoutStorage.clearEmail();
         }
@@ -265,7 +265,7 @@ const SubscriptionCheckoutForm = ({
       return "ফ্রি ট্রায়াল শুরু করুন";
     }
     if (selectedPurchaseType === PurchaseType.SUBSCRIPTION) {
-      return "পেমেন্ট করুন";
+      return "বিকাশে পেমেন্ট সম্পূর্ণ করুন";
     }
     // Fallback to original logic
     if (hasActiveSubscription) {
@@ -274,14 +274,16 @@ const SubscriptionCheckoutForm = ({
     if (isExpiredSubscription) {
       return "প্ল্যান রিনিউ করুন"; // Renew Plan
     }
-    return "পেমেন্ট করুন";
+    return "বিকাশে পেমেন্ট সম্পূর্ণ করুন";
   };
-
+  const watchedAmount = form.watch("amount");
+  const selectedAmount =
+    selectedPurchaseType === PurchaseType.TRIAL ? 0 : watchedAmount;
   return (
     <Card className="sm:p-1 p-0 rounded-lg h-fit">
       <CardHeader className="sm:space-y-1.5 space-y-0 sm:pb-6 pb-2.5">
         <CardTitle className="sm:text-2xl text-xl font-semibold ">
-          কোর্স এনরোলমেন্ট সম্পূর্ণ করুন
+          এনরোলমেন্ট ডিটেলস
         </CardTitle>
         <CardDescription className="sr-only"></CardDescription>
       </CardHeader>
@@ -293,7 +295,7 @@ const SubscriptionCheckoutForm = ({
               <CheckCircle className="h-5 w-5 text-gray-500 mt-0.5 shrink-0 hidden sm:block" />
               <div className="flex-1">
                 <h3 className="font-medium text-gray-900 mb-1">
-                  আপনি ইতিমধ্যেই এই সাবস্ক্রিপশন প্ল্যান ব্যবহার করছেন
+                  বর্তমান প্ল্যান
                 </h3>
                 <p className="text-sm text-gray-700 mb-3">
                   আপনি বর্তমানে{" "}
@@ -694,21 +696,44 @@ const SubscriptionCheckoutForm = ({
                   )}
                 />
               </div>
-
+              <div className="flex justify-between items-center mt-4 text-xl font-bold border-t pr-2.5">
+                <p className="pt-2">সর্বমোট</p>
+                <p className="pt-2">৳{convertNumberToBangla(selectedAmount)}</p>
+              </div>
               {hasCheckedSubscription && (
                 <>
                   <Button
                     type="submit"
-                    className="w-full bg-brand shadow-customButton hover:bg-teal-700 transition-colors duration-300 size-lg h-12 disabled:bg-gray-400 disabled:text-gray-200"
+                    className={`w-full shadow-customButton transition-colors duration-300 size-lg h-12 disabled:bg-gray-400 disabled:text-gray-200
+        ${
+          selectedPurchaseType === PurchaseType.TRIAL
+            ? "bg-brand hover:bg-teal-700"
+            : "bg-[#E2136E] hover:bg-[#d70d65]"
+        }`}
                     size="lg"
-                    disabled={isProcessing}
+                    disabled={isProcessing || isPaymentSuccessful} // ✅ disables if payment is successful
                   >
+                    {selectedPurchaseType !== PurchaseType.TRIAL && (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="w-10 h-10"
+                        viewBox="-6.6741 -11.07275 57.8422 66.4365"
+                        fill="none"
+                      >
+                        <g fill="none">
+                          <path d="M42.31 44.291H2.182C.981 44.291 0 43.308 0 42.107V2.186C0 .982.981 0 2.182 0H42.31c1.203 0 2.184.982 2.184 2.186v39.921c0 1.201-.981 2.184-2.184 2.184" />
+                          <path
+                            fill="#FFF"
+                            d="M31.894 24.251l-14.107-2.246 1.909 8.329zm.572-.682L21.374 8.16l-3.623 13.106zm-15.402-2.482L5.441 6.239l15.221 1.819zm-5.639-6.154l-6.449-6.08h1.695zm24.504 1.15L33.2 23.486l-4.426-6.118zM21.417 30.232l10.71-4.3.454-1.365zm-8.933 7.821l4.589-16.102 2.326 10.479zm24.099-21.914l-1.128 3.056 4.059-.07z"
+                          />
+                        </g>
+                      </svg>
+                    )}
                     {getButtonText()}
                   </Button>
                   <p className="text-sm text-gray-600 sm:text-center text-left">
-                    {selectedPurchaseType === PurchaseType.SUBSCRIPTION
-                      ? "*ফ্রি ট্রায়াল দিয়ে শুরু করুন। পেমেন্ট অপশন শীঘ্রই আসছে।"
-                      : "আমরা আপনার জন্য একটি অ্যাকাউন্ট তৈরি করব এবং নিশ্চিতকরণ ইমেইলে পাঠাব।"}
+                    আমরা আপনার জন্য একটি অ্যাকাউন্ট তৈরি করব এবং নিশ্চিতকরণ
+                    ইমেইলে পাঠাব।
                   </p>
                 </>
               )}

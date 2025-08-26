@@ -157,6 +157,7 @@ const CourseCheckoutForm = ({
   availableSubscriptionPlans,
   defaultSelectedPlan,
   userSubscription: initialUserSubscription,
+  isPaymentSuccessful,
 }) => {
   // Hooks
   const router = useRouter();
@@ -473,7 +474,7 @@ const CourseCheckoutForm = ({
           router.push(result?.data?.url);
         } else {
           toast.success("পেমেন্ট সফলভাবে সম্পন্ন হয়েছে");
-
+          router.refresh();
           // Clear stored data on success
           CheckoutStorage.clearEmail();
           if (session?.user?.email) {
@@ -690,10 +691,10 @@ const CourseCheckoutForm = ({
         />
         {/* total p rice section */}
 
-        <div className="flex justify-between items-center mt-4 text-xl font-bold border-t pr-2.5">
+        {/* <div className="flex justify-between items-center mt-4 text-xl font-bold border-t pr-2.5">
           <p className="pt-2">সর্বমোট</p>
           <p className="pt-2">৳{convertNumberToBangla(selectedAmount)}</p>
-        </div>
+        </div> */}
       </>
     );
   };
@@ -768,18 +769,20 @@ const CourseCheckoutForm = ({
   }
 
   const isFormDisabled = !emailContinued && !session?.user?.email;
+
   const canPurchase =
     (subscriptionStatus?.isActive &&
       !subscriptionStatus?.isTrial &&
       course?.isUnderSubscription) ||
     (subscriptionStatus?.isTrial && course?.isUnderSubscription);
+
   const userStatusMessage = getUserStatusMessage();
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="sm:text-2xl text-xl font-semibold">
-          কোর্স এনরোলমেন্ট সম্পূর্ণ করুন
+          এনরোলমেন্ট ডিটেলস
         </CardTitle>
         <CardDescription className="sr-only"></CardDescription>
       </CardHeader>
@@ -912,7 +915,15 @@ const CourseCheckoutForm = ({
                       }
                     >
                       {/* Regular Price Option */}
-                      <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 border rounded-lg hover:bg-gray-50 gap-3 md:gap-4">
+                      <div
+                        className={`flex flex-col md:flex-row items-start md:items-center justify-between p-4 border rounded-lg gap-3 md:gap-4 ${
+                          subscriptionStatus?.isActive &&
+                          !subscriptionStatus?.isTrial &&
+                          course?.isUnderSubscription
+                            ? "opacity-50 pointer-events-none bg-gray-100"
+                            : "hover:bg-gray-50"
+                        }`}
+                      >
                         {/* Radio + Label */}
                         <label
                           htmlFor={pricingOptions.regular.type}
@@ -921,7 +932,12 @@ const CourseCheckoutForm = ({
                           <RadioGroupItem
                             value={pricingOptions.regular.type}
                             id={pricingOptions.regular.type}
-                            disabled={isFormDisabled}
+                            disabled={
+                              isFormDisabled ||
+                              (subscriptionStatus?.isActive &&
+                                !subscriptionStatus?.isTrial &&
+                                course?.isUnderSubscription)
+                            }
                             className="shrink-0 mt-1 w-4 h-4 text-primary-brand border-primary-brand ring-offset-0 focus:ring-0 focus-visible:ring-0"
                           />
                           <div className="flex flex-col">
@@ -1070,27 +1086,57 @@ const CourseCheckoutForm = ({
                 <AlertDescription>{errorMessage}</AlertDescription>
               </Alert>
             )}
+            {/* Total Price Section */}
+            {subscriptionStatus?.isActive &&
+            !subscriptionStatus?.isTrial &&
+            course?.isUnderSubscription ? null : (
+              <div className="flex justify-between items-center mt-4 text-xl font-bold border-t pr-2.5">
+                <p className="pt-2">সর্বমোট</p>
+                <p className="pt-2">৳{convertNumberToBangla(selectedAmount)}</p>
+              </div>
+            )}
 
             {/* Checkout Button */}
             <Button
               type="submit"
-              className="w-full disabled:bg-gray-400 disabled:text-gray-200"
+              className="w-full bg-[#E2136E] hover:bg-[#d70d65]  disabled:bg-gray-400 disabled:text-gray-200"
               size="lg"
-              disabled={isProcessing}
+              disabled={
+                isProcessing ||
+                isPaymentSuccessful ||
+                (subscriptionStatus?.isActive &&
+                  !subscriptionStatus?.isTrial &&
+                  course?.isUnderSubscription)
+              }
             >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-10 h-10"
+                viewBox="-6.6741 -11.07275 57.8422 66.4365"
+                fill="none"
+              >
+                <g fill="none">
+                  <path d="M42.31 44.291H2.182C.981 44.291 0 43.308 0 42.107V2.186C0 .982.981 0 2.182 0H42.31c1.203 0 2.184.982 2.184 2.186v39.921c0 1.201-.981 2.184-2.184 2.184" />
+                  <path
+                    fill="#FFF"
+                    d="M31.894 24.251l-14.107-2.246 1.909 8.329zm.572-.682L21.374 8.16l-3.623 13.106zm-15.402-2.482L5.441 6.239l15.221 1.819zm-5.639-6.154l-6.449-6.08h1.695zm24.504 1.15L33.2 23.486l-4.426-6.118zM21.417 30.232l10.71-4.3.454-1.365zm-8.933 7.821l4.589-16.102 2.326 10.479zm24.099-21.914l-1.128 3.056 4.059-.07z"
+                  />
+                </g>
+              </svg>
+
               {isProcessing ? (
                 <>
-                  <Loader className="animate-spin mr-2" size={16} />
-                  Processing payment...
+                  {/* <Loader className="animate-spin mr-2" size={16} /> */}
+                  প্রক্রিয়াধীন…
                 </>
-              ) : canPurchase ? (
-                subscriptionStatus?.isTrial ? (
-                  "ট্রায়াল প্ল্যানে অন্তর্ভুক্ত আছে - সাইন ইন করুন"
-                ) : (
-                  "আপনার সাবস্ক্রিপশনে ইতিমধ্যেই অন্তর্ভুক্ত আছে"
-                )
+              ) : subscriptionStatus?.isActive &&
+                !subscriptionStatus?.isTrial &&
+                course?.isUnderSubscription ? (
+                "বিকাশে পেমেন্ট সম্পূর্ণ করুন"
+              ) : subscriptionStatus?.isTrial && course?.isUnderSubscription ? (
+                "ট্রায়াল প্ল্যানে অন্তর্ভুক্ত আছে - সাইন ইন করুন"
               ) : (
-                `পেমেন্ট সম্পূর্ণ করুন`
+                `বিকাশে পেমেন্ট সম্পূর্ণ করুন`
               )}
             </Button>
 

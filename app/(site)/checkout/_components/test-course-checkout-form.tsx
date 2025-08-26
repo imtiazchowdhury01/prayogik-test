@@ -57,8 +57,8 @@ const CourseCheckoutForm = ({
   const [errorMessage, setErrorMessage] = useState("");
   const { data } = useSession();
 
-  console.log(userSubscription, "user subscription");
-  console.log(selectedType, "selected type");
+  // console.log(userSubscription, "user subscription");
+  // console.log(selectedType, "selected type");
 
   // Check if user has active subscription
   const hasActiveSubscription =
@@ -233,7 +233,7 @@ const CourseCheckoutForm = ({
       }
 
       const result = await handleCheckout(formData);
-      console.log("Checkout result:", result.message);
+      // console.log("Checkout result:", result.message);
 
       if (result.success) {
         router.push("/checkout/success");
