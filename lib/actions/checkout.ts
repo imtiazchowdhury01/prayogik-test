@@ -5,13 +5,11 @@ import { clearServerCart } from "./cart-cookie";
 import { clientApi } from "../utils/openai/client";
 
 export async function handleCheckout(formData: FormData) {
-  console.log(formData, "form data");
   const subscriptionPlanId = formData.get("planId") as string;
   const purchasedType = formData.get("type") as string;
   const courseId = formData.get("courseId") as string;
   const email = formData.get("email") as string;
   let amount = parseInt(formData.get("amount") as string) || 0;
-  console.log(amount, "amount");
 
   try {
     const payload = {
@@ -25,7 +23,7 @@ export async function handleCheckout(formData: FormData) {
 
     if (purchasedType === "TRIAL") {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/api/webhook/payment-callback`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/subscriptions/purchase/trial`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -35,7 +33,7 @@ export async function handleCheckout(formData: FormData) {
       const data = await response.json();
 
       if (data.success) {
-        console.log("Trial successfully chekout:", data);
+        // console.log("ট্রায়াল নেয়া হয়েছে", data);
         await clearServerCart();
         return {
           success: data.success,
@@ -43,7 +41,7 @@ export async function handleCheckout(formData: FormData) {
           data: data?.data,
         };
       } else {
-        console.log("Trial unsuccessful:", data);
+        console.log("ত্রুটি ঘটেছে। অনুগ্রহ করে আবার চেষ্টা করুন!", data);
 
         await clearServerCart();
         return { success: false };
@@ -60,7 +58,8 @@ export async function handleCheckout(formData: FormData) {
       if (!bkashPaymentRes?.url) {
         throw new Error(bkashPaymentRes?.statusMessage || "Payment failed");
       }
-
+      // Clear server cart after successful payment
+      // await clearServerCart();
       // Return success status & data
       return { success: true, data: bkashPaymentRes };
     }
@@ -69,7 +68,7 @@ export async function handleCheckout(formData: FormData) {
     // Return failure status & error message
     return {
       success: false,
-      message: data?.message || "An unexpected error occurred",
+      message: error?.message || "An unexpected error occurred",
       data: null,
     };
   }

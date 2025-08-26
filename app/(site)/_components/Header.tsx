@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 const navigation = [
   { name: "কোর্স সমূহ", href: "/courses" },
   { name: "প্রাইম", href: "/prime" },
+  { name: "লাইভ কোর্স", href: "/live" },
   { name: "কোর্স রোডম্যাপ", href: "/course-roadmap" },
   { name: "শেখাতে চাই", href: "/become-a-teacher" },
   // { name: "টেস্টিমোনিয়াল", href: "/testimonial" },

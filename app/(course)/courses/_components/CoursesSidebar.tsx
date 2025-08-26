@@ -645,7 +645,7 @@ const CoursesSidebar = ({
                       href={`/courses/category/${parentCategory.slug}`}
                       prefetch={false}
                       onClick={isMobile ? toggleSidebar : undefined}
-                      className={`flex items-center justify-between py-3 px-2 cursor-pointer hover:bg-sidebar-highlight transition-colors rounded block ${
+                      className={`flex items-center justify-between py-3 px-2 cursor-pointer hover:bg-sidebar-highlight transition-colors rounded ${
                         isActive
                           ? "bg-sidebar-highlight text-black font-medium rounded-md"
                           : "text-gray-700"

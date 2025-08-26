@@ -8,11 +8,12 @@ import {
 } from "@/lib/convertNumberToBangla";
 import { textLangChecker } from "@/lib/utils/textLangChecker";
 import FreeLessonPreviewButton from "./FreeLessonPreviewButton";
-import { Clock, Radio, UserRound } from "lucide-react";
+import { Clock, UserRound } from "lucide-react";
 import { formatDateToBangla } from "@/lib/utils/stringUtils";
 import { GradientBorderBadge } from "./ui/badge";
 import { CourseMode } from "@prisma/client";
 import { formatLiveCourseTime } from "@/lib/utils/formatLiveCourseTime";
+import LiveCourseIcon from "./LiveCourseIcon";
 
 const CourseCard = ({
   variant = "dark",
@@ -73,12 +74,7 @@ const CourseCard = ({
           />
         )}
         {/* Live course badge - positioned at top right */}
-        {course?.courseMode === CourseMode.LIVE && (
-          <div className="absolute top-4 left-4 border border-[#FFC4C2] flex gap-1 items-center flex-row bg-white text-[#FF140C] text-xs font-bold px-2 py-1 rounded-md z-10">
-            <Radio className="w-4 h-4" />
-            লাইভ কোর্স
-          </div>
-        )}
+        {course?.courseMode === CourseMode.LIVE && <LiveCourseIcon />}
         <FreeLessonPreviewButton course={course} freeLesson={freeLesson} />
       </div>
 

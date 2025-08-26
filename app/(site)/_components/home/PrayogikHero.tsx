@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-// import prayogikhero from "@/public/prayogik_hero_img.webp"; // Static import
-import prayogikhero from "@/public/home/hero-image.webp"; // Static import
+import prayogikhero from "@/public/home/prayogik-hero-img.webp"; // Static import
+// import prayogikhero from "@/public/home/prayogik-hero-img.jpg"; // Static import
 
 export default function PrayogikHero() {
   return (

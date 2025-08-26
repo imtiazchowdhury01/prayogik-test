@@ -30,6 +30,7 @@ export default async function VisitorSidebar({
           course={course}
           plan={plan}
           defaultDiscount={plan?.subscriptionDiscount}
+          preview={preview}
         />
       </div>
     </>

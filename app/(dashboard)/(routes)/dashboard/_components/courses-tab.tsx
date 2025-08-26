@@ -35,6 +35,7 @@ export function CoursesTab({
 }: TCoursesTabProps) {
   return (
     <div className="w-full">
+    
       <Tabs defaultValue="purchased" className="w-full">
         <div className="w-full mb-8">
           <TabsList className="grid grid-cols-2 gap-2 bg-gray-50 rounded-lg max-w-md p-0 m-0">

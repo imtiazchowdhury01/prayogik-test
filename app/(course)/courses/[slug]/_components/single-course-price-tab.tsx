@@ -1,4 +1,3 @@
-
 // @ts-nocheck
 "use client";
 import { useEffect, useState, useCallback, useMemo, memo } from "react";
@@ -24,7 +23,7 @@ type TSingleCoursePriceTab = {
   course: any;
   defaultDiscount: any;
   plan: any;
-  preview?: any;
+  preview?: boolean; // Make preview optional with boolean type
 };
 
 // Animation variants
@@ -67,6 +66,7 @@ const SingleCoursePriceTab = ({
   course: initialCourse,
   defaultDiscount,
   plan,
+  preview = false, // Default to false if not provided
 }: TSingleCoursePriceTab) => {
   const { status, data } = useSession();
   const router = useRouter();
@@ -77,7 +77,7 @@ const SingleCoursePriceTab = ({
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isAccessingFreeCourse, setIsAccessingFreeCourse] = useState(false);
   const [hasCourseAccess, setHasCourseAccess] = useState({});
-
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const subscriptions = data?.user?.info?.studentProfile?.subscription;
   const isSubscribedUser = subscriptions?.status === "ACTIVE";
   const isUnderSubscriptionsCourse = course?.isUnderSubscription;
@@ -128,9 +128,15 @@ const SingleCoursePriceTab = ({
     }
   }, [initialCourse]);
 
-  // Load data effect
+  // Load data effect - Skip API calls in preview mode
   useEffect(() => {
     const loadAllData = async () => {
+      // Skip loading in preview mode
+      if (preview) {
+        setIsInitialLoading(false);
+        return;
+      }
+
       if (!data?.user?.id || !course?.slug) {
         setIsInitialLoading(false);
         return;
@@ -168,7 +174,7 @@ const SingleCoursePriceTab = ({
     };
 
     loadAllData();
-  }, [data?.user?.id, course?.slug, course?.id, fetchCourse]);
+  }, [data?.user?.id, course?.slug, course?.id, fetchCourse, preview]);
 
   // Determine if the course is free
   const isCourseFree = useMemo(() => {
@@ -189,12 +195,13 @@ const SingleCoursePriceTab = ({
   // Early returns after all hooks are defined
   if (!course) return <div>দুঃখিত! কোনো কোর্স পাওয়া যায় নি।</div>;
 
-  // Show loading skeleton while loading initial data
-  if (isInitialLoading) {
+  // Show loading skeleton while loading initial data (skip in preview mode)
+  if (isInitialLoading && !preview) {
     return <CourseAccessSkeleton />;
   }
-  // If user has course access and check live course or not, show the access button
-  if (hasCourseAccess?.access) {
+
+  // Skip course access check in preview mode
+  if (!preview && hasCourseAccess?.access) {
     if (course?.courseMode === CourseMode.LIVE) {
       return <LiveLinkCard course={course} />;
     } else {
@@ -241,6 +248,12 @@ const SingleCoursePriceTab = ({
   }
 
   const handleFreeCourseAccess = async (courseId: string) => {
+    // Disable functionality in preview mode
+    if (preview) {
+      toast.error("প্রিভিউ মোডে এই ফিচারটি উপলব্ধ নেই।");
+      return;
+    }
+
     setIsAccessingFreeCourse(true);
     try {
       if (status === "unauthenticated") {
@@ -272,6 +285,13 @@ const SingleCoursePriceTab = ({
   };
 
   const handleRedirectToCheckout = async () => {
+    setIsRedirecting(true);
+    // Disable functionality in preview mode
+    if (preview) {
+      toast.error("প্রিভিউ মোডে এই ফিচারটি উপলব্ধ নেই।");
+      return;
+    }
+
     if (initialCourse) {
       await clearServerCart();
       await setServerCart({
@@ -290,10 +310,17 @@ const SingleCoursePriceTab = ({
         ],
       });
       router.push("/checkout");
+      setIsRedirecting(false);
     }
+     setIsRedirecting(false);
   };
 
-  const renderPriceBlock = ({ value, title, priceDisplay, showPayment }:any) => {
+  const renderPriceBlock = ({
+    value,
+    title,
+    priceDisplay,
+    showPayment,
+  }: any) => {
     const isActive = selectedPriceOption === value;
     const labels = {
       subscription: isSubscribedUser
@@ -307,14 +334,16 @@ const SingleCoursePriceTab = ({
           "border-[1px] rounded-lg p-6 cursor-pointer transition-colors duration-300",
           isActive
             ? "bg-[#E7F5F4] border-[#4AAFA6]"
-            : "border-[#BFC3C2] bg-transparent"
+            : "border-[#BFC3C2] bg-transparent",
+          preview && "cursor-not-allowed opacity-75" // Add visual indication for preview mode
         )}
-        onClick={() => setSelectedPriceOption(value)}
+        onClick={() => !preview && setSelectedPriceOption(value)} // Disable click in preview mode
       >
         <div className="flex items-start gap-2">
           <RadioGroupItem
             value={value}
             id={`${value}-price`}
+            disabled={preview} // Disable radio button in preview mode
             style={{ width: "18px", height: "18px", borderRadius: "100%" }}
             className="text-primary-brand border-primary-brand ring-offset-0 focus:ring-0 focus-visible:ring-0"
           />
@@ -334,9 +363,19 @@ const SingleCoursePriceTab = ({
                     {!isCourseFree && (
                       <Button
                         onClick={handleRedirectToCheckout}
-                        className="w-full mt-4 bg-primary-brand text-white hover:bg-primary-700"
+                        disabled={preview || isRedirecting} // Disable button in preview mode
+                        className={twMerge(
+                          "w-full mt-4 bg-primary-brand text-white hover:bg-primary-700",
+                          preview &&
+                            "opacity-50 cursor-not-allowed hover:bg-primary-brand" // Style disabled state
+                        )}
                       >
-                        {labels[selectedPriceOption] ?? ""}
+                        {!isRedirecting ? (
+                          labels[selectedPriceOption] ?? ""
+                        ) : (
+                          <Loader size={16} className="animate-spin" />
+                        )}
+                        {/* {preview && " (প্রিভিউ মোড)"} */}
                       </Button>
                     )}
                   </motion.div>
@@ -349,10 +388,6 @@ const SingleCoursePriceTab = ({
     );
   };
 
-  // Early returns
-  if (!course) return <div>দুঃখিত! কোনো কোর্স পাওয়া যায় নি।</div>;
-  if (isInitialLoading) return <CourseAccessSkeleton />;
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -361,7 +396,8 @@ const SingleCoursePriceTab = ({
     >
       <RadioGroup
         value={selectedPriceOption}
-        onValueChange={setSelectedPriceOption}
+        onValueChange={!preview ? setSelectedPriceOption : undefined} // Disable value change in preview mode
+        disabled={preview} // Disable entire radio group in preview mode
       >
         {/* Regular Price Option */}
         {renderPriceBlock({
@@ -373,12 +409,20 @@ const SingleCoursePriceTab = ({
                 <p className="text-2xl font-bold">*ফ্রি</p>
                 <Button
                   onClick={() => handleFreeCourseAccess(course.id)}
-                  className="w-full hover:bg-primary-brand hover:text-white bg-primary-brand text-white transition-opacity mt-3"
+                  disabled={preview || isAccessingFreeCourse} // Disable in preview mode
+                  className={twMerge(
+                    "w-full hover:bg-primary-brand hover:text-white bg-primary-brand text-white transition-opacity mt-3",
+                    preview &&
+                      "opacity-50 cursor-not-allowed hover:bg-primary-brand" // Style disabled state
+                  )}
                 >
                   {isAccessingFreeCourse ? (
                     <Loader className="w-4 h-4 animate-spin" />
                   ) : (
-                    " ফ্রি এক্সেস করুন"
+                    <>
+                      ফ্রি এক্সেস করুন
+                      {/* {preview && " (প্রিভিউ মোড)"} */}
+                    </>
                   )}
                 </Button>
               </div>
@@ -460,6 +504,20 @@ const SingleCoursePriceTab = ({
           </>
         )}
       </RadioGroup>
+
+      {/* Preview Mode Indicator */}
+      {preview && (
+        <motion.div
+          className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-center"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <p className="text-sm text-yellow-800 font-medium">
+            🔍 কোর্সটি এখনো প্রক্রিয়াধীন রয়েছে
+          </p>
+        </motion.div>
+      )}
     </motion.div>
   );
 };

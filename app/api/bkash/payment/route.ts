@@ -39,13 +39,13 @@ export async function POST(req: NextRequest) {
       callbackURL: `${baseUrl}/api/bkash/callback`,
     };
 
-    console.log("Payment Details:", paymentDetails);
+    // console.log("Payment Details:", paymentDetails);
 
     const createPaymentResponse = await createPayment(
       bkashConfig,
       paymentDetails
     );
-    console.log(createPaymentResponse);
+    // console.log(createPaymentResponse);
 
     if (createPaymentResponse.statusCode !== "0000") {
       return NextResponse.json({ message: "Payment Failed" });
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
       url: createPaymentResponse.bkashURL,
     });
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     return NextResponse.json({ message: "Something went wrong" });
   }
 }

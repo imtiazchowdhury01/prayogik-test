@@ -66,7 +66,7 @@ export default function SearchPage() {
   }
 
   const { pagination } = searchResult;
-  console.log(allCourses, "all courses");
+  // console.log(allCourses, "all courses");
   return (
     <div className="app-container mx-auto px-4 py-8">
       <div className="mb-8">

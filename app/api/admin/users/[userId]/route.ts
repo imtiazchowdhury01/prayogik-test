@@ -168,7 +168,7 @@ export async function PUT(
       }
       // Case 2: Has subscription IDs
       else {
-        console.log("FROM ELSE - Has subscription IDs");
+        // console.log("FROM ELSE - Has subscription IDs");
         const subscriptionPlanId = subscriptionListIds[0];
 
         const subscriptionPlan = await db.subscriptionPlan.findUnique({
@@ -351,7 +351,7 @@ export async function DELETE(
   req: Request,
   { params }: { params: { userId: string } }
 ) {
-  console.log("DELETE API HITTED");
+  // console.log("DELETE API HITTED");
   const { userId } = params;
 
   try {

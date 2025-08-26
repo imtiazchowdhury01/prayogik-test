@@ -5,6 +5,8 @@ import jwt from "jsonwebtoken";
 import { sendCredentialTemplate } from "@/lib/utils/emailTemplates/send-credential-template";
 import nodemailer from "nodemailer";
 import bcrypt from "bcrypt";
+import { sendSubscriptionCredential } from "@/lib/utils/emailTemplates/sendSubscriptionCredential";
+import preparePurchaseDetails from "@/lib/utils/preparePurchaseDetails";
 
 const bkashConfig = {
   base_url: process.env.BKASH_BASE_URL!,
@@ -20,7 +22,7 @@ export async function GET(req: NextRequest) {
     const paymentID = searchParams.get("paymentID");
     const status = searchParams.get("status");
 
-    console.log("Callback received:", { paymentID, status });
+    // console.log("Callback received:", { paymentID, status });
 
     if (!paymentID) {
       return NextResponse.redirect(
@@ -32,7 +34,7 @@ export async function GET(req: NextRequest) {
       // Execute the payment
       const executePaymentResult = await executePayment(bkashConfig, paymentID);
 
-      console.log("Execute payment result:", executePaymentResult);
+      // console.log("Execute payment result:", executePaymentResult);
 
       if (executePaymentResult && executePaymentResult.statusCode === "0000") {
         // Payment successful
@@ -47,6 +49,9 @@ export async function GET(req: NextRequest) {
           const authenticatedUser = await getAuthenticatedUser(req);
           let user: any = authenticatedUser;
           let studentProfile = authenticatedUser?.studentProfile;
+          let isNewUser = false;
+          let temporaryPassword = null;
+          let username = null;
 
           // Handle unauthenticated users, let them register in our site
           if (!authenticatedUser) {
@@ -69,12 +74,14 @@ export async function GET(req: NextRequest) {
               // Create new user
               const randomPassword = generateRandomPassword();
               const hashedPassword = await bcrypt.hash(randomPassword, 12);
-              const username = generateUsernameFromEmail(payload.email);
+              const generatedUsername = generateUsernameFromEmail(
+                payload.email
+              );
 
               user = await db.user.create({
                 data: {
                   name: payload.email.split("@")[0],
-                  username,
+                  username: username || generatedUsername,
                   email: payload.email,
                   password: hashedPassword,
                   phoneNumber: executePaymentResult?.payerAccount || "",
@@ -87,31 +94,14 @@ export async function GET(req: NextRequest) {
                 },
                 include: { studentProfile: true },
               });
-
+              isNewUser = true;
+              temporaryPassword = randomPassword;
+              username = generatedUsername;
               studentProfile = user.studentProfile;
+
               console.log(
                 `New user created with email: ${payload.email}, temporary password: ${randomPassword}`
               );
-              const transporter = nodemailer.createTransport({
-                service: "Gmail",
-                auth: {
-                  user: process.env.SMTP_USERNAME,
-                  pass: process.env.SMTP_APP_PASS,
-                },
-              });
-
-              const mailOptions = {
-                from: `"প্রায়োগিক" <${process.env.SMTP_USERNAME}>`,
-                to: payload?.email,
-                subject: "প্রয়োগিকে স্বাগতম! আপনার অ্যাকাউন্ট তৈরি হয়েছে।",
-                html: sendCredentialTemplate(
-                  payload.email,
-                  username,
-                  randomPassword
-                ),
-              };
-
-              await transporter.sendMail(mailOptions);
             }
           }
 
@@ -131,7 +121,8 @@ export async function GET(req: NextRequest) {
             case "SINGLE_COURSE": {
               const result = await handleSingleCoursePurchase(
                 payload,
-                studentProfile
+                studentProfile,
+                executePaymentResult
               );
               if (result instanceof NextResponse) return result; // Error response
               purchase = result.purchase;
@@ -142,7 +133,8 @@ export async function GET(req: NextRequest) {
             case "SUBSCRIPTION": {
               const result = await handleMembershipPurchase(
                 payload,
-                studentProfile
+                studentProfile,
+                executePaymentResult
               );
               if (result instanceof NextResponse) return result; // Error response
               purchase = result.purchase;
@@ -150,7 +142,11 @@ export async function GET(req: NextRequest) {
               break;
             }
             case "OFFER": {
-              const result = await handleOfferPurchase(payload, studentProfile);
+              const result = await handleOfferPurchase(
+                payload,
+                studentProfile,
+                executePaymentResult
+              );
               if (result instanceof NextResponse) return result; // Error response
               purchase = result.purchase;
               subscription = result.subscription;
@@ -168,9 +164,70 @@ export async function GET(req: NextRequest) {
                 `Unsupported purchase type: ${payload.purchaseType}`
               );
           }
+          //--------Send email for new users AFTER purchase ----
+          if (isNewUser && temporaryPassword && username) {
+            try {
+              // Get course and subscription plan details for email
+              let courseForEmail = null;
+              let subscriptionPlanForEmail = null;
 
-          console.log("Purchase after payment Success:", purchase);
-          console.log("subscription after payment Success:", subscription);
+              if (payload.courseId) {
+                courseForEmail = await db.course.findUnique({
+                  where: { id: payload.courseId },
+                  select: { title: true },
+                });
+              }
+
+              if (payload.subscriptionPlanId) {
+                subscriptionPlanForEmail = await db.subscriptionPlan.findUnique(
+                  {
+                    where: { id: payload.subscriptionPlanId },
+                    select: { name: true },
+                  }
+                );
+              }
+
+              // Prepare purchase details for email template
+              const purchaseDetailsForEmail = await preparePurchaseDetails(
+                payload,
+                purchase,
+                subscription,
+                courseForEmail,
+                subscriptionPlanForEmail
+              );
+              console.log(
+                `Purchase details for email:`,
+                purchaseDetailsForEmail
+              );
+
+              const transporter = nodemailer.createTransport({
+                service: "Gmail",
+                auth: {
+                  user: process.env.SMTP_USERNAME,
+                  pass: process.env.SMTP_APP_PASS,
+                },
+              });
+
+              const mailOptions = {
+                from: `"প্রায়োগিক" <${process.env.SMTP_USERNAME}>`,
+                to: payload?.email,
+                subject:
+                  "প্রয়োগিকে স্বাগতম! আপনার পেমেন্ট সফল হয়েছে এবং অ্যাকাউন্ট তৈরি হয়েছে।",
+                html: sendSubscriptionCredential(
+                  payload.email,
+                  username,
+                  temporaryPassword,
+                  purchaseDetailsForEmail
+                ),
+              };
+
+              await transporter.sendMail(mailOptions);
+            } catch (emailError) {
+              console.error("Failed to send welcome email:", emailError);
+            }
+          }
+          // console.log("Purchase after payment Success:", purchase);
+          // console.log("subscription after payment Success:", subscription);
         }
 
         return NextResponse.redirect(
@@ -189,7 +246,9 @@ export async function GET(req: NextRequest) {
         new URL("/checkout?error=Payment cancelled by user", req.url)
       );
     } else if (status === "cancel") {
-      return NextResponse.redirect(new URL("/checkout?error=Payment canceled", req.url));
+      return NextResponse.redirect(
+        new URL("/checkout?error=Payment canceled", req.url)
+      );
     } else {
       return NextResponse.redirect(
         new URL("/checkout?error=Unknown status", req.url)
@@ -342,7 +401,8 @@ async function checkCourseAccess(studentProfileId: string, courseId: string) {
 // Purchase handler for SINGLE_COURSE
 async function handleSingleCoursePurchase(
   payload: any,
-  studentProfile: any
+  studentProfile: any,
+  executePaymentResult: any
 ): Promise<{ purchase: any; subscription: null } | NextResponse> {
   if (!payload.courseId) {
     return createErrorResponse(
@@ -355,7 +415,7 @@ async function handleSingleCoursePurchase(
     studentProfile.id,
     payload.courseId
   );
-  console.log(courseAccess, "courseAccess");
+  // console.log(courseAccess, "courseAccess");
   if (courseAccess.hasAccess) {
     const accessMessage =
       courseAccess.accessType === "direct_enrollment"
@@ -386,6 +446,7 @@ async function handleSingleCoursePurchase(
       teacherProfileId: course.teacherProfileId,
       courseId: payload.courseId,
       purchaseType: "SINGLE_COURSE",
+      bkashData: JSON.parse(JSON.stringify(executePaymentResult)),
     },
   });
 
@@ -409,7 +470,8 @@ async function handleSingleCoursePurchase(
 // Purchase handler for MEMBERSHIP/SUBSCRIPTION
 async function handleMembershipPurchase(
   payload: any,
-  studentProfile: any
+  studentProfile: any,
+  executePaymentResult: any
 ): Promise<{ purchase: any; subscription: any } | NextResponse> {
   if (!payload.subscriptionPlanId) {
     return createErrorResponse(
@@ -476,6 +538,7 @@ async function handleMembershipPurchase(
           ? subscriptionPlan.durationInMonths
           : subscriptionPlan.durationInYears,
       expiresAt,
+      bkashData: JSON.parse(JSON.stringify(executePaymentResult)),
     },
   });
 
@@ -533,7 +596,8 @@ async function handleMembershipPurchase(
 // Purchase handler for OFFER (subscription + course combo OR course with existing subscription)
 async function handleOfferPurchase(
   payload: any,
-  studentProfile: any
+  studentProfile: any,
+  executePaymentResult: any
 ): Promise<
   { purchase: any; subscription: any; scenario?: string } | NextResponse
 > {
@@ -582,7 +646,7 @@ async function handleOfferPurchase(
     payload.courseId &&
     !courseAccess.activeSubscription
   ) {
-    console.log(courseAccess.activeSubscription, "courseAccess 1212");
+    // console.log(courseAccess.activeSubscription, "courseAccess 1212");
 
     const subscriptionPlan = await db.subscriptionPlan.findUnique({
       where: { id: payload.subscriptionPlanId },
@@ -619,6 +683,7 @@ async function handleOfferPurchase(
             ? subscriptionPlan.durationInMonths
             : subscriptionPlan.durationInYears,
         expiresAt,
+        bkashData: JSON.parse(JSON.stringify(executePaymentResult)),
       },
     });
 
@@ -672,7 +737,7 @@ async function handleOfferPurchase(
   if (payload.courseId && courseAccess.activeSubscription) {
     // Use the existing subscription from the access check
     const existingSubscription = courseAccess.activeSubscription;
-    console.log(courseAccess, "existingSubscription 121211");
+    // console.log(courseAccess, "existingSubscription 121211");
     if (!existingSubscription) {
       return createErrorResponse(
         "No active subscription found. Please purchase a subscription first."

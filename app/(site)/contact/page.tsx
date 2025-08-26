@@ -22,7 +22,7 @@ function ContactInfo() {
       </CardHeader>
       <CardContent className="p-0 space-y-5">
         <div className="space-y-2 text-base text-fontcolor-description">
-          <p className="font-secondary">প্রায়োগিক</p>
+          <p className="text-xl text-black font-bold">প্রায়োগিক</p>
           <p>
             নূর বিল্ডিং, ২য় তলা। ৭০০/বি, ডিটি রোড। <br /> দেওয়ানহাট,
             চট্টগ্রাম-৪১০০

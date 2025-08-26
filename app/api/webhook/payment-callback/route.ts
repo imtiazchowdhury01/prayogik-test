@@ -3,8 +3,9 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { db } from "@/lib/db";
 import { PurchaseType } from "@prisma/client";
-import { sendCredentialTemplate } from "@/lib/utils/emailTemplates/send-credential-template";
 import nodemailer from "nodemailer";
+import { sendSubscriptionCredential } from "@/lib/utils/emailTemplates/sendSubscriptionCredential";
+import preparePurchaseDetails from "@/lib/utils/preparePurchaseDetails";
 // Types for the callback payload
 interface BkashCallbackPayload {
   paymentID: string;
@@ -670,6 +671,9 @@ export async function POST(request: NextRequest) {
     const authenticatedUser = await getAuthenticatedUser(request);
     let user: any = authenticatedUser;
     let studentProfile = authenticatedUser?.studentProfile;
+    let isNewUser = false;
+    let temporaryPassword = null;
+    let username = null;
 
     // Handle unauthenticated users
     if (!authenticatedUser) {
@@ -692,12 +696,12 @@ export async function POST(request: NextRequest) {
         // Create new user
         const randomPassword = generateRandomPassword();
         const hashedPassword = await bcrypt.hash(randomPassword, 12);
-        const username = generateUsernameFromEmail(payload.email);
+        const generatedUsername = generateUsernameFromEmail(payload.email);
 
         user = await db.user.create({
           data: {
             name: payload.userInfo?.name || payload.email.split("@")[0],
-            username,
+            username: username || generatedUsername,
             email: payload.email,
             password: hashedPassword,
             phoneNumber:
@@ -711,27 +715,14 @@ export async function POST(request: NextRequest) {
           },
           include: { studentProfile: true },
         });
-
+        isNewUser = true;
+        temporaryPassword = randomPassword;
+        username = generatedUsername; // Assign to the outer scope variable; // Assign to the outer scope variable
         studentProfile = user.studentProfile;
         console.log(
           `New user created with email: ${payload.email}, temporary password: ${randomPassword}`
         );
-        const transporter = nodemailer.createTransport({
-          service: "Gmail",
-          auth: {
-            user: process.env.SMTP_USERNAME,
-            pass: process.env.SMTP_APP_PASS,
-          },
-        });
-
-        const mailOptions = {
-          from: `"প্রায়োগিক" <${process.env.SMTP_USERNAME}>`,
-          to: payload?.email,
-          subject: "প্রয়োগিকে স্বাগতম! আপনার অ্যাকাউন্ট তৈরি হয়েছে।",
-          html: sendCredentialTemplate(payload.email, username, randomPassword),
-        };
-
-        await transporter.sendMail(mailOptions);
+        //---previous
       }
     }
 
@@ -793,6 +784,72 @@ export async function POST(request: NextRequest) {
           subscriptionId: subscription?.id,
         },
       });
+    }
+
+    //--------new: Send email for new users AFTER purchase processing is complete----
+    if (isNewUser && temporaryPassword && username) {
+      console.log(`Attempting to send email to new user: ${payload.email}`);
+      console.log(
+        `isNewUser: ${isNewUser}, temporaryPassword: ${!!temporaryPassword}, username: ${username}`
+      );
+      try {
+        // Get course and subscription plan details for email
+        let courseForEmail = null;
+        let subscriptionPlanForEmail = null;
+
+        if (payload.courseId) {
+          courseForEmail = await db.course.findUnique({
+            where: { id: payload.courseId },
+            select: { title: true },
+          });
+          console.log(`Course details:`, courseForEmail);
+        }
+
+        if (payload.subscriptionPlanId) {
+          subscriptionPlanForEmail = await db.subscriptionPlan.findUnique({
+            where: { id: payload.subscriptionPlanId },
+            select: { name: true },
+          });
+          console.log(`Subscription plan details:`, subscriptionPlanForEmail);
+        }
+
+        // Prepare purchase details for email template
+        const purchaseDetailsForEmail = await preparePurchaseDetails(
+          payload,
+          purchase,
+          subscription,
+          courseForEmail,
+          subscriptionPlanForEmail
+        );
+        console.log(`Purchase details for email:`, purchaseDetailsForEmail);
+
+        const transporter = nodemailer.createTransport({
+          service: "Gmail",
+          auth: {
+            user: process.env.SMTP_USERNAME,
+            pass: process.env.SMTP_APP_PASS,
+          },
+        });
+
+        const mailOptions = {
+          from: `"প্রায়োগিক" <${process.env.SMTP_USERNAME}>`,
+          to: payload?.email,
+          subject:
+            "প্রয়োগিকে স্বাগতম! আপনার পেমেন্ট সফল হয়েছে এবং অ্যাকাউন্ট তৈরি হয়েছে।",
+          html: sendSubscriptionCredential(
+            payload.email,
+            username,
+            temporaryPassword,
+            purchaseDetailsForEmail
+          ),
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log(`Welcome email sent to: ${payload.email}`);
+      } catch (emailError) {
+        console.error("Failed to send welcome email:", emailError);
+        // Don't fail the entire request if email fails
+      }
     }
 
     // Prepare response data

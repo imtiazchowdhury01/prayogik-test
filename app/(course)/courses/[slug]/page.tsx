@@ -20,6 +20,8 @@ import SingleCoursePriceTab from "./_components/single-course-price-tab";
 import { generateMultipleBlurDataURLs } from "@/lib/blurGenerator";
 import CourseBreadCrumb from "./_components/CourseBreadCrumb";
 import RelatedCourse from "./_components/RelatedCourse";
+import { CourseMode } from "@prisma/client";
+import LiveCourseIcon from "@/components/LiveCourseIcon";
 
 // Generate static params for all courses
 export async function generateStaticParams() {
@@ -82,6 +84,9 @@ const CourseDetailsPage = async ({ params }: { params: { slug: string } }) => {
         {/* left grid-- */}
         <div className="w-full md:mt-6 sm:mt-8 lg:w-[70%]">
           <div>
+            {course?.courseMode === CourseMode.LIVE && (
+              <LiveCourseIcon isCourseCard={false} />
+            )}
             <h2
               style={{
                 lineHeight: "3.2rem",

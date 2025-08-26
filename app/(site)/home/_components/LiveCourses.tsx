@@ -6,11 +6,9 @@ import { getLiveCoursesDBCall } from "@/lib/data-access-layer/getHomeCourses";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
-const LiveCourses = async () => {
+const LiveCourses = async ({ isLivePage = false }) => {
   const courses = await getLiveCoursesDBCall();
-  if (!courses || courses.length === 0) {
-    return null;
-  }
+  if ((!courses || courses.length === 0) && !isLivePage) return null;
   // Generate blur data URLs for all course images
   const imageUrls = courses
     ?.map((course) => course.imageUrl)

@@ -25,12 +25,6 @@ export default async function SubscriptionPlans(): Promise<JSX.Element> {
 
   return (
     <div className="md:max-w-4xl max-w-7xl px-6 xl:px-0 mx-auto">
-      {/* <div className="h-12 border rounded-lg mb-10 p-4 flex items-center justify-start shadow-customInput">
-        <span className="flex flex-row items-center gap-2">
-          <RefreshCcw className="w-4 h-4 " />
-          আপনার বর্তমান প্ল্যান ১ বছরের। প্ল্যানটি রিনিউ করুন।
-        </span>
-      </div> */}
       {/* Regular subscription plans */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
         {regularPlans.map((plan: SubscriptionPlan, index) => (

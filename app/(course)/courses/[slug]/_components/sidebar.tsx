@@ -13,7 +13,7 @@ export default function Sidebar({
   subscriptionsData,
   plan,
   preview,
-  paymentStatus
+  paymentStatus,
 }) {
   return (
     <div>

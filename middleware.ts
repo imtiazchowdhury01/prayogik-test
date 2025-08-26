@@ -13,7 +13,7 @@ export default withAuth(
 
     // All other protected routes require authentication
     if (!user) {
-      console.log("Redirecting unauthenticated user to signin");
+      // console.log("Redirecting unauthenticated user to signin");
       return NextResponse.redirect(new URL("/signin", req.url));
     }
 
@@ -22,13 +22,13 @@ export default withAuth(
       path.startsWith("/teacher") &&
       !(user?.info?.teacherProfile?.teacherStatus === "VERIFIED")
     ) {
-      console.log("Redirecting non-teacher from teacher route");
+      // console.log("Redirecting non-teacher from teacher route");
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 
     // Admin route protection
     if (path.startsWith("/admin") && !user?.info?.isAdmin) {
-      console.log("Redirecting non-admin from admin route");
+      // console.log("Redirecting non-admin from admin route");
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 

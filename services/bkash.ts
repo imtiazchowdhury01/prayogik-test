@@ -13,10 +13,10 @@ interface BkashConfig {
 }
 
 interface PaymentDetails {
-  amount: number; // product price
-  callbackURL: string; // callback route
-  orderId: string; // order ID
-  reference: string; // optional reference
+  amount: number;
+  callbackURL: string;
+  orderId: string;
+  reference: string;
 }
 
 export async function createPayment(
@@ -26,18 +26,19 @@ export async function createPayment(
   try {
     const { amount, callbackURL, orderId, reference } = paymentDetails;
 
+    // Validation
     if (!amount) {
       return {
         statusCode: 2065,
         statusMessage: "amount required",
       };
-    } else {
-      if (amount < 1) {
-        return {
-          statusCode: 2065,
-          statusMessage: "minimum amount 1",
-        };
-      }
+    }
+
+    if (amount < 1) {
+      return {
+        statusCode: 2065,
+        statusMessage: "minimum amount 1",
+      };
     }
 
     if (!callbackURL) {
@@ -47,26 +48,105 @@ export async function createPayment(
       };
     }
 
+    // Get fresh token for live environment
+    const authToken = await grantToken(bkashConfig);
+
+    if (!authToken) {
+      console.error("Failed to get authentication token");
+      return {
+        statusCode: 2048,
+        statusMessage: "Authentication failed",
+      };
+    }
+
+    console.log("Creating payment with amount:", amount);
+    console.log("Using base URL:", bkashConfig?.base_url);
+
     const response = await axios.post(
       `${bkashConfig?.base_url}/tokenized/checkout/create`,
       {
-        mode: "0011",
+        mode: "0011", //00000 for test, 0011 for live
         currency: "BDT",
         intent: "sale",
-        amount,
+        amount: amount.toString(), // Ensure amount is string
         callbackURL,
         payerReference: reference || "1",
         merchantInvoiceNumber: orderId || "Inv_" + uuidv4().substring(0, 6),
       },
       {
-        headers: await authHeaders(bkashConfig),
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          authorization: authToken,
+          "x-app-key": bkashConfig?.app_key,
+        },
+        timeout: 30000, // 30 seconds timeout
       }
     );
 
     return response?.data;
-  } catch (e) {
-    console.error("Create Bkash Payment Error:", e);
-    return e;
+  } catch (error: any) {
+    console.error(
+      "Create Bkash Payment Error:",
+      error?.response?.data || error.message
+    );
+
+    // If 401, clear the token and retry once
+    if (error?.response?.status === 401) {
+      console.log("Token expired, clearing and retrying...");
+      await clearStoredToken();
+
+      // Retry once with fresh token
+      try {
+        const freshToken = await grantToken(bkashConfig);
+        if (!freshToken) {
+          return {
+            statusCode: 2048,
+            statusMessage: "Authentication failed on retry",
+          };
+        }
+
+        const retryResponse = await axios.post(
+          `${bkashConfig?.base_url}/tokenized/checkout/create`,
+          {
+            mode: "0011",
+            currency: "BDT",
+            intent: "sale",
+            amount: paymentDetails.amount.toString(),
+            callbackURL: paymentDetails.callbackURL,
+            payerReference: paymentDetails.reference || "1",
+            merchantInvoiceNumber:
+              paymentDetails.orderId || "Inv_" + uuidv4().substring(0, 6),
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+              authorization: freshToken,
+              "x-app-key": bkashConfig?.app_key,
+            },
+            timeout: 30000,
+          }
+        );
+
+        return retryResponse?.data;
+      } catch (retryError: any) {
+        console.error(
+          "Retry failed:",
+          retryError?.response?.data || retryError.message
+        );
+        return {
+          statusCode: 2048,
+          statusMessage: "Payment creation failed after retry",
+        };
+      }
+    }
+
+    return {
+      statusCode: error?.response?.status || 5000,
+      statusMessage:
+        error?.response?.data?.statusMessage || "Payment creation failed",
+    };
   }
 }
 
@@ -75,63 +155,91 @@ export async function executePayment(
   paymentID: string
 ) {
   try {
+    const authToken = await grantToken(bkashConfig);
+
+    if (!authToken) {
+      console.error("Failed to get authentication token for execute");
+      return null;
+    }
+
     const response = await axios.post(
       `${bkashConfig?.base_url}/tokenized/checkout/execute`,
       {
         paymentID,
       },
       {
-        headers: await authHeaders(bkashConfig),
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          authorization: authToken,
+          "x-app-key": bkashConfig?.app_key,
+        },
+        timeout: 30000,
       }
     );
 
     return response?.data;
-  } catch (error) {
-    console.log("Error from bkash executePayment: ", error);
+  } catch (error: any) {
+    console.error(
+      "Error from bkash executePayment: ",
+      error?.response?.data || error.message
+    );
     return null;
   }
 }
 
-const authHeaders = async (bkashConfig: BkashConfig) => {
-  return {
-    "Content-Type": "application/json",
-    Accept: "application/json",
-    authorization: await grantToken(bkashConfig),
-    "x-app-key": bkashConfig?.app_key,
-  };
-};
-
 const grantToken = async (bkashConfig: BkashConfig) => {
   try {
+    // For live environment, always get fresh token or check more frequently
     const findToken = await db.bkash.findFirst({
       orderBy: {
         updatedAt: "desc",
       },
     });
 
-    // Check if token exists and is not older than 1 hour
-    if (!findToken || findToken.updatedAt < new Date(Date.now() - 3600000)) {
+    // For live environment, check token more frequently (45 minutes instead of 1 hour)
+    const tokenExpiryTime = 45 * 60 * 1000; // 45 minutes in milliseconds
+
+    if (
+      !findToken ||
+      findToken.updatedAt < new Date(Date.now() - tokenExpiryTime)
+    ) {
+      console.log("Getting fresh token...");
       return await setToken(bkashConfig);
     }
 
+    console.log("Using existing token");
     return findToken.auth_token;
-  } catch (e) {
-    console.log("Error in grantToken:", e);
-    return null;
+  } catch (error) {
+    console.error("Error in grantToken:", error);
+    return await setToken(bkashConfig); // Fallback to getting new token
   }
 };
 
 const setToken = async (bkashConfig: BkashConfig) => {
   try {
+    console.log("Requesting new token from bKash...");
+
     const response = await axios.post(
       `${bkashConfig?.base_url}/tokenized/checkout/token/grant`,
-      tokenParameters(bkashConfig),
       {
-        headers: tokenHeaders(bkashConfig),
+        app_key: bkashConfig?.app_key,
+        app_secret: bkashConfig?.app_secret,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          username: bkashConfig?.username,
+          password: bkashConfig?.password,
+        },
+        timeout: 30000,
       }
     );
 
     if (response?.data?.id_token) {
+      console.log("Successfully received new token");
+
       // First, try to find existing token
       const existingToken = await db.bkash.findFirst({
         orderBy: {
@@ -147,6 +255,7 @@ const setToken = async (bkashConfig: BkashConfig) => {
           },
           data: {
             auth_token: response?.data?.id_token,
+            updatedAt: new Date(),
           },
         });
       } else {
@@ -157,27 +266,41 @@ const setToken = async (bkashConfig: BkashConfig) => {
           },
         });
       }
+
+      return response?.data?.id_token;
+    } else {
+      console.error("No id_token received from bKash");
+      return null;
+    }
+  } catch (error: any) {
+    console.error("Error in setToken:", error?.response?.data || error.message);
+
+    // Log specific error details for debugging
+    if (error?.response?.status === 401) {
+      console.error("Authentication failed - check your live credentials");
     }
 
-    return response?.data?.id_token;
-  } catch (error) {
-    console.error("Error in setToken:", error);
     return null;
   }
 };
 
-const tokenParameters = (bkashConfig: BkashConfig) => {
-  return {
-    app_key: bkashConfig?.app_key,
-    app_secret: bkashConfig?.app_secret,
-  };
-};
+// Helper function to clear stored token
+const clearStoredToken = async () => {
+  try {
+    const existingToken = await db.bkash.findFirst({
+      orderBy: {
+        updatedAt: "desc",
+      },
+    });
 
-const tokenHeaders = (bkashConfig: BkashConfig) => {
-  return {
-    "Content-Type": "application/json",
-    Accept: "application/json",
-    username: bkashConfig?.username,
-    password: bkashConfig?.password,
-  };
+    if (existingToken) {
+      await db.bkash.delete({
+        where: {
+          id: existingToken.id,
+        },
+      });
+    }
+  } catch (error) {
+    console.error("Error clearing token:", error);
+  }
 };

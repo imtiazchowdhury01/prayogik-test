@@ -56,9 +56,9 @@ async function rollbackDatabaseChanges(
       //   },
       // });
     });
-    console.log(
-      `Successfully rolled back database changes for lesson ${lessonId}`
-    );
+    // console.log(
+    //   `Successfully rolled back database changes for lesson ${lessonId}`
+    // );
   } catch (error) {
     console.error(
       `Failed to rollback database changes for lesson ${lessonId}:`,
@@ -80,7 +80,7 @@ async function handleInitiate(data: any) {
       (async () => {
         if (isReplacing && originalVideoId && originalVideoId.trim() !== "") {
           try {
-            console.log(`Attempting to replace video: ${originalVideoId}`);
+            // console.log(`Attempting to replace video: ${originalVideoId}`);
             videoReplacementAttempted = true;
 
             // Check if video exists
@@ -96,14 +96,14 @@ async function handleInitiate(data: any) {
             );
 
             if (videoCheckResponse.ok) {
-              console.log(
-                `Video ${originalVideoId} exists, proceeding with deletion`
-              );
+              // console.log(
+              //   `Video ${originalVideoId} exists, proceeding with deletion`
+              // );
               const deleted = await deleteVideoFromVdoCipher(originalVideoId);
               if (deleted) {
-                console.log(
-                  `Successfully deleted old video: ${originalVideoId}`
-                );
+                // console.log(
+                //   `Successfully deleted old video: ${originalVideoId}`
+                // );
                 // Add delay to ensure VdoCipher processes the deletion
                 await new Promise((resolve) => setTimeout(resolve, 3000));
               }
@@ -182,9 +182,9 @@ async function handleInitiate(data: any) {
           },
         });
       });
-      console.log(
-        `Created initial database record for lesson ${lessonId} with video ${videoId}`
-      );
+      // console.log(
+      //   `Created initial database record for lesson ${lessonId} with video ${videoId}`
+      // );
     }
 
     return {
@@ -248,9 +248,9 @@ async function handleFinalize(data: any) {
         return { lessonUpdate };
       });
 
-      console.log(
-        `Successfully completed all database operations for video ${videoId}`
-      );
+      // console.log(
+      //   `Successfully completed all database operations for video ${videoId}`
+      // );
     }
 
     return {

@@ -2,6 +2,8 @@
 import React, { useState } from "react";
 import { VisitorLessonCard } from "./visitor-lesson-card";
 import { ShowMoreLessons } from "./show-more-lessons";
+import { CourseMode } from "@prisma/client";
+import LiveCourseVisitorCard from "./live-course-visitor-card";
 
 interface ShowMoreLessonsClientProps {
   course: any;
@@ -21,9 +23,17 @@ const ShowMoreLessonsClient = ({
   return (
     <>
       {/* Render all visible lessons */}
-      {lessonsToShow.map((lesson: any) => (
-        <VisitorLessonCard key={lesson.id} lesson={lesson} course={course} />
-      ))}
+      {lessonsToShow.map((lesson: any) =>
+        course?.courseMode === CourseMode.RECORDED ? (
+          <VisitorLessonCard key={lesson.id} lesson={lesson} course={course} />
+        ) : (
+          <LiveCourseVisitorCard
+            key={lesson.id}
+            lesson={lesson}
+            course={course}
+          />
+        )
+      )}
 
       {/* Show more/less button */}
       {course.lessons.length > visibleLessonCount && (

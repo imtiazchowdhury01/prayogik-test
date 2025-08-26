@@ -25,7 +25,7 @@ const page = () => {
       <PrimeIntro />
       <SpecialLaunchingOffer />
       <PrimeBenefitsOverview />
-      <CourseRoadmapOverView />
+      {/* <CourseRoadmapOverView /> */}
       <StudentFeedback />
       <MentorFeedback />
       <PrimePlanFeatures />

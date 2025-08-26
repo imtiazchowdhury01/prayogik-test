@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { clearServerCart, setServerCart } from "@/lib/actions/cart-cookie";
 import { useSession } from "next-auth/react";
-import { convertNumberToBangla } from "@/lib/convertNumberToBangla";
+import { Loader } from "lucide-react"; // Import the loader icon
 
 // Types
 interface SubscriptionPlan {
@@ -39,9 +39,10 @@ const BUTTON_VARIANTS = {
   primary: "hover:bg-primary-700 bg-brand text-white py-3",
   secondary:
     "bg-secondary-button hover:bg-secondary-button hover:opacity-85 text-white px-6 py-1.5 text-base",
-  disabled:
-    "bg-gray-400 hover:bg-gray-400 text-white opacity-60 cursor-not-allowed px-6 py-1.5 text-base",
-  loading: "bg-gray-300 text-gray-600 cursor-wait px-6 py-1.5 text-base",
+  disable:
+    "bg-gray-400 text-white opacity-60 cursor-not-allowed px-6 py-1.5 text-base disabled:hover:bg-gray-300",
+  loading:
+    "bg-gray-300 text-gray-600 cursor-wait px-6 py-1.5 text-base disabled:hover:bg-gray-300",
 } as const;
 
 const LOADING_TEXT = "অপেক্ষা করুন...";
@@ -56,6 +57,7 @@ const PurchasePlanButton: React.FC<PurchasePlanButtonProps> = ({
   const router = useRouter();
   const { status } = useSession();
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false); // New state for button action loading
   const [activeSubscription, setActiveSubscription] =
     useState<ActiveSubscription | null>(null);
 
@@ -148,39 +150,46 @@ const PurchasePlanButton: React.FC<PurchasePlanButtonProps> = ({
     (plan?.isTrial && hasUsedTrial);
 
   const getVariantClass = (): keyof typeof BUTTON_VARIANTS => {
-    if (loading) return "loading";
-    if (isDisabled) return "disabled";
+    if (loading || actionLoading) return "loading";
+    if (isDisabled) return "disable";
     return variant;
   };
 
   // Handle button click
   const handlePlanAction = useCallback(async () => {
-    if (!plan || isDisabled) return;
+  if (!plan || isDisabled) return;
 
-    try {
-      await clearServerCart();
-      await setServerCart({
-        type: "SUBSCRIPTION",
-        items: [
-          {
-            planId: plan.id,
-            activeSubscription,
-            hasUsedTrial,
-          },
-        ],
-      } as any);
+  try {
+    setActionLoading(true); // Show loader immediately
 
-      router.push("/checkout");
-    } catch (error) {
-      console.error("Error handling plan action:", error);
-    }
-  }, [plan, isDisabled, activeSubscription, hasUsedTrial, router]);
+    // Perform API actions sequentially
+    await clearServerCart();
+    await setServerCart({
+      type: "SUBSCRIPTION",
+      items: [
+        {
+          planId: plan.id,
+          activeSubscription,
+          hasUsedTrial,
+        },
+      ],
+    } as any);
+
+    // Once done, navigate to checkout
+    router.push("/checkout");
+  } catch (error) {
+    console.error("Error handling plan action:", error);
+  } finally {
+    setActionLoading(false); // Hide loader after navigation attempt
+  }
+}, [plan, isDisabled, activeSubscription, hasUsedTrial, router]);
+
 
   // Render loading spinner
-  const LoadingSpinner = () => (
-    <div className="flex items-center gap-2">
-      {/* <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" /> */}
-      <span>{getButtonText()}</span>
+  const LoadingSpinner = ({ text }: { text?: string }) => (
+    <div className="flex items-center gap-2 justify-center">
+      <Loader className="w-4 h-4 animate-spin" />
+      {/* <span>{text || LOADING_TEXT}</span> */}
     </div>
   );
 
@@ -192,10 +201,15 @@ const PurchasePlanButton: React.FC<PurchasePlanButtonProps> = ({
   return (
     <Button
       onClick={handlePlanAction}
-      disabled={isDisabled || loading}
-      className={buttonClasses}
+      disabled={isDisabled || loading || actionLoading}
+      className={`${buttonClasses} transition-all duration-300 ease-linear`}
+      aria-label={getButtonText()}
     >
-      {loading ? <LoadingSpinner /> : children || getButtonText()}
+      {loading || actionLoading ? (
+        <LoadingSpinner />
+      ) : (
+        children || getButtonText()
+      )}
     </Button>
   );
 };

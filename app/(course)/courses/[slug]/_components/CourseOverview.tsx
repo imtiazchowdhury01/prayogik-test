@@ -11,13 +11,12 @@ const CourseOverview = ({
   blurDataURL,
 }: {
   course: any;
-  blurDataURL: any;
+  blurDataURL?: string | null; // Make it optional
 }) => {
   const freeLesson = course?.lessons?.find(
     (lesson: any) => lesson.isFree && lesson.videoUrl
   );
-  // Check if image is static or dynamic
-  // const isStaticImage = imgSrc.startsWith("/") && !imgSrc.startsWith("http");
+
   return (
     <section id="overview" className="my-8">
       <VideoDialog course={course} freeLesson={freeLesson}>
@@ -33,8 +32,8 @@ const CourseOverview = ({
             height={0}
             sizes="100vw"
             className="object-cover w-full h-full rounded-lg bg-gray-50"
-            placeholder="blur"
-            blurDataURL={blurDataURL}
+            placeholder={blurDataURL ? "blur" : "empty"} // Conditionally set placeholder
+            blurDataURL={blurDataURL || ""} // Will be undefined if not provided
             quality={75}
             priority={false}
           />

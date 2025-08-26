@@ -33,8 +33,10 @@ import { Button } from "./ui/button";
 export default function UserProfileMenus({ session, subscription, pathName }) {
   const router = useRouter();
   const displayName = session?.user?.name;
+  // console.log("subscription result:", subscription);
   const isSubscribed = subscription?.status === "ACTIVE";
-
+  const isTrial = subscription?.isTrial;
+  const isExpired = subscription?.status === "EXPIRED";
 
   const subscriptionName =
     subscription?.subscriptionPlan?.name || "সাবস্ক্রিপশন";
@@ -95,19 +97,12 @@ export default function UserProfileMenus({ session, subscription, pathName }) {
 
           {/* Subscription Item - Menu closes on click */}
           <MenubarItem
-            className={cn(
-              "space-x-1 flex items-start group"
-              // isSubscribed
-              //   ? "cursor-not-allowed pointer-events-none"
-              //   : "cursor-pointer hover:bg-muted"
-            )}
+            className={cn("space-x-1 flex items-start group")}
             onSelect={() => {
               if (isSubscribed) {
                 handleNavigation("/prime");
               }
             }}
-            // tabIndex={isSubscribed ? -1 : 0}
-            // aria-disabled={isSubscribed}
           >
             <div className="w-full p-0">
               <div className="space-y-1">
@@ -123,16 +118,17 @@ export default function UserProfileMenus({ session, subscription, pathName }) {
                   </p>
                 </div>
 
-                {isSubscribed ? (
+                {/* Show badge for both active and expired subscriptions */}
+                {(isSubscribed || isExpired) && (
                   <>
                     <Badge
                       className={`ml-4 ${
-                        subscription?.status === "EXPIRED"
+                        isExpired
                           ? "bg-red-500 hover:bg-red-600"
                           : "bg-[#408B85] hover:bg-[#408B85]"
-                      }  `}
+                      }`}
                     >
-                      {subscription?.status === "EXPIRED" ? "মেয়াদ শেষ" : "সাবস্ক্রাইবড"}
+                      {isExpired ? "মেয়াদ শেষ" : "সাবস্ক্রাইবড"}
                     </Badge>
 
                     {subscription?.expiresAt ? (
@@ -144,23 +140,29 @@ export default function UserProfileMenus({ session, subscription, pathName }) {
                         {formatDateToBangla(new Date(subscription?.expiresAt))}
                       </p>
                     ) : null}
+
+                    {/* Show upgrade link for trial OR renew link for non-trial expired */}
                     <Link href="/prime">
                       <span className="bg-transparent text-brand underline text-xs ml-4 cursor-pointer mt-1">
-                        প্ল্যান আপগ্রেড করুন
+                        {isTrial
+                          ? "প্ল্যান আপগ্রেড করুন"
+                          : isExpired && !subscription.type ==='TRIAL'
+                          ? "রিনিউ করুন"
+                          : "প্ল্যান আপগ্রেড করুন"}
                       </span>
                     </Link>
                   </>
-                ) : (
+                )}
+
+                {/* Show default message when no subscription */}
+                {!isSubscribed && !isExpired && (
                   <div>
                     <p
                       className="text-xs font-normal text-gray-500 select-text"
                       onClick={handleTextClick}
                     >
-                      {subscription?.expiresAt
-                        ? `*মেয়াদ শেষ ${formatDateToBangla(
-                            new Date(subscription?.expiresAt)
-                          )}`
-                        : "প্রায়োগিকে সাবস্ক্রাইব করে আনলিমিটেড ফ্রি কোর্স এক্সেস করুন"}
+                      প্রায়োগিকে সাবস্ক্রাইব করে আনলিমিটেড ফ্রি কোর্স এক্সেস
+                      করুন
                     </p>
                     <Link href="/prime">
                       <span className="bg-transparent text-brand underline text-xs ml-1 mt-1">
