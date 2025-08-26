@@ -1,9 +1,10 @@
-import SubscriptionCheckout from "./_components/subscription-checkout";
-import { getServerCart } from "@/lib/actions/cart-cookie";
-import CourseCheckout from "./_components/course-checkout";
-import Link from "next/link";
+export const dynamic = "force-dynamic";
 import { Button } from "@/components/ui/button";
+import { getServerCart } from "@/lib/actions/cart-cookie";
 import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import CourseCheckout from "./_components/course-checkout";
+import SubscriptionCheckout from "./_components/subscription-checkout";
 
 interface CheckOutPageProps {
   searchParams: {

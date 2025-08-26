@@ -1,4 +1,50 @@
 
+// import CourseWrapper from "./_components/CourseWrapper";
+// import type { Metadata } from "next";
+// import { getCategoriesDBCall } from "@/lib/data-access-layer/categories";
+// import { getCoursesDbCall } from "@/lib/data-access-layer/course";
+
+// export const metadata: Metadata = {
+//   title: "New Online Courses | Learn Practical Skills in Bangla | Prayogik",
+//   description:
+//     "Discover the latest online courses to boost your skills. Learn practical, career-focused topics through short and simple lessons — all in Bangla, only on Prayogik.",
+// };
+
+// interface SearchParams {
+//   page?: number;
+//   category?: string;
+//   sort?: "asc" | "desc";
+//   search?: string;
+//   limit?: number;
+// }
+
+// interface CategoryPageProps {
+//   searchParams: SearchParams;
+// }
+// const AllCourses = async ({ searchParams }: CategoryPageProps) => {
+//   const [response, categories]: any = await Promise.all([
+//     getCoursesDbCall({
+//       title: searchParams.search,
+//       category: searchParams.category,
+//       page: Number(searchParams.page),
+//       sort: searchParams.sort,
+//       limit: Number(searchParams.limit) || 24,
+//     }),
+//     getCategoriesDBCall(),
+//   ]);
+//   const courses = response?.courses;
+//   return (
+//     <CourseWrapper
+//       initalData={courses}
+//       pagination={response?.pagination}
+//       categories={categories}
+//     />
+//   );
+// };
+
+// export default AllCourses;
+
+// ------------------------------------
 
 import CourseWrapper from "./_components/CourseWrapper";
 import type { Metadata } from "next";

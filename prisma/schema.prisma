@@ -195,24 +195,24 @@ model TeacherRank {
 
 // Represents a course created by a teacher.
 model Course {
-  id               String   @id @default(auto()) @map("_id") @db.ObjectId
-  title            String
-  slug             String   @unique
-  description      String?
-  imageUrl         String?
-  totalDuration    Int?
-  learningOutcomes String[]
-  requirements     String[]
-  whoFor           String[]
-  prices           Price[]
-  isPublished      Boolean  @default(false)
+  id                  String     @id @default(auto()) @map("_id") @db.ObjectId
+  title               String
+  slug                String     @unique
+  description         String?
+  imageUrl            String?
+  totalDuration       Int?
+  learningOutcomes    String[]
+  requirements        String[]
+  whoFor              String[]
+  prices              Price[]
+  isPublished         Boolean    @default(false)
   isUnderSubscription Boolean    @default(false)
   courseType          CourseType @default(MINI)
 
   // Course Mode is recorded or live
-  courseMode          CourseMode @default(RECORDED)
-  courseLiveLink      String?
-  courseLiveLinkPassword String?
+  courseMode                CourseMode @default(RECORDED)
+  courseLiveLink            String?
+  courseLiveLinkPassword    String?
   courseLiveLinkScheduledAt DateTime?
 
   teacherProfileId String         @db.ObjectId
@@ -248,7 +248,6 @@ model Course {
 
   createdAt DateTime? @default(now())
   updatedAt DateTime? @updatedAt
-
 }
 
 // Represents a category of a course.
@@ -577,14 +576,14 @@ model SubscriptionDiscount {
 
 // Represent individual plan for subscription   
 model SubscriptionPlan {
-  id           String           @id @default(auto()) @map("_id") @db.ObjectId
-  name         String           @unique
-  type         SubscriptionType?
-  regularPrice Float?
-  offerPrice             Float?  // Offer price for subscription
+  id               String            @id @default(auto()) @map("_id") @db.ObjectId
+  name             String            @unique
+  type             SubscriptionType?
+  regularPrice     Float?
+  offerPrice       Float? // Offer price for subscription
   // Duration in details
-  durationInMonths Int? @default(1)
-  durationInYears  Int? @default(1)
+  durationInMonths Int?              @default(1)
+  durationInYears  Int?              @default(1)
 
   isTrial             Boolean @default(false)
   trialDurationInDays Int?    @default(30)
@@ -596,8 +595,8 @@ model SubscriptionPlan {
   // one to many realtion to Course model
   courses Course[]
 
-  subscription Subscription[]
-  Purchase     Purchase[]
+  subscription         Subscription[]
+  Purchase             Purchase[]
   bkashPurchaseHistory BkashPurchaseHistory[]
 
   createdAt DateTime? @default(now())
@@ -720,29 +719,28 @@ model NewsletterTag {
   updatedAt             DateTime               @updatedAt
 }
 
-
-model Bkash{
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+model Bkash {
+  id         String  @id @default(auto()) @map("_id") @db.ObjectId
   auth_token String?
-  
+
   updatedAt DateTime @updatedAt
   createdAt DateTime @default(now())
 }
 
-model BkashPurchaseHistory{
+model BkashPurchaseHistory {
   id String @id @default(auto()) @map("_id") @db.ObjectId
-  
-  bkashPaymentId String? 
-  email String
-  amount Float
-  subscriptionPlanId String? @db.ObjectId
-  subscriptionPlan SubscriptionPlan? @relation(fields: [subscriptionPlanId], references: [id])
+
+  bkashPaymentId     String?
+  email              String
+  amount             Float
+  subscriptionPlanId String?           @db.ObjectId
+  subscriptionPlan   SubscriptionPlan? @relation(fields: [subscriptionPlanId], references: [id])
 
   courseId String? @db.ObjectId
-  course Course? @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  course   Course? @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   purchaseType PurchaseType
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

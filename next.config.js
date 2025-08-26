@@ -69,24 +69,24 @@ const nextConfig = {
       })
     );
 
-    if (!dev) {
-      config.optimization.splitChunks = {
-        chunks: "all",
-        maxSize: 244 * 1024,
-      };
+    // if (!dev) {
+    //   config.optimization.splitChunks = {
+    //     chunks: "all",
+    //     maxSize: 244 * 1024,
+    //   };
 
-      config.optimization.minimizer.forEach((plugin) => {
-        if (plugin.constructor.name === "TerserPlugin") {
-          plugin.options.terserOptions = {
-            ...plugin.options.terserOptions,
-            compress: {
-              ...plugin.options.terserOptions?.compress,
-              drop_console: true,
-            },
-          };
-        }
-      });
-    }
+    //   config.optimization.minimizer.forEach((plugin) => {
+    //     if (plugin.constructor.name === "TerserPlugin") {
+    //       plugin.options.terserOptions = {
+    //         ...plugin.options.terserOptions,
+    //         compress: {
+    //           ...plugin.options.terserOptions?.compress,
+    //           drop_console: true,
+    //         },
+    //       };
+    //     }
+    //   });
+    // }
 
     return config;
   },
