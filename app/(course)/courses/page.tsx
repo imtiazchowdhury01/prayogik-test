@@ -50,26 +50,14 @@
 // export const dynamic = "force-static";
 import CourseWrapper from "./_components/CourseWrapper";
 import type { Metadata } from "next";
-import { fetchCategories } from "@/services";
 import { getCoursesDbCall } from "@/lib/data-access-layer/course";
+import { getCategories } from "@/lib/utils/GetCategories";
 
 export const metadata: Metadata = {
   title: "New Online Courses | Learn Practical Skills in Bangla | Prayogik",
   description:
     "Discover the latest online courses to boost your skills. Learn practical, career-focused topics through short and simple lessons — all in Bangla, only on Prayogik.",
 };
-
-interface SearchParams {
-  page?: number;
-  category?: string;
-  sort?: "asc" | "desc";
-  search?: string;
-  limit?: number;
-}
-
-interface CategoryPageProps {
-  searchParams: SearchParams;
-}
 const AllCourses = async () => {
   const [response, categories]: any = await Promise.all([
     getCoursesDbCall({
@@ -77,7 +65,7 @@ const AllCourses = async () => {
       sort: "desc",
       limit: 24,
     }),
-    fetchCategories(),
+    getCategories(),
   ]);
   const courses = response?.courses;
   return (
