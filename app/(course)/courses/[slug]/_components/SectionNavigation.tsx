@@ -21,6 +21,7 @@ const SectionNavigation = ({ course }: { course: any }) => {
       ...navigation,
       { name: "সিলেবাস", href: "syllabas" },
       { name: "ইন্সট্রাক্টর পরিচিতি", href: "instructor" },
+      { name: "সময়সূচী ও ক্লাসসংখ্যা", href: "live-schedule" },
     ];
   }
 
@@ -44,7 +45,7 @@ const SectionNavigation = ({ course }: { course: any }) => {
             }}
             className={`text-[#475569] inline-block text-nowrap hover:bg-[#e7f4f3] rounded-t-lg font-semibold p-2 transition-all duration-300   ${
               activeNav === navItem.name &&
-              "border-b-[3px] border-primary-brand bg-[#E7F4F3] text-primary-700"
+              "border-b-[3px] border-brand text-brand"
             }`}
           >
             {navItem.name}

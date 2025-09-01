@@ -256,8 +256,6 @@ const TeacherIntro = ({ course, blurDataURL }: TeacherIntroProps) => {
 
             {/* co authors */}
             {course?.coTeachers?.map((coTeacher: any, index: number) => {
-              console.log(coTeacher);
-
               return (
                 <div
                   key={index}

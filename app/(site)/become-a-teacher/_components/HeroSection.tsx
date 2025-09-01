@@ -1,14 +1,9 @@
 import React from "react";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
-import becometeacherhero from "@/public/site/become-teacher/become-teacher-hero.webp";
+// import becometeacherhero from "@/public/site/become-teacher/become-teacher-hero.webp";
+import becometeacherhero from "@/public/course-proposals/course-proposal-hero.webp";
 
 const HeroSection = () => {
-  const programTypes = [
-    "কোর্স তৈরি করুন",
-    "লাইভ ট্রেনিং নিন",
-    "ওয়ার্কশপ ও সেমিনারে কী-নোট স্পিকার হিসেবে যুক্ত হোন",
-  ];
   return (
     <section className="w-full relative bg-brand">
       {/* block image shape */}
@@ -29,26 +24,16 @@ const HeroSection = () => {
               <p>প্রফেশনালদের জন্য সুযোগ </p>
             </div>
             <h1 className="text-3xl md:text-3xl lg:text-[2.3rem] xl:text-[3rem] 2xl:text-[3.2rem] font-bold text-white md:leading-[3rem] lg:leading-[4.87rem] xl:leading-[4.87rem] 2xl:leading-[4.87rem] text-wrap md:text-nowrap ">
-              প্রায়োগিকের সাথে <br /> মেন্টর হিসাবে যুক্ত হোন
+              প্রায়োগিকের সাথে মেন্টর <br className="hidden md:block" /> হিসাবে
+              যুক্ত হোন
             </h1>
-            <p className="md:text-md lg:text-[1.4rem] xl:text-[1.6rem] font-medium text-gray-100 max-w-3xl md:leading-8 mt-3 md:mt-4 lg:mt-6 font-primary">
-              আপনি যদি সিনিয়র ও অভিজ্ঞ প্রফেশনাল হন, তবে আপনার স্কিল ও অভিজ্ঞতা
-              দিয়ে অন্যদের ক্যারিয়ার গড়তে অবদান রাখুন।
-              <span className="font-bold">প্রায়োগিকের</span> সাথে:
+            <p className="text-lg md:text-lg font-normal text-gray-100 max-w-3xl md:leading-8 mt-3 md:mt-4 lg:mt-6 font-primary">
+              আপনি যদি সিনিয়র ও অভিজ্ঞ  প্রফেশনাল হন, তবে আপনার স্কিল ও অভিজ্ঞতা
+              দিয়ে অন্যদের ক্যারিয়ার গড়তে অবদান রাখুন। কোর্স তৈরি করুন, লাইভ
+              ট্রেনিং নিন এবং ওয়ার্কশপ ও সেমিনারে কী-নোট স্পিকার হিসেবে যুক্ত
+              হোন।
             </p>
-            <ul className="mt-3 lg:mt-4 pl-5">
-              {programTypes.map((type, index) => (
-                <li
-                  key={index}
-                  className={cn(
-                    "md:text-start text-sm md:text-md lg:text-xl font-light max-w-3xl leading-relaxed text-white md:mt-2 list-disc list-outside",
-                    index === 2 && "lg:w-[80%] xl:w-[60%] w-full"
-                  )}
-                >
-                  {type}
-                </li>
-              ))}
-            </ul>
+
             <div className="flex flex-row justify-start md:justify-start gap-4 mt-10">
               <a
                 href="tel:+8801814432875"
@@ -70,7 +55,7 @@ const HeroSection = () => {
             </div>
           </div>
           {/* image */}
-          <div className="relative w-full max-w-[520px] aspect-[520/453] overflow-hidden pl-16 hidden md:block">
+          <div className="relative w-full md:max-w-[520px] aspect-[520/453] overflow-hidden pl-16  mt-8 md:mt-0">
             <Image
               src={becometeacherhero}
               alt="কোর্স হিরো"

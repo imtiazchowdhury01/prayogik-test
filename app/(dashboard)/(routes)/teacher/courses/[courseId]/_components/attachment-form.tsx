@@ -55,8 +55,10 @@ export const AttachmentForm = ({
       toast.success("Course updated");
       toggleEdit();
         await revalidatePage([
-      { route: '/(site)', type: "layout" },
-      { route: "/courses", type: "layout" },
+      { route: "/", type: "page" },
+        { route: "/home", type: "page" },
+        { route: "/live", type: "page" },
+        { route: "/courses", type: "layout" },
     ]);
       router.refresh();
     } catch {
@@ -77,8 +79,10 @@ export const AttachmentForm = ({
 
       toast.success("Attachment deleted");
         await revalidatePage([
-      { route: '/(site)', type: "layout" },
-      { route: "/courses", type: "layout" },
+      { route: "/", type: "page" },
+        { route: "/home", type: "page" },
+        { route: "/live", type: "page" },
+        { route: "/courses", type: "layout" },
     ]);
       router.refresh();
     } catch {

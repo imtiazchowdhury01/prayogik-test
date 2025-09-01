@@ -13,13 +13,12 @@ interface UpdateCourseOptions {
   api?: string;
 }
 
-
 /**
  * Updates a course by sending a PATCH request to the specified API route.
- * 
+ *
  * This function handles loading state, error and success toasts, optional UI toggling,
  * route revalidation, and router refreshing after a successful update.
- * 
+ *
  * @param {UpdateCourseOptions} options - The options for updating the course.
  * @param {string} options.courseId - The ID of the course to update.
  * @param {any} options.values - The values to update in the course.
@@ -28,9 +27,9 @@ interface UpdateCourseOptions {
  * @param {AppRouterInstance} options.router - Next.js router instance used to refresh the route.
  * @param {string} [options.successMessage] - Optional success message to show in toast.
  * @param {string} [options.api] - Optional custom API endpoint for the update.
- * 
+ *
  * @returns {Promise<void>} A promise that resolves when the update is complete.
- * 
+ *
  * @example
  * await updateCourse({
  *   courseId: "123",
@@ -57,7 +56,9 @@ export const updateCourse = async ({
     await axios.patch(apiRoute, values);
     toast.success(successMessage || "Course updated");
     await revalidatePage([
-      { route: '/(site)', type: "layout" },
+      { route: "/", type: "page" },
+      { route: "/home", type: "page" },
+      { route: "/live", type: "page" },
       { route: "/courses", type: "layout" },
     ]);
     if (toggleEdit) {

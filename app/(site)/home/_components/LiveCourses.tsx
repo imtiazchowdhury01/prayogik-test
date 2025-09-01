@@ -8,6 +8,7 @@ import Link from "next/link";
 
 const LiveCourses = async ({ isLivePage = false }) => {
   const courses = await getLiveCoursesDBCall();
+
   if ((!courses || courses.length === 0) && !isLivePage) return null;
   // Generate blur data URLs for all course images
   const imageUrls = courses

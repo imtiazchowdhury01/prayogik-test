@@ -11,9 +11,7 @@ import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 import { RouteHandler } from "@/lib/utils/server/route-handler";
 import { deleteFolderInVdeocipherByCourseId } from "@/lib/utils/vdeocipher";
-import { Role } from "@prisma/client";
 import { NextResponse } from "next/server";
-import { z } from "zod";
 
 const routeHandler = new RouteHandler();
 
@@ -327,6 +325,7 @@ export async function PATCH(
         lessons: true,
         category: true,
         attachments: true,
+        liveSchedules: true, // Include existing schedules
       },
     });
 
@@ -334,6 +333,9 @@ export async function PATCH(
     if (!existingCourse) {
       return new NextResponse("Not found", { status: 404 });
     }
+
+    // Extract liveSchedules from values to handle separately
+    const { liveSchedules, ...courseUpdateData } = values;
 
     // Get current coTeacherIds from the existing course
     const currentCoTeachers = existingCourse.coTeacherIds || [];
@@ -389,11 +391,6 @@ export async function PATCH(
 
         // Add courseId to new co-teachers' coTeachingCourseIds
         if (teachersToAdd.length > 0) {
-          // console.log(
-          //   `Adding co-teachers to course ${courseId}:`,
-          //   teachersToAdd
-          // );
-
           for (const coTeacherId of teachersToAdd) {
             try {
               const existingProfile = await db.teacherProfile.findUnique({
@@ -462,13 +459,38 @@ export async function PATCH(
       }
     }
 
-    // Update the course with the provided fields
+    // Handle LiveSchedules separately if provided
+    if (liveSchedules !== undefined) {
+      // First, delete all existing schedules for this course
+      await db.liveSchedule.deleteMany({
+        where: {
+          courseId: courseId,
+        },
+      });
+
+      // Then create new schedules if any provided
+      if (liveSchedules && liveSchedules.length > 0) {
+        const scheduleCreateData = liveSchedules.map((schedule: any) => ({
+          courseId: courseId,
+          dayOfWeek: schedule.dayOfWeek,
+          startTime: new Date(schedule.startTime),
+          endTime: new Date(schedule.endTime),
+        }));
+
+        await db.liveSchedule.createMany({
+          data: scheduleCreateData,
+        });
+      }
+    }
+
+    // Update the course with the provided fields (excluding liveSchedules)
     const updatedCourse = await db.course.update({
       where: {
         id: courseId,
       },
-      data: {
-        ...values, // Only apply the fields being updated
+      data: courseUpdateData, // Only course fields, not relations
+      include: {
+        liveSchedules: true, // Include updated schedules in response
       },
     });
 

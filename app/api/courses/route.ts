@@ -162,7 +162,8 @@ export async function GET(req: Request) {
         isUnderSubscription: true,
         courseMode: true,
         courseType: true,
-        courseLiveLinkScheduledAt: true,
+        courseLiveBatchStartedAt: true,
+        liveSchedules: true,
         courseLiveLink: true,
         lessons: {
           where: {

@@ -16,7 +16,7 @@ export const CourseCard = ({
   course: any;
   blurDataMap: any;
 }) => {
-  console.log("cuourse result:", course);
+  // console.log("cuourse result:", course);
   if (!course) {
     return (
       <div className="bg-transparent p-4 h-28 flex items-center justify-center">

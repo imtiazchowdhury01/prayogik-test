@@ -24,7 +24,7 @@ interface LiveLinkFormProps {
   initialData: {
     courseLiveLink?: string | null;
     courseLiveLinkPassword?: string | null;
-    courseLiveLinkScheduledAt?: Date | null;
+    courseLiveBatchStartedAt?: Date | null;
   };
   courseId: string;
 }
@@ -36,7 +36,7 @@ const formSchema = z.object({
     .optional()
     .or(z.literal("")),
   courseLiveLinkPassword: z.string().optional(),
-  courseLiveLinkScheduledAt: z.string().optional(),
+  courseLiveBatchStartedAt: z.string().optional(),
 });
 
 export const LiveLinkForm = ({ initialData, courseId }: LiveLinkFormProps) => {
@@ -53,8 +53,8 @@ export const LiveLinkForm = ({ initialData, courseId }: LiveLinkFormProps) => {
     defaultValues: {
       courseLiveLink: initialData.courseLiveLink || "",
       courseLiveLinkPassword: initialData.courseLiveLinkPassword || "",
-      courseLiveLinkScheduledAt: formatDateForInput(
-        initialData.courseLiveLinkScheduledAt
+      courseLiveBatchStartedAt: formatDateForInput(
+        initialData.courseLiveBatchStartedAt
       ),
     },
   });
@@ -69,8 +69,8 @@ export const LiveLinkForm = ({ initialData, courseId }: LiveLinkFormProps) => {
       ...values,
       courseLiveLink: values.courseLiveLink || null,
       courseLiveLinkPassword: values.courseLiveLinkPassword || null,
-      courseLiveLinkScheduledAt: values.courseLiveLinkScheduledAt
-        ? new Date(values.courseLiveLinkScheduledAt).toISOString()
+      courseLiveBatchStartedAt: values.courseLiveBatchStartedAt
+        ? new Date(values.courseLiveBatchStartedAt).toISOString()
         : null,
     };
 
@@ -130,7 +130,7 @@ export const LiveLinkForm = ({ initialData, courseId }: LiveLinkFormProps) => {
             <Calendar className="h-3 w-3 text-gray-500" />
             <span className="font-medium">Scheduled:</span>
             <span className="text-gray-700">
-              {formatDateForDisplay(initialData.courseLiveLinkScheduledAt)}
+              {formatDateForDisplay(initialData.courseLiveBatchStartedAt)}
             </span>
           </div>
         </div>
@@ -187,7 +187,7 @@ export const LiveLinkForm = ({ initialData, courseId }: LiveLinkFormProps) => {
 
             <FormField
               control={form.control}
-              name="courseLiveLinkScheduledAt"
+              name="courseLiveBatchStartedAt"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2">

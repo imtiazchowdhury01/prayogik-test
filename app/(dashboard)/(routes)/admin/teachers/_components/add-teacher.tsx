@@ -113,7 +113,11 @@ const AddTeacher = ({ open, setOpen }) => {
         await revalidatePage([
           {
             route: "/",
-            type: "layout",
+            type: "page",
+          },
+          {
+            route: "/home",
+            type: "page",
           },
           {
             route: "/teachers",

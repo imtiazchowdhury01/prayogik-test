@@ -1,57 +1,55 @@
-// Bengali datetime formatter utility
-export function formatLiveCourseTime(isoString: string): string {
+// ---------- Common constants & utilities ---------- //
+
+// Bengali day names
+const BENGALI_DAYS = [
+  "রবিবার",    // Sunday
+  "সোমবার",    // Monday
+  "মঙ্গলবার",  // Tuesday
+  "বুধবার",    // Wednesday
+  "বৃহস্পতিবার", // Thursday
+  "শুক্রবার",  // Friday
+  "শনিবার",    // Saturday
+];
+
+// Bengali month names
+const BENGALI_MONTHS = [
+  "জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল",
+  "মে", "জুন", "জুলাই", "আগস্ট",
+  "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর",
+];
+
+// Bengali numbers map
+const BENGALI_NUMBERS: { [key: string]: string } = {
+  "0": "০", "1": "১", "2": "২", "3": "৩", "4": "৪",
+  "5": "৫", "6": "৬", "7": "৭", "8": "৮", "9": "৯",
+};
+
+// Convert number to Bengali
+function toBengaliNumber(num: number): string {
+  return num.toString().replace(/[0-9]/g, (digit) => BENGALI_NUMBERS[digit]);
+}
+
+
+// ---------- Formatters ---------- //
+
+// Bengali date formatter utility
+export function formatLiveCourseDate(isoString: string): string {
   const date = new Date(isoString);
 
-  // Bengali day names
-  const bengaliDays = [
-    "রবিবার", // Sunday
-    "সোমবার", // Monday
-    "মঙ্গলবার", // Tuesday
-    "বুধবার", // Wednesday
-    "বৃহস্পতিবার", // Thursday
-    "শুক্রবার", // Friday
-    "শনিবার", // Saturday
-  ];
-
-  // Bengali month names
-  const bengaliMonths = [
-    "জানুয়ারি", // January
-    "ফেব্রুয়ারি", // February
-    "মার্চ", // March
-    "এপ্রিল", // April
-    "মে", // May
-    "জুন", // June
-    "জুলাই", // July
-    "আগস্ট", // August
-    "সেপ্টেম্বর", // September
-    "অক্টোবর", // October
-    "নভেম্বর", // November
-    "ডিসেম্বর", // December
-  ];
-
-  // Bengali numbers
-  const bengaliNumbers: { [key: string]: string } = {
-    "0": "০",
-    "1": "১",
-    "2": "২",
-    "3": "৩",
-    "4": "৪",
-    "5": "৫",
-    "6": "৬",
-    "7": "৭",
-    "8": "৮",
-    "9": "৯",
-  };
-
-  // Convert number to Bengali
-  function toBengaliNumber(num: number): string {
-    return num.toString().replace(/[0-9]/g, (digit) => bengaliNumbers[digit]);
-  }
-
-  // Get components
-  const dayName = bengaliDays[date.getDay()];
   const day = toBengaliNumber(date.getDate());
-  const monthName = bengaliMonths[date.getMonth()];
+  const monthName = BENGALI_MONTHS[date.getMonth()];
+  const year = toBengaliNumber(date.getFullYear());
+
+  return `${day} ${monthName} ${year}`;
+}
+
+// Bengali datetime formatter utility
+export function formatEventTime(isoString: string): string {
+  const date = new Date(isoString);
+
+  const dayName = BENGALI_DAYS[date.getDay()];
+  const day = toBengaliNumber(date.getDate());
+  const monthName = BENGALI_MONTHS[date.getMonth()];
   const hour = date.getHours();
 
   // Determine time period and format hour
@@ -80,7 +78,3 @@ export function formatLiveCourseTime(isoString: string): string {
 
   return `${dayName}, ${day} ${monthName}, ${timeText}`;
 }
-
-// Example usage:
-// const formatted = formatLiveCourseTime('2025-08-18T07:00:00.000Z');
-// console.log(formatted); // Output: সোমবার, ১৮ আগস্ট, সকাল ৭টা

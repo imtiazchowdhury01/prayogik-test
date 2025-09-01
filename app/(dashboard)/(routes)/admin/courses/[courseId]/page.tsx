@@ -111,7 +111,6 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
     course.prices.some((price: any) => price.regularAmount) ||
       course.prices[0]?.isFree,
     course.categoryId,
-    // course.lessons.some((chapter: any) => chapter.isPublished),
   ];
 
   // Calculate course setup progress
@@ -121,6 +120,7 @@ const CourseIdPage = async ({ params }: { params: { courseId: string } }) => {
   const isComplete = requiredFields.every(Boolean);
   const teacherProfileId = await useTeacherProfile(userId);
   const isCourseAuthor = course.teacherProfileId === teacherProfileId;
+  // console.log("course result:", course);
   return (
     <>
       {!course.isPublished && (

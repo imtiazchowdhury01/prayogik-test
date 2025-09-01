@@ -18,7 +18,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader } from "lucide-react"; // Import Loader
-import { revalidatePage } from "@/actions/revalidatePage";
 import { updateCourse } from "@/lib/course/updateCourse";
 
 interface TitleFormProps {

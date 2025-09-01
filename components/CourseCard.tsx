@@ -11,7 +11,6 @@ import FreeLessonPreviewButton from "./FreeLessonPreviewButton";
 import { Clock, UserRound } from "lucide-react";
 import { GradientBorderBadge } from "./ui/badge";
 import { CourseMode } from "@prisma/client";
-import { formatLiveCourseTime } from "@/lib/utils/formatLiveCourseTime";
 import LiveCourseIcon from "./LiveCourseIcon";
 import { headers } from "next/headers";
 import LiveCourseTime from "./liveCourseTime";
@@ -33,6 +32,7 @@ const CourseCard = ({
   blurDataURL?: string;
   pathname?: string;
 }) => {
+  
   const { slug, imageUrl, progress, lessons, nextLessonSlug = null } = course;
   const freeLesson = lessons?.find(
     (lesson: any) => lesson.isFree && lesson.videoUrl

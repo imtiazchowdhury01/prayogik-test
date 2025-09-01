@@ -31,6 +31,7 @@ import { FileText } from "lucide-react";
 import { db } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { notFound } from "next/navigation";
+import { getSubscriptionDBCall } from "@/lib/data-access-layer/subscriptions";
 
 // Generate metadata for this page
 export async function generateMetadata({
@@ -58,39 +59,13 @@ export async function generateMetadata({
 
 const CoursePreview = async ({ params }: { params: { courseId: string } }) => {
   const { isAdmin, userId } = await getServerUserSession();
-
-  // if (!userId) return notFound();
-
-  // const teacherProfile = await db.teacherProfile.findUnique({
-  //   where: {
-  //     userId: userId, // Getting the teacher profile using userId
-  //   },
-  // });
-
-  // let teacherProfileId = teacherProfile?.id;
-
-  // const teacherOrCoTeacherAccess = await db.course.findUnique({
-  //   where: {
-  //     id: params.courseId,
-  //     OR: [
-  //       {
-  //         teacherProfileId,
-  //       },
-  //       {
-  //         coTeacherIds: {
-  //           hasSome: [teacherProfileId],
-  //         },
-  //       },
-  //     ],
-  //   },
-  // });
-
-  // if (!teacherOrCoTeacherAccess && !isAdmin) return notFound();
-
   const course = await getCourseByCourseIdForPreview(params?.courseId);
-
   const salesData = await fetchSubscriptionDisounts();
   const subscriptionsData = await fetchUserSubscription();
+
+  const allSubscription = await getSubscriptionDBCall();
+
+  const plan = allSubscription.find((p) => p.isDefault);
 
   return (
     <section className="min-h-[70vh] w-full">
@@ -269,23 +244,26 @@ const CoursePreview = async ({ params }: { params: { courseId: string } }) => {
               )}
           </section>
           <Syllabas course={course} />
+
           <div className="block w-full lg:hidden">
+            {/* mobile view */}
             <Sidebar
               course={course}
               access={false}
               userId={null}
               lesson={course.lessons}
+              salesData={salesData}
+              subscriptionsData={subscriptionsData}
+              preview={true}
             />
-            <BecomeAProMember />
+            <BecomeAProMember plan={plan} />
           </div>
           <TeacherIntro course={course} />
-          {/* <RelatedSkills /> */}
-          {/* <StudentFeedback /> */}
-          {/* <Faq /> */}
         </div>
         {/* right grid-- */}
         <div className="hidden w-full mt-8 mb-16 lg:block lg:top-20 lg:sticky lg:w-4/12">
           <Badge>Preview Mode</Badge>
+          {/* desktop view */}
           <Sidebar
             course={course}
             access={false}
@@ -295,7 +273,7 @@ const CoursePreview = async ({ params }: { params: { courseId: string } }) => {
             subscriptionsData={subscriptionsData}
             preview={true}
           />
-          <BecomeAProMember />
+          <BecomeAProMember plan={plan} />
         </div>
       </div>
     </section>

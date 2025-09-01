@@ -10,9 +10,9 @@ import { Calendar, Globe, MapPin } from "lucide-react";
 import eventImage1 from "@/public/images/event/event-1.webp";
 import { textLangChecker } from "@/lib/utils/textLangChecker";
 import { getPlainTextFromHtml } from "@/lib/convertNumberToBangla";
-import { formatLiveCourseTime } from "@/lib/utils/formatLiveCourseTime";
 import Link from "next/link";
 import { buttonVariants } from "./ui/button";
+import { formatEventTime } from "@/lib/utils/formatLiveCourseTime";
 
 const EventCard = ({ event }: any) => {
   return (
@@ -46,7 +46,7 @@ const EventCard = ({ event }: any) => {
         <div className="space-y-2">
           <p className="text-[14px] font-semibold flex items-center gap-1">
             <Calendar size={16} className="text-gray-800" />
-            {formatLiveCourseTime(event.date)}
+            {formatEventTime(event.date)}
           </p>
           <div className="flex items-center text-base text-gray-600">
             {!event.isOnline ? (

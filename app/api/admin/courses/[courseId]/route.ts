@@ -26,6 +26,7 @@ export async function GET(req, { params }) {
       },
       include: {
         prices: true,
+        liveSchedules: true,
         lessons: {
           orderBy: {
             position: "asc",

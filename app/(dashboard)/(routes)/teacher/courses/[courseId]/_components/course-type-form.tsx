@@ -89,7 +89,9 @@ export const CourseTypeForm = ({
       toast.success("Course updated");
       setIsEditing(false); // Exit edit mode
       await revalidatePage([
-        { route: "/(site)", type: "layout" },
+        { route: "/", type: "page" },
+        { route: "/home", type: "page" },
+        { route: "/live", type: "page" },
         { route: "/courses", type: "layout" },
       ]);
       router.refresh();

@@ -71,6 +71,7 @@ async function getLiveCoursesDBCall() {
       },
       include: {
         prices: true,
+        liveSchedules: true,
         teacherProfile: {
           include: {
             user: {

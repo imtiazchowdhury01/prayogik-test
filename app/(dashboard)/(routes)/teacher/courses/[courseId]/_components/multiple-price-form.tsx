@@ -212,8 +212,10 @@ export const MultiplePriceForm = ({ initialData, courseId }) => {
       toast.success("Course prices updated successfully");
       toggleEdit();
        await revalidatePage([
-      { route: '/(site)', type: "layout" },
-      { route: "/courses", type: "layout" },
+      { route: "/", type: "page" },
+        { route: "/home", type: "page" },
+        { route: "/live", type: "page" },
+        { route: "/courses", type: "layout" },
     ]);
       router.refresh();
     } catch (error) {

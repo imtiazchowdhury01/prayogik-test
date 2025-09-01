@@ -16,11 +16,11 @@ import {
 import EventOverview from "./_components/EventOverview";
 import Link from "next/link";
 import { Calendar } from "lucide-react";
-import { formatLiveCourseTime } from "@/lib/utils/formatLiveCourseTime";
 import { textLangChecker } from "@/lib/utils/textLangChecker";
 import EventRegisterForm from "./_components/EventRegisterForm";
 import EventSpeakers from "./_components/EventSpeakers";
 import FaqComponent from "@/components/FaqComponent";
+import { formatEventTime } from "@/lib/utils/formatLiveCourseTime";
 
 // // Generate static params for all events
 // export async function generateStaticParams() {
@@ -155,7 +155,7 @@ const EventDetailsPage = async ({
             <h2 className="text-2xl mb-4 font-bold">তারিখ এবং সময়</h2>
             <p className="font-semibold flex items-center gap-2 text-gray-600">
               <Calendar size={16} />
-              {formatLiveCourseTime(String(event.date))}
+              {formatEventTime(String(event.date))}
             </p>
           </div>
           {/* form Part */}

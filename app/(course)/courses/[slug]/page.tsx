@@ -22,6 +22,8 @@ import CourseBreadCrumb from "./_components/CourseBreadCrumb";
 import RelatedCourse from "./_components/RelatedCourse";
 import { CourseMode } from "@prisma/client";
 import LiveCourseIcon from "@/components/LiveCourseIcon";
+import LiveCourseState from "./_components/live-course-state";
+import LiveScheduleDetails from "./_components/live-schedule-details";
 
 // Generate static params for all courses
 export async function generateStaticParams() {
@@ -49,11 +51,8 @@ export async function generateMetadata({
 
 const CourseDetailsPage = async ({ params }: { params: { slug: string } }) => {
   const course = await getCourseDBCall(params.slug);
-
   const allSubscription = await getSubscriptionDBCall();
-
   const plan = allSubscription.find((p) => p.isDefault);
-
   if (!course) {
     redirect("/");
   }
@@ -152,18 +151,24 @@ const CourseDetailsPage = async ({ params }: { params: { slug: string } }) => {
               </>
             ) : null}
 
-            <div className="flex items-center space-x-[6px]">
-              <Image
-                src={"/icon/book-gray.svg"}
-                alt="user-icon"
-                width={16}
-                height={16}
-                className="w-4 h-4 object-contain"
-              />
-              <p className="text-base text-fontcolor-description">
-                {convertNumberToBangla(course?.lessons?.length)} টি লেসন
-              </p>
-            </div>
+            {course?.courseMode === CourseMode.RECORDED && (
+              <div className="flex items-center space-x-[6px]">
+                <Image
+                  src={"/icon/book-gray.svg"}
+                  alt="user-icon"
+                  width={16}
+                  height={16}
+                  className="w-4 h-4 object-contain"
+                />
+                <p className="text-base text-fontcolor-description">
+                  {convertNumberToBangla(course?.lessons?.length)} টি লেসন
+                </p>
+              </div>
+            )}
+            {/* live course state */}
+            {course?.courseMode === CourseMode.LIVE && (
+              <LiveCourseState course={course} />
+            )}
           </div>
 
           <SectionNavigation course={course} />
@@ -225,6 +230,10 @@ const CourseDetailsPage = async ({ params }: { params: { slug: string } }) => {
               </>
             ) : null}
           </section>
+
+          {course?.courseMode === CourseMode.LIVE && (
+            <LiveScheduleDetails course={course} />
+          )}
 
           <Syllabas course={course} />
           <TeacherIntro

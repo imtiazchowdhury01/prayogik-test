@@ -44,7 +44,12 @@ import {
 } from "@/components/ui/accordion";
 import MultiSelect from "@/components/ui/multi-select";
 import DualListBox from "@/components/ui/dual-listbox";
-import { Role, TeacherExpertiseLevel, UserAccountStatus } from "@prisma/client";
+import {
+  Role,
+  TeacherExpertiseLevel,
+  TeacherStatus,
+  UserAccountStatus,
+} from "@prisma/client";
 import RequiredFieldText from "@/components/common/requiredFieldText";
 import RequiredFieldStar from "@/components/common/requiredFieldStar";
 import EducationsInput from "@/app/(dashboard)/(routes)/apply-for-teaching/_components/EducationsInput";
@@ -254,14 +259,19 @@ const UserDetailForm = ({
       form.reset(data);
       toast.success("Changes saved successfully");
       await revalidatePage([
-        {
-          route: "/",
-          type: "layout",
-        },
-        {
-          route: "/teachers",
-          type: "page",
-        },
+        ...(teacherProfile?.id &&
+        teacherProfile?.teacherStatus === TeacherStatus.VERIFIED
+          ? [
+              {
+                route: "/teachers",
+                type: "page",
+              },
+              {
+                route: `/teachers/${initialData?.username}`,
+                type: "page",
+              },
+            ]
+          : []),
       ]);
       router.refresh(); // Refresh the page to update server-side data
     } catch (err) {

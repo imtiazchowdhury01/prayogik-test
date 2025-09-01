@@ -101,6 +101,16 @@ enum CourseType {
   SHORT
 }
 
+enum DayOfWeek {
+  SATURDAY
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+}
+
 // Represents a user in the system, including students, teachers, and admins.
 model User {
   id                     String            @id @default(auto()) @map("_id") @db.ObjectId
@@ -211,10 +221,12 @@ model Course {
   courseType          CourseType @default(MINI)
 
   // Course Mode is recorded or live
-  courseMode                CourseMode @default(RECORDED)
-  courseLiveLink            String?
-  courseLiveLinkPassword    String?
-  courseLiveLinkScheduledAt DateTime?
+  courseMode               CourseMode     @default(RECORDED)
+  courseLiveLink           String?
+  courseLiveLinkPassword   String?
+  courseLiveBatchStartedAt DateTime?
+  totalLiveClass           Int? // Optional field for number of live classes
+  liveSchedules            LiveSchedule[]
 
   teacherProfileId String         @db.ObjectId
   teacherProfile   TeacherProfile @relation("TeacherCourses", fields: [teacherProfileId], references: [id])
@@ -249,6 +261,21 @@ model Course {
 
   createdAt DateTime? @default(now())
   updatedAt DateTime? @updatedAt
+}
+
+model LiveSchedule {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  courseId String @db.ObjectId
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  dayOfWeek DayOfWeek
+  startTime DateTime
+  endTime   DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([courseId, dayOfWeek]) // One schedule per day per course
 }
 
 // Represents a category of a course.
@@ -409,28 +436,6 @@ model MembershipPlan {
   createdAt DateTime? @default(now())
   updatedAt DateTime? @updatedAt
 }
-
-// Represents course purchase data from the AamarPay gateway.
-// model AamarPayData {
-//   id String @id @default(auto()) @map("_id") @db.ObjectId
-
-//   purchaseId String   @unique @db.ObjectId
-//   purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
-//   pg_txnid          String
-//   payment_type      String
-//   amount            String
-//   currency          String
-//   amount_bdt        String
-//   amount_currency   String
-//   rec_amount        String
-//   processing_ratio  String
-//   processing_charge String
-//   date_processed    DateTime
-
-//   createdAt DateTime? @default(now())
-//   updatedAt DateTime? @updatedAt
-// }
 
 // Represents a purchase made by a student (course or membership).
 model Purchase {

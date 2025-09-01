@@ -121,7 +121,8 @@ export async function GET(req: NextRequest) {
             description: true,
             slug: true,
             courseMode: true,
-            courseLiveLinkScheduledAt: true,
+            courseLiveBatchStartedAt: true,
+            liveSchedules: true,
             totalDuration: true,
             purchases: true,
             teacherProfile: {

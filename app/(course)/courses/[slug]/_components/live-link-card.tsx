@@ -2,7 +2,8 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Copy, Check, ExternalLink } from "lucide-react";
-import { formatLiveCourseTime } from "@/lib/utils/formatLiveCourseTime";
+import { formatLiveCourseDate } from "@/lib/utils/formatLiveCourseTime";
+
 
 const LiveLinkCard = ({ course }: any) => {
   const [copiedStates, setCopiedStates] = useState<Record<string, boolean>>({});
@@ -82,7 +83,7 @@ const LiveLinkCard = ({ course }: any) => {
         {/* Live Course Information */}
         {(course?.courseLiveLink ||
           course?.courseLiveLinkPassword ||
-          course?.courseLiveLinkScheduledAt) && (
+          course?.courseLiveBatchStartedAt) && (
           <motion.div
             className="bg-white rounded-lg p-4 mb-4 border border-[#4AAFA6]/20"
             initial={{ y: 10, opacity: 0 }}
@@ -134,13 +135,13 @@ const LiveLinkCard = ({ course }: any) => {
                 </div>
               )}
 
-              {course?.courseLiveLinkScheduledAt && (
+              {course?.courseLiveBatchStartedAt && (
                 <div>
                   <label className="block text-sm font-medium text-fontcolor mb-1">
                     নির্ধারিত সময়:
                   </label>
                   <div className="px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-md">
-                    {formatLiveCourseTime(course?.courseLiveLinkScheduledAt)}
+                    {formatLiveCourseDate(course?.courseLiveBatchStartedAt)}
                   </div>
                 </div>
               )}

@@ -52,7 +52,9 @@ export const Actions = ({
         confetti.onOpen();
       }
       await revalidatePage([
-        { route: "/", type: "layout" },
+        { route: "/", type: "page" },
+        { route: "/home", type: "page" },
+        { route: "/live", type: "page" },
         { route: "/courses", type: "layout" },
       ]);
       router.refresh();
@@ -82,7 +84,9 @@ export const Actions = ({
     } finally {
       setIsLoading(false);
       await revalidatePage([
-        { route: "/", type: "layout" },
+        { route: "/", type: "page" },
+        { route: "/home", type: "page" },
+        { route: "/live", type: "page" },
         { route: "/courses", type: "layout" },
       ]);
     }

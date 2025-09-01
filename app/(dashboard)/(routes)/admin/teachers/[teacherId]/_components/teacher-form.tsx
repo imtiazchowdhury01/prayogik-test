@@ -165,11 +165,11 @@ export default function TeacherForm({
       form.reset(data);
       await revalidatePage([
         {
-          route: "/",
-          type: "layout",
+          route: "/teachers",
+          type: "page",
         },
         {
-          route: "/teachers",
+          route: `/teachers/${initialData?.username}`,
           type: "page",
         },
       ]);
