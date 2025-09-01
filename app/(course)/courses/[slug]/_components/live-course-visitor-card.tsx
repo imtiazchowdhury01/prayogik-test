@@ -9,7 +9,7 @@ import {
 import { textLangChecker } from "@/lib/utils/textLangChecker";
 
 const LiveCourseVisitorCard = ({ lesson, course }) => {
-  console.log(lesson, "lessi");
+  // console.log(lesson, "lessi");
   return (
     <div className="p-4 mb-4 bg-[#F3F9F9] rounded-md">
       <Accordion type="single" collapsible className="w-full">
@@ -21,7 +21,7 @@ const LiveCourseVisitorCard = ({ lesson, course }) => {
           </AccordionTrigger>
           <AccordionContent className="pt-4">
             {lesson.textContent && (
-               <TextContent value={lesson?.textContent} size="sm"/>
+              <TextContent value={lesson?.textContent} size="sm" />
             )}
           </AccordionContent>
         </AccordionItem>

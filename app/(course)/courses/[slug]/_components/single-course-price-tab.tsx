@@ -310,9 +310,7 @@ const SingleCoursePriceTab = ({
         ],
       });
       router.push("/checkout");
-      setIsRedirecting(false);
     }
-     setIsRedirecting(false);
   };
 
   const renderPriceBlock = ({

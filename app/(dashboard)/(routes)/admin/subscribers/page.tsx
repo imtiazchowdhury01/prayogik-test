@@ -5,6 +5,8 @@ import { clientApi } from "@/lib/utils/openai/client";
 import { columns } from "./_components/columns";
 import { DataTable } from "./_components/data-table";
 import { cookies } from "next/headers";
+import { db } from "@/lib/db";
+import { getSubscriptionDBCall } from "@/lib/data-access-layer/subscriptions";
 
 const Subscribers = async () => {
   // subscription status
@@ -16,6 +18,7 @@ const Subscribers = async () => {
     { value: "PENDING", label: "PENDING" },
   ];
 
+  let subscriptionPlans = await getSubscriptionDBCall();
   let data = [];
 
   try {
@@ -34,7 +37,12 @@ const Subscribers = async () => {
 
   return (
     <div className="h-full flex-1 flex-col space-y-8 flex">
-      <DataTable data={data} columns={columns} statuses={statuses} />
+      <DataTable
+        data={data}
+        columns={columns}
+        statuses={statuses}
+        plans={subscriptionPlans}
+      />
     </div>
   );
 };
@@ -54,6 +62,7 @@ const convertSubscriberData = (subscribers) => {
       avatarUrl: user.avatarUrl || "",
       role: user.role || "STUDENT",
       subscription: subscriptionPlanName,
+      subscriptionPlanId: subscriber.subscriptionPlan?.id || "",
       subscriptionStatus: subscriber.status || "",
       subscriptionExpiresAt: subscriber.expiresAt,
       subscriptionCreatedAt: subscriber.createdAt,

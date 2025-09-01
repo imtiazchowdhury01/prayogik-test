@@ -1,17 +1,19 @@
-
 import {
   getCategoriesDBCall,
   getCategoryCoursesCountDBCall,
   getCategoryCoursesDBCall,
 } from "@/lib/data-access-layer/categories";
-import { getPrimeCoursesByCategoryDBCall } from "@/lib/data-access-layer/course";
+import { 
+  getPrimeCoursesByCategoryDBCall,
+  getCategoryLiveCoursesDBCall
+} from "@/lib/data-access-layer/course";
 import React from "react";
 import CategoriesWrapper from "../../_components/CategoryWrapper";
 import type { Metadata, ResolvingMetadata } from "next";
 import { CategoryFilterSelect } from "../../../_components/SelectFilterOption";
 
 // Define filter types
-const FILTER_TYPES = ["recent", "older", "prime"] as const;
+const FILTER_TYPES = ["recent", "older", "prime", "live"] as const;
 type FilterType = (typeof FILTER_TYPES)[number];
 
 // Generate static params only for category-filter combinations that have courses
@@ -41,6 +43,16 @@ export async function generateStaticParams() {
             try {
               const primeCourses = await getPrimeCoursesByCategoryDBCall(category.slug, 1);
               hasFilteredCourses = primeCourses && primeCourses.length > 0;
+            } catch (error) {
+              hasFilteredCourses = false;
+            }
+            break;
+            
+          case "live":
+            // Check if category has live courses
+            try {
+              const liveCourses = await getCategoryLiveCoursesDBCall(category.slug, 1);
+              hasFilteredCourses = liveCourses && liveCourses.length > 0;
             } catch (error) {
               hasFilteredCourses = false;
             }
@@ -83,6 +95,7 @@ export async function generateMetadata(
     recent: "সাম্প্রতিক",
     older: "পুরাতন",
     prime: "প্রাইমের সাথে ফ্রি",
+    live: "লাইভ",
   };
   
   const filterLabel = filterLabels[filter as FilterType];
@@ -138,6 +151,11 @@ const CategoryFilterPage = async ({
     case "prime":
       // Get prime courses for this specific category
       courses = await getPrimeCoursesByCategoryDBCall(categorySlug, 1); // Initial load: page 1, 24 courses
+      break;
+      
+    case "live":
+      // Get live courses for this specific category
+      courses = await getCategoryLiveCoursesDBCall(categorySlug, 1); // Initial load: page 1, 24 courses
       break;
       
     default:

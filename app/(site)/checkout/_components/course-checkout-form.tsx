@@ -770,6 +770,10 @@ const CourseCheckoutForm = ({
 
   const isFormDisabled = !emailContinued && !session?.user?.email;
 
+  // (subscriptionStatus?.isActive &&
+  //   !subscriptionStatus?.isTrial &&
+  //   course?.isUnderSubscription)
+
   const canPurchase =
     (subscriptionStatus?.isActive &&
       !subscriptionStatus?.isTrial &&
@@ -777,7 +781,8 @@ const CourseCheckoutForm = ({
     (subscriptionStatus?.isTrial && course?.isUnderSubscription);
 
   const userStatusMessage = getUserStatusMessage();
-
+  // check email is empty
+  const isEmillEmtpy = !session?.user?.email && !storedEmail;
   return (
     <Card>
       <CardHeader>
@@ -1090,59 +1095,63 @@ const CourseCheckoutForm = ({
             {subscriptionStatus?.isActive &&
             !subscriptionStatus?.isTrial &&
             course?.isUnderSubscription ? null : (
-              <div className="flex justify-between items-center mt-4 text-xl font-bold border-t pr-2.5">
+              <div
+                className={` ${
+                  isEmillEmtpy && "hidden"
+                } flex justify-between items-center mt-4 text-xl font-bold border-t pr-2.5`}
+              >
                 <p className="pt-2">সর্বমোট</p>
-                <p className="pt-2">৳{convertNumberToBangla(selectedAmount)}</p>
+                <p className="pt-2">
+                  {selectedAmount === 0
+                    ? "ফ্রি"
+                    : `৳${convertNumberToBangla(selectedAmount)}`}
+                </p>
               </div>
             )}
 
             {/* Checkout Button */}
-            <Button
-              type="submit"
-              className="w-full bg-[#E2136E] hover:bg-[#d70d65]  disabled:bg-gray-400 disabled:text-gray-200"
-              size="lg"
-              disabled={
-                isProcessing ||
-                isPaymentSuccessful ||
-                (subscriptionStatus?.isActive &&
-                  !subscriptionStatus?.isTrial &&
-                  course?.isUnderSubscription)
-              }
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-10 h-10"
-                viewBox="-6.6741 -11.07275 57.8422 66.4365"
-                fill="none"
-              >
-                <g fill="none">
-                  <path d="M42.31 44.291H2.182C.981 44.291 0 43.308 0 42.107V2.186C0 .982.981 0 2.182 0H42.31c1.203 0 2.184.982 2.184 2.186v39.921c0 1.201-.981 2.184-2.184 2.184" />
-                  <path
-                    fill="#FFF"
-                    d="M31.894 24.251l-14.107-2.246 1.909 8.329zm.572-.682L21.374 8.16l-3.623 13.106zm-15.402-2.482L5.441 6.239l15.221 1.819zm-5.639-6.154l-6.449-6.08h1.695zm24.504 1.15L33.2 23.486l-4.426-6.118zM21.417 30.232l10.71-4.3.454-1.365zm-8.933 7.821l4.589-16.102 2.326 10.479zm24.099-21.914l-1.128 3.056 4.059-.07z"
-                  />
-                </g>
-              </svg>
+            {!isEmillEmtpy && (
+              <>
+                <Button
+                  type="submit"
+                  className="w-full bg-[#E2136E] hover:bg-[#d70d65]  disabled:bg-gray-400 disabled:text-gray-200 whitespace-nowrap"
+                  size="lg"
+                  disabled={isProcessing || isPaymentSuccessful || canPurchase}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="w-10 h-10"
+                    viewBox="-6.6741 -11.07275 57.8422 66.4365"
+                    fill="none"
+                  >
+                    <g fill="none">
+                      <path d="M42.31 44.291H2.182C.981 44.291 0 43.308 0 42.107V2.186C0 .982.981 0 2.182 0H42.31c1.203 0 2.184.982 2.184 2.186v39.921c0 1.201-.981 2.184-2.184 2.184" />
+                      <path
+                        fill="#FFF"
+                        d="M31.894 24.251l-14.107-2.246 1.909 8.329zm.572-.682L21.374 8.16l-3.623 13.106zm-15.402-2.482L5.441 6.239l15.221 1.819zm-5.639-6.154l-6.449-6.08h1.695zm24.504 1.15L33.2 23.486l-4.426-6.118zM21.417 30.232l10.71-4.3.454-1.365zm-8.933 7.821l4.589-16.102 2.326 10.479zm24.099-21.914l-1.128 3.056 4.059-.07z"
+                      />
+                    </g>
+                  </svg>
 
-              {isProcessing ? (
-                <>
-                  {/* <Loader className="animate-spin mr-2" size={16} /> */}
-                  প্রক্রিয়াধীন…
-                </>
-              ) : subscriptionStatus?.isActive &&
-                !subscriptionStatus?.isTrial &&
-                course?.isUnderSubscription ? (
-                "বিকাশে পেমেন্ট সম্পূর্ণ করুন"
-              ) : subscriptionStatus?.isTrial && course?.isUnderSubscription ? (
-                "ট্রায়াল প্ল্যানে অন্তর্ভুক্ত আছে - সাইন ইন করুন"
-              ) : (
-                `বিকাশে পেমেন্ট সম্পূর্ণ করুন`
-              )}
-            </Button>
-
-            <p className="text-sm text-gray-600 sm:text-center text-left">
-              নিরাপদ পেমেন্ট প্রসেসিং বিকাশ এর মাধ্যমে। আপনার লেনদেন সুরক্ষিত।
-            </p>
+                  {isProcessing ? (
+                    <>প্রক্রিয়াধীন…</>
+                  ) : subscriptionStatus?.isActive &&
+                    !subscriptionStatus?.isTrial &&
+                    course?.isUnderSubscription ? (
+                    "বিকাশে পেমেন্ট করুন"
+                  ) : subscriptionStatus?.isTrial &&
+                    course?.isUnderSubscription ? (
+                    "ট্রায়াল প্ল্যানে অন্তর্ভুক্ত আছে"
+                  ) : (
+                    `বিকাশে পেমেন্ট করুন`
+                  )}
+                </Button>
+                <p className="text-sm text-gray-600 sm:text-center text-left">
+                  নিরাপদ পেমেন্ট প্রসেসিং বিকাশ এর মাধ্যমে। আপনার লেনদেন
+                  সুরক্ষিত।
+                </p>
+              </>
+            )}
           </form>
         </Form>
       </CardContent>

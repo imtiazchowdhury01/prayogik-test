@@ -1,8 +1,6 @@
 //@ts-nocheck
 "use client";
 import { FC, useRef, useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import PlayIcon from "../_utils/PlayIcon";
 
 interface VideoItem {
   src: string;
@@ -36,9 +34,9 @@ const getVideoType = (
 // Extract YouTube ID from various URL formats
 const getYouTubeId = (url: string): string | null => {
   const regExp =
-    /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+    /(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|shorts|embed)\/|.*[?&]v=)|youtu\.be\/)([^#&?]{11})/;
   const match = url.match(regExp);
-  return match && match[7].length === 11 ? match[7] : null;
+  return match ? match[1] : null;
 };
 
 // Extract Vimeo ID from URL
@@ -50,57 +48,9 @@ const getVimeoId = (url: string): string | null => {
 };
 
 const VideoGallery: FC<VideoGalleryProps> = ({ videos }) => {
-  // Changed to track which single video is currently playing (null means none)
-  const [currentlyPlayingIndex, setCurrentlyPlayingIndex] = useState<
-    number | null
-  >(null);
-  const [showControls, setShowControls] = useState<boolean[]>(
-    Array(videos.length).fill(false)
-  );
-
-  // Play video at index (stop any other playing video)
-  const handlePlay = (index: number) => {
-    setCurrentlyPlayingIndex(index);
-  };
-
-  // Show controls on mouse enter if video is currently playing
-  const handleMouseEnter = (index: number) => {
-    if (currentlyPlayingIndex === index) {
-      setShowControls((prev) => {
-        const newState = [...prev];
-        newState[index] = true;
-        return newState;
-      });
-    }
-  };
-
-  // Hide controls on mouse leave if video is currently playing
-  const handleMouseLeave = (index: number) => {
-    if (currentlyPlayingIndex === index) {
-      setShowControls((prev) => {
-        const newState = [...prev];
-        newState[index] = false;
-        return newState;
-      });
-    }
-  };
-
-  // Reset video when it ends (for direct videos)
-  const handleVideoEnded = (index: number) => {
-    if (currentlyPlayingIndex === index) {
-      setCurrentlyPlayingIndex(null);
-      setShowControls((prev) => {
-        const newState = [...prev];
-        newState[index] = false;
-        return newState;
-      });
-    }
-  };
-
   // Render appropriate video player based on URL type
   const renderVideoPlayer = (video: VideoItem, index: number) => {
     const videoType = getVideoType(video.src);
-    const isCurrentlyPlaying = currentlyPlayingIndex === index;
 
     if (videoType === "youtube") {
       const videoId = getYouTubeId(video.src);
@@ -108,14 +58,13 @@ const VideoGallery: FC<VideoGalleryProps> = ({ videos }) => {
 
       return (
         <iframe
-          src={`https://www.youtube.com/embed/${videoId}?autoplay=${
-            isCurrentlyPlaying ? 1 : 0
-          }&mute=1`}
+          src={`https://www.youtube.com/embed/${videoId}`}
           title={video.alt}
           className="w-full h-full object-cover"
           frameBorder="0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
+          style={{ objectFit: "cover" }}
         />
       );
     } else if (videoType === "vimeo") {
@@ -124,14 +73,13 @@ const VideoGallery: FC<VideoGalleryProps> = ({ videos }) => {
 
       return (
         <iframe
-          src={`https://player.vimeo.com/video/${videoId}?autoplay=${
-            isCurrentlyPlaying ? 1 : 0
-          }&muted=1`}
+          src={`https://player.vimeo.com/video/${videoId}`}
           title={video.alt}
           className="w-full h-full object-cover"
           frameBorder="0"
           allow="autoplay; fullscreen; picture-in-picture"
           allowFullScreen
+          style={{ objectFit: "cover" }}
         />
       );
     } else if (videoType === "vdocipher") {
@@ -146,6 +94,7 @@ const VideoGallery: FC<VideoGalleryProps> = ({ videos }) => {
           allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
           allowFullScreen
           referrerPolicy="no-referrer-when-downgrade"
+          style={{ objectFit: "cover" }}
         />
       );
     } else if (videoType === "direct") {
@@ -154,11 +103,8 @@ const VideoGallery: FC<VideoGalleryProps> = ({ videos }) => {
           src={video.src}
           title={video.alt}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-          muted
-          playsInline
-          controls={isCurrentlyPlaying && showControls[index]}
+          controls
           preload="metadata"
-          onEnded={() => handleVideoEnded(index)}
         />
       );
     }
@@ -184,34 +130,15 @@ const VideoGallery: FC<VideoGalleryProps> = ({ videos }) => {
         {videos.map((video, idx) => {
           const isVideoEmpty = !video.src || video.src.trim() === "";
           const videoType = getVideoType(video.src);
-          const isCurrentlyPlaying = currentlyPlayingIndex === idx;
-          const shouldShowPlayButton =
-            !isCurrentlyPlaying && !isVideoEmpty && videoType !== "unknown";
 
           return (
             <div
               key={idx}
-              className="relative rounded-lg overflow-hidden bg-gray-100 xl:w-[290px] xl:h-[232px] xl:aspect-auto w-full h-[232px]"
-              onMouseEnter={() => handleMouseEnter(idx)}
-              onMouseLeave={() => handleMouseLeave(idx)}
+              className="relative rounded-lg overflow-hidden bg-gray-100 w-full aspect-[9/16] max-w-[280px]"
             >
               {isVideoEmpty || videoType === "unknown"
                 ? renderPlaceholder(video, idx)
                 : renderVideoPlayer(video, idx)}
-
-              {/* Play Button Overlay - only show if not currently playing and is valid video */}
-              {shouldShowPlayButton && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-auto">
-                  <Button
-                    size="lg"
-                    onClick={() => handlePlay(idx)}
-                    className="bg-brand hover:bg-brand/50 text-white rounded-full w-10 h-10 p-0 z-10 transition-all duration-300"
-                    aria-label={`Play video ${video.alt}`}
-                  >
-                    <PlayIcon />
-                  </Button>
-                </div>
-              )}
             </div>
           );
         })}

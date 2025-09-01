@@ -32,7 +32,26 @@ import { Button } from "./ui/button";
 
 export default function UserProfileMenus({ session, subscription, pathName }) {
   const router = useRouter();
-  const displayName = session?.user?.name;
+
+  // Function to format display name based on word count
+  const formatDisplayName = (name) => {
+    if (!name || typeof name !== "string") return "";
+
+    const words = name.trim().split(/\s+/); // Split by whitespace and remove empty strings
+
+    if (words.length > 2) {
+      // More than 2 words: show first 2 words
+      return words.slice(0, 2).join(" ");
+    } else {
+      // 1 or 2 words: show all words
+      return words.join(" ");
+    }
+  };
+
+  // Use the formatter function for display name
+  const displayName = formatDisplayName(session?.user?.name);
+  const fullName = session?.user?.name; // Keep full name for avatar fallback
+
   // console.log("subscription result:", subscription);
   const isSubscribed = subscription?.status === "ACTIVE";
   const isTrial = subscription?.isTrial;
@@ -70,7 +89,7 @@ export default function UserProfileMenus({ session, subscription, pathName }) {
             />
 
             <AvatarFallback>
-              {displayName?.slice(0, 1)?.toUpperCase()}
+              {fullName?.slice(0, 1)?.toUpperCase()}
             </AvatarFallback>
           </Avatar>
 
@@ -146,7 +165,7 @@ export default function UserProfileMenus({ session, subscription, pathName }) {
                       <span className="bg-transparent text-brand underline text-xs ml-4 cursor-pointer mt-1">
                         {isTrial
                           ? "প্ল্যান আপগ্রেড করুন"
-                          : isExpired && !subscription.type ==='TRIAL'
+                          : isExpired && !subscription.type === "TRIAL"
                           ? "রিনিউ করুন"
                           : "প্ল্যান আপগ্রেড করুন"}
                       </span>

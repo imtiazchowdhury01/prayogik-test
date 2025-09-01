@@ -136,48 +136,43 @@ export const testimonials = [
 
 export const mentorsFeedbackData = [
   {
-    src: "https://player.vdocipher.com/v2/?otp=20160313versASE323jUcR1qoMllWdS2sDQK3aYBkKQdXWs4SG5APNL8m0fHrMnQ&playbackInfo=eyJ2aWRlb0lkIjoiYmNmZTA4YTY2YTAyNDYwNzk4ZDlhOThiNDY4MGRkZmMifQ==",
+    src: "https://youtube.com/shorts/JXgSucb3o04?feature=share",
     alt: "Video 1",
     imageSrc: "/images/placeholder1.jpg",
   },
-  // {
-  //   src: "https://player.vdocipher.com/v2/?otp=20160313versASE323YTyw3PqgDicAs48Hts00qIRMkdtZPASGB1wWWwPCieE2Lu&playbackInfo=eyJ2aWRlb0lkIjoiYmNmZTA4YTY2YTAyNDYwNzk4ZDlhOThiNDY4MGRkZmMifQ==",
-  //   alt: "Video test",
-  //   imageSrc: "/images/placeholder1.jpg",
-  // },
 
   {
-    src: "https://player.vdocipher.com/v2/?otp=20160313versASE323RHJiWyGHJSwlYuSZCV49vXSfL3yHubZD0JZEI5txAfsz0j&playbackInfo=eyJ2aWRlb0lkIjoiYTZkOGY2OTBiZmVmNDcwNjlkNDJkNjA2NDAwNDU5MjIifQ==",
+    src: "https://youtube.com/shorts/VbmwQqWUPGg?feature=share",
     alt: "Video 2",
     imageSrc: "/images/placeholder1.jpg",
   },
   {
-    src: "https://player.vdocipher.com/v2/?otp=20160313versASE323u426E9Pp3lcjGXUMwPIx1B5EJ3uHmfHDS6JUjNRM4PIDwG&playbackInfo=eyJ2aWRlb0lkIjoiNmU5NjYwNTkxZjY1NDg4NGJkYzYwYzI2NTU1MjhjNjEifQ==",
+    src: "https://youtube.com/shorts/-NWbtBHKk8g?feature=share",
     alt: "Video 3",
     imageSrc: "/images/placeholder1.jpg",
   },
   {
-    src: "https://player.vdocipher.com/v2/?otp=20160313versASE323Qt81lOoZdODnr3iRjY4uZqDyGsUjQrvRJ0ilUF8Bfhx0Q3&playbackInfo=eyJ2aWRlb0lkIjoiNDkwY2M2ODJjYjJhNGM5MmExNDJhOTM4ZDA5MzI4MzEifQ==",
+    src: "https://youtube.com/shorts/JXgSucb3o04?feature=share",
     alt: "Video 4",
     imageSrc: "/images/placeholder1.jpg",
   },
   {
-    src: "https://player.vdocipher.com/v2/?otp=20160313versASE323M68QvBV2Klp99bIRdjlGZcuxSsdgvEFxPKo1OLmMj39S2c&playbackInfo=eyJ2aWRlb0lkIjoiYTViMTIyNjY3OTE2NDI3N2I4YTBkZTg4NDU3Yzg4MTQifQ==",
+    src: "https://youtube.com/shorts/VbmwQqWUPGg?feature=share",
     alt: "Video 5",
     imageSrc: "/images/placeholder1.jpg",
   },
   {
-    src: "https://player.vdocipher.com/v2/?otp=20160313versASE323SRTYrzhGgdQBrPYB2hZegs4tga82FMUQPjnN9H9wyXppQf&playbackInfo=eyJ2aWRlb0lkIjoiY2JjYTdhN2U2YThjNDIzN2I5ZDczY2NmNGRlNWNiMTQifQ==",
+    src: "https://youtube.com/shorts/-NWbtBHKk8g?feature=share",
     alt: "Video 6",
     imageSrc: "/images/placeholder1.jpg",
   },
   {
-    src: "https://player.vdocipher.com/v2/?otp=20160313versASE323pR7twrkjkKQwMJN8Y118RHxisr2cLYHfZIabYFJNJ7FLhl&playbackInfo=eyJ2aWRlb0lkIjoiNjhkNjkzOTIwZmQ1NDU0ODlkYWY2OTFkYjcyZDYyYzcifQ==",
+    src: "https://youtube.com/shorts/eSNNTd9fyA4?feature=share",
     alt: "Video 7",
     imageSrc: "/images/placeholder1.jpg",
   },
   {
-    src: "https://player.vdocipher.com/v2/?otp=20160313versASE323M20ySdAFyrvyrIVZlqa8ZxwjaofYOi9nrYXIgABb9NNNag&playbackInfo=eyJ2aWRlb0lkIjoiOTc1NWMyMmNhM2Q5NDlmOTkxZDFjNDBiMDY0ODc3NzMifQ==",
+    src: "https://youtube.com/shorts/6nf_zP460GI?feature=share",
     alt: "Video 8",
     imageSrc: "/images/placeholder1.jpg",
   },

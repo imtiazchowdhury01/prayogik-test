@@ -1,4 +1,4 @@
-import React, { Suspense } from "react";
+import React from "react";
 import TeacherIntro from "./_components/TeacherIntro";
 import Image from "next/image";
 import Syllabas from "./_components/Syllabas";

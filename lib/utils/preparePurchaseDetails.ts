@@ -8,6 +8,7 @@ const preparePurchaseDetails = async (
   subscriptionPlan: any = null
 ) => {
   const purchaseDetails: {
+    purchaseId: string | null;
     purchaseType: any;
     transactionId: any;
     amount: any;
@@ -16,6 +17,7 @@ const preparePurchaseDetails = async (
     courseName: string | null;
     subscriptionPlanName: string | null;
   } = {
+    purchaseId: purchase?.id || null, // Added purchase ID
     purchaseType: payload.type,
     transactionId: payload.trxID || null,
     amount: payload.amount || null,
@@ -49,4 +51,5 @@ const preparePurchaseDetails = async (
 
   return purchaseDetails;
 };
+
 export default preparePurchaseDetails;

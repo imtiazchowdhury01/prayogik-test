@@ -132,7 +132,7 @@ export default function ContactFormClient() {
         toast.error(data.message);
       }
     } catch (err) {
-      console.log(err);
+      // console.log(err);
       toast.error("একটি সমস্যা হয়েছে, পরে আবার চেষ্টা করুন");
     } finally {
       setIsLoading(false);

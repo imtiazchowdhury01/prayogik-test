@@ -1,11 +1,17 @@
-// Create this file: app/api/courses/route.ts
+// Create this file: app/api/courses/filter/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import {
   getCategoriesDBCall,
   getCategoryCoursesDBCall,
   getCategoryCoursesCountDBCall,
 } from "@/lib/data-access-layer/categories";
-import { getPrimeCoursesDBCall, getPrimeCoursesByCategoryDBCall, getCoursesDbCall } from "@/lib/data-access-layer/course";
+import { 
+  getPrimeCoursesDBCall, 
+  getPrimeCoursesByCategoryDBCall, 
+  getCoursesDbCall,
+  getLiveCoursesDBCall,
+  getCategoryLiveCoursesDBCall
+} from "@/lib/data-access-layer/course";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -45,6 +51,10 @@ export async function GET(request: NextRequest) {
           courses = await getPrimeCoursesDBCall(page);
           break;
 
+        case "live":
+          courses = await getLiveCoursesDBCall(page);
+          break;
+
         default:
           courses = [];
       }
@@ -69,6 +79,10 @@ export async function GET(request: NextRequest) {
           
         case "prime":
           courses = await getPrimeCoursesByCategoryDBCall(categorySlug, page);
+          break;
+          
+        case "live":
+          courses = await getCategoryLiveCoursesDBCall(categorySlug, page);
           break;
           
         default:

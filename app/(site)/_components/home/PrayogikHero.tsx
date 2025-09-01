@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import prayogikhero from "@/public/home/prayogik-hero-img.webp"; // Static import
-// import prayogikhero from "@/public/home/prayogik-hero-img.jpg"; // Static import
+import prayogikhero from "@/public/site/home/prayogik-hero.webp"; // Static import
 
 export default function PrayogikHero() {
   return (
@@ -13,7 +12,7 @@ export default function PrayogikHero() {
             <div className="bg-[#119D90] mb-3 w-fit mx-auto md:inline-block px-3 py-1 rounded text-white font-light sm:font-thin text-md">
               <p>শেখা হোক সহজ </p>
             </div>
-            <h1 className="text-3xl lg:text-5xl xl:text-6xl 2xl:text-6xl font-bold text-white leading-[2.5rem] lg:leading-[5rem] xl:leading-[5rem] 2xl:leading-[5rem] md:text-start text-center">
+            <h1 className="text-3xl lg:text-5xl xl:text-[3.5rem] 2xl:text-6xl font-bold text-white leading-[2.5rem] lg:leading-[5rem] xl:leading-[5rem] 2xl:leading-[5rem] md:text-start text-center">
               ডিজিটাল মার্কেটিং শেখার পূর্ণাঙ্গ লার্নিং প্ল্যাটফর্ম
             </h1>
             <p className="text-lg text-center md:text-start md:text-lg text-gray-100 font-light max-w-3xl leading-relaxed mt-4">
@@ -35,7 +34,7 @@ export default function PrayogikHero() {
                 প্রাইম মেম্বারশিপ
               </Link>
               {/* star shape */}
-              <div className="absolute z-0 hidden lg:block lg:bottom-[-15%] lg:left-[70%] xl:bottom-[-25%] xl:left-[65%] w-[80px] h-[80px] xl:w-[110px] xl:h-[110px]">
+              <div className="absolute z-0 hidden lg:block lg:bottom-[-15%] lg:left-[70%] xl:bottom-[-15%] xl:left-[75%]  2xl:bottom-[-25%] 2xl:left-[65%] w-[80px] h-[80px] xl:w-[110px] xl:h-[110px]">
                 <Image
                   src="/images/home/star.svg"
                   alt="background star image"
@@ -48,7 +47,7 @@ export default function PrayogikHero() {
             </div>
           </div>
           {/* hero image section */}
-          <div className="w-full mt-6 md:mt-0 xl:mt-6 px-8 pr-0 pl-0 md:pl-8">
+          <div className="w-full mt-6 md:mt-0 xl:mt-0 px-8 pr-0  pl-0 xl:pl-16">
             <Image
               src={prayogikhero}
               alt={"prayogik hero"}

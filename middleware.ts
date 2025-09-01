@@ -10,7 +10,10 @@ export default withAuth(
     });
 
     const path = req.nextUrl.pathname;
+    const requestHeaders = new Headers(req.headers);
 
+    // pathname set to headers
+    requestHeaders.set("x-pathname", path);
     // All other protected routes require authentication
     if (!user) {
       // console.log("Redirecting unauthenticated user to signin");

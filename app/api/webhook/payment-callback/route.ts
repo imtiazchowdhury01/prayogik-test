@@ -6,6 +6,7 @@ import { PurchaseType } from "@prisma/client";
 import nodemailer from "nodemailer";
 import { sendSubscriptionCredential } from "@/lib/utils/emailTemplates/sendSubscriptionCredential";
 import preparePurchaseDetails from "@/lib/utils/preparePurchaseDetails";
+import { sendAdminNotification } from "@/lib/utils/emailTemplates/sendAdminNotification";
 // Types for the callback payload
 interface BkashCallbackPayload {
   paymentID: string;
@@ -181,7 +182,7 @@ async function handleSingleCoursePurchase(
     studentProfile.id,
     payload.courseId
   );
-  console.log(courseAccess, "courseAccess");
+  // console.log(courseAccess, "courseAccess");
   if (courseAccess.hasAccess) {
     const accessMessage =
       courseAccess.accessType === "direct_enrollment"
@@ -407,7 +408,7 @@ async function handleOfferPurchase(
     payload.courseId &&
     !courseAccess.activeSubscription
   ) {
-    console.log(courseAccess.activeSubscription, "courseAccess 1212");
+    // console.log(courseAccess.activeSubscription, "courseAccess 1212");
 
     const subscriptionPlan = await db.subscriptionPlan.findUnique({
       where: { id: payload.subscriptionPlanId },
@@ -497,7 +498,7 @@ async function handleOfferPurchase(
   if (payload.courseId && courseAccess.activeSubscription) {
     // Use the existing subscription from the access check
     const existingSubscription = courseAccess.activeSubscription;
-    console.log(courseAccess, "existingSubscription 121211");
+    // console.log(courseAccess, "existingSubscription 121211");
     if (!existingSubscription) {
       return createErrorResponse(
         "No active subscription found. Please purchase a subscription first."
@@ -639,7 +640,7 @@ async function handleTrialPurchase(
 export async function POST(request: NextRequest) {
   try {
     const payload: BkashCallbackPayload = await request.json();
-    console.log("bKash Callback Payload:", payload);
+    // console.log("bKash Callback Payload:", payload);
 
     // Validate required fields
     if (!payload.type) {
@@ -788,10 +789,6 @@ export async function POST(request: NextRequest) {
 
     //--------new: Send email for new users AFTER purchase processing is complete----
     if (isNewUser && temporaryPassword && username) {
-      console.log(`Attempting to send email to new user: ${payload.email}`);
-      console.log(
-        `isNewUser: ${isNewUser}, temporaryPassword: ${!!temporaryPassword}, username: ${username}`
-      );
       try {
         // Get course and subscription plan details for email
         let courseForEmail = null;
@@ -845,10 +842,94 @@ export async function POST(request: NextRequest) {
         };
 
         await transporter.sendMail(mailOptions);
+
+        const adminMailOptions = {
+          from: `"প্রায়োগিক সিস্টেম" <${process.env.SMTP_USERNAME}>`,
+          // to: process.env.ADMIN_RECIPIENT_EMAIL,
+          to: process.env.ADMIN_RECIPIENT_EMAIL,
+          subject: `প্রায়োগিক - ${
+            isNewUser ? "নতুন নিবন্ধন" : "নতুন পেমেন্ট"
+          } নোটিফিকেশন`,
+          html: sendAdminNotification(
+            payload.email,
+            username,
+            isNewUser,
+            purchaseDetailsForEmail
+          ),
+        };
+        await transporter.sendMail(adminMailOptions);
+
         console.log(`Welcome email sent to: ${payload.email}`);
       } catch (emailError) {
         console.error("Failed to send welcome email:", emailError);
         // Don't fail the entire request if email fails
+      }
+    } else if (!isNewUser) {
+      // Send email to existing user without login credentials
+      try {
+        // Get course and subscription plan details for email
+        let courseForEmail = null;
+        let subscriptionPlanForEmail = null;
+
+        if (payload.subscriptionPlanId) {
+          subscriptionPlanForEmail = await db.subscriptionPlan.findUnique({
+            where: { id: payload.subscriptionPlanId },
+            select: { name: true },
+          });
+        }
+
+        // Prepare purchase details for email template
+        const purchaseDetailsForEmail = await preparePurchaseDetails(
+          payload,
+          purchase,
+          subscription,
+          courseForEmail,
+          subscriptionPlanForEmail
+        );
+        // console.log("purchaseDetailsForEmail result:", purchaseDetailsForEmail);
+        // send email for both student and admin
+        const transporter = nodemailer.createTransport({
+          service: "Gmail",
+          auth: {
+            user: process.env.SMTP_USERNAME,
+            pass: process.env.SMTP_APP_PASS,
+          },
+        });
+
+        const studentMailOptions = {
+          from: `"প্রায়োগিক" <${process.env.SMTP_USERNAME}>`,
+          to: payload?.email,
+          subject: "প্রয়োগিক - আপনার পেমেন্ট সফল হয়েছে!",
+          html: sendSubscriptionCredential(
+            payload.email,
+            null, // No username for existing users
+            null, // No password for existing users
+            purchaseDetailsForEmail
+          ),
+        };
+
+        await transporter.sendMail(studentMailOptions);
+
+        const adminMailOptions = {
+          from: `"প্রায়োগিক সিস্টেম" <${process.env.SMTP_USERNAME}>`,
+          // to: process.env.ADMIN_RECIPIENT_EMAIL,
+          to: process.env.ADMIN_RECIPIENT_EMAIL,
+          subject: `প্রায়োগিক - ${
+            isNewUser ? "নতুন নিবন্ধন" : "নতুন পেমেন্ট"
+          } নোটিফিকেশন`,
+          html: sendAdminNotification(
+            payload.email,
+            username,
+            isNewUser,
+            purchaseDetailsForEmail
+          ),
+        };
+        await transporter.sendMail(adminMailOptions);
+      } catch (emailError) {
+        console.error(
+          "Failed to send purchase confirmation email:",
+          emailError
+        );
       }
     }
 

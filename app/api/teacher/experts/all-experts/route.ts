@@ -56,7 +56,7 @@ export async function GET(request: any) {
         skip: skip,
         take: limit,
         orderBy: {
-          createdAt: "asc", // Consistent ordering
+          updatedAt: "asc",
         },
       }),
     ]);

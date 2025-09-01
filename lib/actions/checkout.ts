@@ -33,7 +33,6 @@ export async function handleCheckout(formData: FormData) {
       const data = await response.json();
 
       if (data.success) {
-        // console.log("ট্রায়াল নেয়া হয়েছে", data);
         await clearServerCart();
         return {
           success: data.success,
@@ -52,15 +51,11 @@ export async function handleCheckout(formData: FormData) {
       });
 
       const bkashPaymentRes = await bkashPaymentReq.body;
-      console.log(bkashPaymentRes, "bkashPaymentRes");
 
       // Bkash payment url is not present then throw error
       if (!bkashPaymentRes?.url) {
         throw new Error(bkashPaymentRes?.statusMessage || "Payment failed");
       }
-      // Clear server cart after successful payment
-      // await clearServerCart();
-      // Return success status & data
       return { success: true, data: bkashPaymentRes };
     }
   } catch (error) {

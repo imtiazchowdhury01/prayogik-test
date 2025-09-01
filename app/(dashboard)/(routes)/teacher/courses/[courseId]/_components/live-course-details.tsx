@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader } from "lucide-react";
 import { updateCourse } from "@/lib/course/updateCourse";
+import { formatDateForInput } from "@/lib/formatDateForInput";
 
 interface LiveLinkFormProps {
   initialData: {
@@ -45,17 +46,7 @@ export const LiveLinkForm = ({ initialData, courseId }: LiveLinkFormProps) => {
   const toggleEdit = () => setIsEditing((current) => !current);
   const router = useRouter();
 
-  // Format date for input field (datetime-local format)
-  const formatDateForInput = (date: Date | null | undefined) => {
-    if (!date) return "";
-    const d = new Date(date);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    const hours = String(d.getHours()).padStart(2, "0");
-    const minutes = String(d.getMinutes()).padStart(2, "0");
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-  };
+
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

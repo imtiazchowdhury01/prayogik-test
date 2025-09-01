@@ -257,7 +257,7 @@ export default function VdocipherVideoForm({
         setVideoUrl(data.videoUrl);
       }
     } catch (error) {
-      console.error("Error fetching video status:", error);
+      // console.error("Error fetching video status:", error);
     } finally {
       setIsLoading(false);
     }

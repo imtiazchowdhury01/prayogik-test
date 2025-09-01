@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { db } from "@/lib/db";
-import { sendCredentialTemplate } from "@/lib/utils/emailTemplates/send-credential-template";
 import nodemailer from "nodemailer";
 import { sendSubscriptionCredential } from "@/lib/utils/emailTemplates/sendSubscriptionCredential";
 import preparePurchaseDetails from "@/lib/utils/preparePurchaseDetails";
+import { courseEnrollmentNotificationTemplate } from "@/lib/utils/emailTemplates/course-enrollment-notification-template";
+import { newsletterAdminNotificationTemplate } from "@/lib/utils/emailTemplates/comingsoon-newsletter";
+import { sendAdminNotification } from "@/lib/utils/emailTemplates/sendAdminNotification";
 
 // Types for the trial callback payload
 interface TrialCallbackPayload {
@@ -178,7 +180,6 @@ async function handleTrialPurchase(
       },
     });
   }
-
   return { purchase, subscription };
 }
 
@@ -186,8 +187,6 @@ async function handleTrialPurchase(
 export async function POST(request: NextRequest) {
   try {
     const payload: TrialCallbackPayload = await request.json();
-    // console.log("Trial Subscription Payload:", payload);
-
     // Validate required fields
     if (!payload.subscriptionPlanId) {
       return createErrorResponse("Subscription plan ID is required");
@@ -242,11 +241,8 @@ export async function POST(request: NextRequest) {
         });
         isNewUser = true;
         temporaryPassword = randomPassword;
-        username = generatedUsername; // Assign to the outer scope variable; // Assign to the outer scope variable
+        username = generatedUsername;
         studentProfile = user.studentProfile;
-        // console.log(
-        //   `New user created with email: ${payload.email}, temporary password: ${randomPassword}`
-        // );
       }
     }
 
@@ -305,8 +301,91 @@ export async function POST(request: NextRequest) {
         };
 
         await transporter.sendMail(mailOptions);
+
+        const adminMailOptions = {
+          from: `"প্রায়োগিক সিস্টেম" <${process.env.SMTP_USERNAME}>`,
+          // to: process.env.ADMIN_RECIPIENT_EMAIL,
+          to: process.env.ADMIN_RECIPIENT_EMAIL,
+          subject: `প্রায়োগিক - ${
+            isNewUser ? "নতুন নিবন্ধন" : "নতুন পেমেন্ট"
+          } নোটিফিকেশন`,
+          html: sendAdminNotification(
+            payload.email,
+            username,
+            isNewUser,
+            purchaseDetailsForEmail
+          ),
+        };
+        await transporter.sendMail(adminMailOptions);
       } catch (emailError) {
         console.error("Failed to send welcome email:", emailError);
+      }
+    } else if (!isNewUser) {
+      // Send email to existing user without login credentials
+      try {
+        // Get course and subscription plan details for email
+        let courseForEmail = null;
+        let subscriptionPlanForEmail = null;
+
+        if (payload.subscriptionPlanId) {
+          subscriptionPlanForEmail = await db.subscriptionPlan.findUnique({
+            where: { id: payload.subscriptionPlanId },
+            select: { name: true },
+          });
+        }
+
+        // Prepare purchase details for email template
+        const purchaseDetailsForEmail = await preparePurchaseDetails(
+          payload,
+          purchase,
+          subscription,
+          courseForEmail,
+          subscriptionPlanForEmail
+        );
+        // console.log("purchaseDetailsForEmail result:", purchaseDetailsForEmail);
+        // send email for both student and admin
+        const transporter = nodemailer.createTransport({
+          service: "Gmail",
+          auth: {
+            user: process.env.SMTP_USERNAME,
+            pass: process.env.SMTP_APP_PASS,
+          },
+        });
+
+        const studentMailOptions = {
+          from: `"প্রায়োগিক" <${process.env.SMTP_USERNAME}>`,
+          to: payload?.email,
+          subject: "প্রয়োগিক - আপনার পেমেন্ট সফল হয়েছে!",
+          html: sendSubscriptionCredential(
+            payload.email,
+            null, // No username for existing users
+            null, // No password for existing users
+            purchaseDetailsForEmail
+          ),
+        };
+
+        await transporter.sendMail(studentMailOptions);
+
+        const adminMailOptions = {
+          from: `"প্রায়োগিক সিস্টেম" <${process.env.SMTP_USERNAME}>`,
+          // to: process.env.ADMIN_RECIPIENT_EMAIL,
+          to: process.env.ADMIN_RECIPIENT_EMAIL,
+          subject: `প্রায়োগিক - ${
+            isNewUser ? "নতুন নিবন্ধন" : "নতুন পেমেন্ট"
+          } নোটিফিকেশন`,
+          html: sendAdminNotification(
+            payload.email,
+            username,
+            isNewUser,
+            purchaseDetailsForEmail
+          ),
+        };
+        await transporter.sendMail(adminMailOptions);
+      } catch (emailError) {
+        console.error(
+          "Failed to send purchase confirmation email:",
+          emailError
+        );
       }
     }
 

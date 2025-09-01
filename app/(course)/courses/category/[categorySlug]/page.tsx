@@ -1,11 +1,14 @@
-
 // @ts-nocheck
 import {
   getCategoriesDBCall,
   getCategoryCoursesCountDBCall,
   getCategoryCoursesDBCall,
 } from "@/lib/data-access-layer/categories";
-import { getPrimeCoursesDBCall, getCoursesDbCall } from "@/lib/data-access-layer/course";
+import { 
+  getPrimeCoursesDBCall, 
+  getCoursesDbCall,
+  getLiveCoursesDBCall
+} from "@/lib/data-access-layer/course";
 import React from "react";
 import CategoriesWrapper from "../_components/CategoryWrapper";
 import type { Metadata, ResolvingMetadata } from "next";
@@ -15,7 +18,7 @@ import {
 } from "../../_components/SelectFilterOption";
 
 // Define filter types
-const FILTER_TYPES = ["recent", "older", "prime"] as const;
+const FILTER_TYPES = ["recent", "older", "prime", "live"] as const;
 type FilterType = (typeof FILTER_TYPES)[number];
 
 // Generate static params only for categories that have courses AND filter types
@@ -69,6 +72,12 @@ export async function generateMetadata(
         description:
           "Access our premium subscription courses. Get exclusive content and advanced practical skills in Bangla.",
       },
+      live: {
+        title:
+          "Live Courses | Interactive Live Classes in Bangla | Prayogik",
+        description:
+          "Join our interactive live courses. Learn in real-time with expert instructors and engage with fellow students in Bangla.",
+      },
     };
     return filterMetadata[slug as FilterType];
   }
@@ -108,7 +117,7 @@ const CategorySlugPage = async ({
   return await handleCategorySlug(slug);
 };
 
-// Handle filter types (recent, older, prime)
+// Handle filter types (recent, older, prime, live)
 async function handleFilterType(filterType: FilterType) {
   let courses;
   let categories: any[];
@@ -151,6 +160,15 @@ async function handleFilterType(filterType: FilterType) {
       categories = primeCategories;
       break;
 
+    case "live":
+      const [liveCategories, liveCourses] = await Promise.all([
+        getCategoriesDBCall(),
+        getLiveCoursesDBCall(1), // Pass page 1 for initial load
+      ]);
+      courses = liveCourses;
+      categories = liveCategories;
+      break;
+
     default:
       courses = [];
       categories = [];
@@ -162,6 +180,7 @@ async function handleFilterType(filterType: FilterType) {
       recent: "সাম্প্রতিক",
       older: "পুরাতন",
       prime: "প্রায়োগিক প্রাইম",
+      live: "লাইভ কোর্স",
     };
     return nameMap[filter];
   };

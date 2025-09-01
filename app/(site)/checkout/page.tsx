@@ -19,9 +19,6 @@ const CheckOutPage = async ({ searchParams }: CheckOutPageProps) => {
   // get data from cookies
   const cartData = await getServerCart();
 
-  // if (cartData.items.length === 0) {
-  //   redirect("/");
-  // }
   if (cartData.items.length === 0) {
     return (
       <div className="app-container py-20 text-center min-h-[60vh] flex items-center justify-center">

@@ -105,6 +105,20 @@ export const columns = [
   },
 
   {
+    accessorKey: "subscriptionPlanId",
+    header: ({ column }) => null,
+    cell: ({ row }) => null,
+    filterFn: (row, id, value) => {
+      const cellValue = row.getValue(id);
+      if (!value || value.length === 0) {
+        return true;
+      }
+
+      return value.includes(cellValue);
+    },
+  },
+
+  {
     accessorKey: "subscriptionCreatedAt",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Enrolled on" />

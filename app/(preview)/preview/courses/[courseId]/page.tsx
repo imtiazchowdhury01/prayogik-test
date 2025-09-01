@@ -59,33 +59,33 @@ export async function generateMetadata({
 const CoursePreview = async ({ params }: { params: { courseId: string } }) => {
   const { isAdmin, userId } = await getServerUserSession();
 
-  if (!userId) return notFound();
+  // if (!userId) return notFound();
 
-  const teacherProfile = await db.teacherProfile.findUnique({
-    where: {
-      userId: userId, // Getting the teacher profile using userId
-    },
-  });
+  // const teacherProfile = await db.teacherProfile.findUnique({
+  //   where: {
+  //     userId: userId, // Getting the teacher profile using userId
+  //   },
+  // });
 
-  let teacherProfileId = teacherProfile?.id;
+  // let teacherProfileId = teacherProfile?.id;
 
-  const teacherOrCoTeacherAccess = await db.course.findUnique({
-    where: {
-      id: params.courseId,
-      OR: [
-        {
-          teacherProfileId,
-        },
-        {
-          coTeacherIds: {
-            hasSome: [teacherProfileId],
-          },
-        },
-      ],
-    },
-  });
+  // const teacherOrCoTeacherAccess = await db.course.findUnique({
+  //   where: {
+  //     id: params.courseId,
+  //     OR: [
+  //       {
+  //         teacherProfileId,
+  //       },
+  //       {
+  //         coTeacherIds: {
+  //           hasSome: [teacherProfileId],
+  //         },
+  //       },
+  //     ],
+  //   },
+  // });
 
-  if (!teacherOrCoTeacherAccess && !isAdmin) return notFound();
+  // if (!teacherOrCoTeacherAccess && !isAdmin) return notFound();
 
   const course = await getCourseByCourseIdForPreview(params?.courseId);
 

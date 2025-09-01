@@ -69,7 +69,7 @@ export const VdocipherVideoPlayer = ({
       );
       setIsReady(data.videoStatus === "READY");
     } catch (error) {
-      console.error("Error fetching video status:", error);
+      // console.error("Error fetching video status:", error);
     } finally {
       setIsLoading(false);
     }

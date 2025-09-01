@@ -128,7 +128,7 @@ async function fetchImageWithRetry(
       return buffer;
     } catch (error) {
       lastError = error as Error;
-      console.warn(`Attempt ${attempt} failed for ${imageUrl}:`, error);
+      // console.warn(`Attempt ${attempt} failed for ${imageUrl}:`, error);
 
       // Don't retry on the last attempt
       if (attempt <= FETCH_CONFIG.retries) {
@@ -140,7 +140,7 @@ async function fetchImageWithRetry(
     }
   }
 
-  console.error(`All attempts failed for ${imageUrl}:`, lastError);
+  // console.error(`All attempts failed for ${imageUrl}:`, lastError);
   return null;
 }
 

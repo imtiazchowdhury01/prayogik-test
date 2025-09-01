@@ -176,7 +176,7 @@ export const CoAuthorForm = ({ initialData, courseId }: AuthorFormProps) => {
 
   // Handle form submission
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    console.log(values.coTeacherIds, "teacherIDs");
+    // console.log(values.coTeacherIds, "teacherIDs");
     // setLoading(true);
     // try {
     //   await axios.patch(`/api/courses/${courseId}`, {

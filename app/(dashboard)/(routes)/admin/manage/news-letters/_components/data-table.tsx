@@ -139,7 +139,7 @@ export function DataTable<TData, TValue>({
       setRowSelection({});
       router.refresh();
     } catch (error) {
-      console.log("error result:", error);
+      // console.log("error result:", error);
       toast.error(error.message || "Failed to update tags");
     }
   };

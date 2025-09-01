@@ -1,11 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
+import teachershero from "@/public/site/teachers/teachers-hero.webp";
 
 export function TeachersHero() {
   return (
     <section className="w-full relative bg-brand">
       {/* block image shape */}
-      <Image
+      {/* <Image
         src="/images/home/BG.svg"
         alt="Prayogik Hero background"
         fill
@@ -13,7 +14,7 @@ export function TeachersHero() {
         quality={75}
         className="object-cover z-0 md:block hidden"
         sizes="100vw"
-      />
+      /> */}
       <div className="container mx-auto px-0 md:px-5 lg:px-5 xl:px-4 2xl:px-4 py-10 lg:py-14 relative z-10">
         <div className="flex xl:flex-row 2xl:flex-row lg:flex-row md:flex-row flex-col md:gap-0 lg:gap-0 xl:gap-10 2xl:gap-10 items-center md:items-center lg:items-start mx-auto max-w-7xl p-6 py-10 lg:px-1">
           {/* Hero Details */}
@@ -51,7 +52,7 @@ export function TeachersHero() {
           {/* image */}
           <div className="w-full items-center justify-end lg:flex xl:mt-0 2xl:mt-0 lg:mt-6 mt-6 hidden sm:block">
             <Image
-              src={"/images/teacher/teacher-hero.webp"}
+              src={teachershero}
               alt=""
               width={544}
               height={474}

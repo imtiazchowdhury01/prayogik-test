@@ -96,6 +96,8 @@ export async function POST(
       success: true,
       message: "Enrollment confirmation email sent successfully",
     });
+
+    
   } catch (error) {
     console.error("Course enrollment email error:", error);
     return NextResponse.json(

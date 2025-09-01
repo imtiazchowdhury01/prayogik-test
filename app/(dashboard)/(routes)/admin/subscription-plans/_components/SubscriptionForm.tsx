@@ -92,7 +92,7 @@ const SubscriptionForm = ({ subscription, onClose, onSave }) => {
   const [defaultDiscountId, setDefaultDiscountId] = useState(null);
   const router = useRouter();
   const [isTrialExist, setIsTrialExist] = useState(false);
-  console.log(subscription, "sub");
+  // console.log(subscription, "sub");
   const form = useForm({
     resolver: zodResolver(subscriptionSchema),
     mode: "onChange",

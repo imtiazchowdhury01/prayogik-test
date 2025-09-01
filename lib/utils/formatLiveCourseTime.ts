@@ -75,7 +75,7 @@ export function formatLiveCourseTime(isoString: string): string {
   // Handle minutes if not zero
   const minutes = date.getMinutes();
   if (minutes > 0) {
-    timeText += ` ${toBengaliNumber(minutes)}`;
+    timeText += ` ${toBengaliNumber(minutes)} মিনিট`;
   }
 
   return `${dayName}, ${day} ${monthName}, ${timeText}`;

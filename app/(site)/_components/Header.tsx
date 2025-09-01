@@ -49,7 +49,6 @@ export default function Header() {
     })();
   }, []);
 
-  
   const [searchTerm, setSearchTerm] = useState<string>(
     slugToReadable(searchParamValue)
   );
@@ -81,7 +80,7 @@ export default function Header() {
         } top-0 z-50 w-full shadow-sm  `}
       >
         {session && <SubscriptionCheck />}
-
+        {/* desktop menu */}
         <nav
           className="flex items-center justify-between h-[72px] app-container gap-x-6 "
           aria-label="Global"
@@ -142,7 +141,7 @@ export default function Header() {
                 path === "/offer"
                   ? "border-gray-400/85 hidden"
                   : "border-[#E2E8F0]"
-              } border-[1px] rounded-md px-3 w-[280px] py-3 flex items-center space-x-1`}
+              } border-[1px] rounded-md px-3 w-[240px] py-3 flex items-center space-x-1`}
             >
               <CiSearch
                 className={`${
@@ -174,7 +173,6 @@ export default function Header() {
               <>
                 <Link
                   href="/signin"
-                  // className="block rounded-md px-5 py-3 transition-all duration-300 font-medium text-sm"
                   className={` ${
                     path === "/offer"
                       ? " bg-white "
@@ -282,12 +280,6 @@ export default function Header() {
                       >
                         লগইন
                       </Link>
-                      {/* <Link
-                        href="/signup"
-                        className="block px-5 py-3 text-sm font-medium text-white transition-all duration-300 rounded-md shadow-sm bg-primary-brand hover:bg-primary-700"
-                      >
-                        সাইন আপ
-                      </Link> */}
                     </div>
                   )}
                 </div>

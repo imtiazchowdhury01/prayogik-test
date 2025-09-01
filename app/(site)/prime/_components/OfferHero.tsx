@@ -1,6 +1,5 @@
 import React from "react";
 import OfferVideoSection from "./OfferVideoSection";
-import CalenderIcon from "../_utils/CalenderIcon";
 import Image from "next/image";
 import PriceIcon from "../_utils/PriceIcon";
 
@@ -26,10 +25,6 @@ const OfferHero = () => {
       <div className="app-container relative flex justify-center flex-col items-center pt-14 md:pt-20">
         <div className="bg-[#10B1A2] gap-1 px-3.5 py-1.5 w-fit mx-auto md:inline-block rounded-lg text-lime-200 font-light text-xl">
           <div className="flex items-center gap-1.5">
-            {/* <CalenderIcon />
-            <p>
-              আজকের প্রাইস: <span className="font-semibold">৳৬২৪</span>
-            </p> */}
             <PriceIcon />
             <p className="font-normal">প্রাইমের অফার দেখুন</p>
           </div>

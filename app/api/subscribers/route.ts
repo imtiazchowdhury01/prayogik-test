@@ -24,6 +24,16 @@ export async function GET() {
         subscriptionPlan: {
           isNot: null, // Only include subscriptions with a plan
         },
+        studentProfile: {
+          AND: {
+            id: {
+              not: undefined,
+            },
+            userId: {
+              not: undefined,
+            },
+          },
+        },
       },
       select: {
         id: true,

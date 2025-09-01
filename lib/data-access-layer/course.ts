@@ -51,6 +51,14 @@ export const getCourseDBCall = cache(async (slug: string) => {
             select: {
               name: true,
               email: true,
+              username: true,
+              avatarUrl: true,
+              teacherProfile: {
+                select: {
+                  yearsOfExperience: true,
+                  subjectSpecializations: true,
+                },
+              },
             },
           },
         },
@@ -146,6 +154,7 @@ export async function getCoursesDbCall({
       slug: true,
       description: true,
       totalDuration: true,
+      courseMode: true,
       isUnderSubscription: true,
       lessons: {
         where: {
@@ -344,4 +353,183 @@ export const getPrimeCoursesByCategoryDBCall = async (
   });
 
   return courses;
+};
+
+// Add these functions to your course data access layer file
+
+// Get all live courses with pagination
+export const getLiveCoursesDBCall = async (page: number = 1) => {
+  const skip = page === 1 ? 0 : 24 + (page - 2) * 6;
+  const take = page === 1 ? 24 : 6;
+
+  const courses = await db.course.findMany({
+    where: {
+      isPublished: true,
+      courseMode: "LIVE", // Filter for live courses only
+    },
+    include: {
+      lessons: {
+        where: { isPublished: true },
+        orderBy: { position: "asc" },
+      },
+      prices: true,
+      enrolledStudents: {
+        select: { studentProfileId: true },
+      },
+      attachments: true,
+      review: {
+        select: {
+          content: true,
+          studentProfile: {
+            select: {
+              user: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+          course: {
+            select: {
+              title: true,
+            },
+          },
+        },
+      },
+      teacherProfile: {
+        include: {
+          user: true,
+        },
+      },
+      category: true,
+      coTeachers: {
+        select: {
+          id: true,
+          user: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
+        },
+      },
+    },
+    skip,
+    take,
+    orderBy: [
+      { courseLiveLinkScheduledAt: "asc" }, // Show upcoming live courses first
+      { createdAt: "desc" }, // Then by creation date
+    ],
+  });
+
+  return courses;
+};
+
+// Get live courses for a specific category with pagination
+export const getCategoryLiveCoursesDBCall = async (
+  categorySlug: string,
+  page: number = 1
+) => {
+  const skip = page === 1 ? 0 : 24 + (page - 2) * 6;
+  const take = page === 1 ? 24 : 6;
+
+  const courses = await db.course.findMany({
+    where: {
+      isPublished: true,
+      courseMode: "LIVE", // Filter for live courses only
+      category: {
+        slug: categorySlug,
+      },
+    },
+    include: {
+      lessons: {
+        where: { isPublished: true },
+        orderBy: { position: "asc" },
+      },
+      prices: true,
+      enrolledStudents: {
+        select: { studentProfileId: true },
+      },
+      attachments: true,
+      review: {
+        select: {
+          content: true,
+          studentProfile: {
+            select: {
+              user: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+          course: {
+            select: {
+              title: true,
+            },
+          },
+        },
+      },
+      teacherProfile: {
+        include: {
+          user: true,
+        },
+      },
+      category: true,
+      coTeachers: {
+        select: {
+          id: true,
+          user: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
+        },
+      },
+    },
+    skip,
+    take,
+    orderBy: [
+      { courseLiveLinkScheduledAt: "asc" }, // Show upcoming live courses first
+      { createdAt: "desc" }, // Then by creation date
+    ],
+  });
+
+  return courses;
+};
+
+// Optional: Get count of live courses for a category (for validation)
+export const getCategoryLiveCoursesCountDBCall = async (categorySlug: string): Promise<number> => {
+  try {
+    const count = await db.course.count({
+      where: {
+        isPublished: true,
+        courseMode: "LIVE",
+        category: {
+          slug: categorySlug,
+        },
+      },
+    });
+    return count;
+  } catch (error) {
+    console.error("Error getting category live courses count:", error);
+    return 0;
+  }
+};
+
+// Optional: Get total count of all live courses
+export const getLiveCoursesCountDBCall = async (): Promise<number> => {
+  try {
+    const count = await db.course.count({
+      where: {
+        isPublished: true,
+        courseMode: "LIVE",
+      },
+    });
+    return count;
+  } catch (error) {
+    console.error("Error getting live courses count:", error);
+    return 0;
+  }
 };

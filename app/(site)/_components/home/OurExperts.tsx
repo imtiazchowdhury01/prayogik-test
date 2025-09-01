@@ -43,11 +43,12 @@ const OurExperts = async () => {
         },
       },
       orderBy: {
-        teacherProfile: {
-          createdCourses: {
-            _count: "desc", // Order by count of createdCourses (published) in descending order
-          },
-        },
+        // teacherProfile: {
+        //   createdCourses: {
+        //     _count: "desc", // Order by count of createdCourses (published) in descending order
+        //   },
+        // },
+        updatedAt: "asc",
       },
     });
     const safeTeachers = teachersData.map((teacher) => {

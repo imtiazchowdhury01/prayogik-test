@@ -9,11 +9,12 @@ import {
 import { textLangChecker } from "@/lib/utils/textLangChecker";
 import FreeLessonPreviewButton from "./FreeLessonPreviewButton";
 import { Clock, UserRound } from "lucide-react";
-import { formatDateToBangla } from "@/lib/utils/stringUtils";
 import { GradientBorderBadge } from "./ui/badge";
 import { CourseMode } from "@prisma/client";
 import { formatLiveCourseTime } from "@/lib/utils/formatLiveCourseTime";
 import LiveCourseIcon from "./LiveCourseIcon";
+import { headers } from "next/headers";
+import LiveCourseTime from "./liveCourseTime";
 
 const CourseCard = ({
   variant = "dark",
@@ -21,6 +22,7 @@ const CourseCard = ({
   className,
   instructor,
   blurDataURL,
+  pathname,
 }: {
   variant?: "light" | "dark";
   className?: string;
@@ -29,6 +31,7 @@ const CourseCard = ({
   userId?: string;
   purchasedCourseIds?: string[];
   blurDataURL?: string;
+  pathname?: string;
 }) => {
   const { slug, imageUrl, progress, lessons, nextLessonSlug = null } = course;
   const freeLesson = lessons?.find(
@@ -172,13 +175,7 @@ const CourseCard = ({
           )}
 
         {/* price  and Time for live course*/}
-        {course?.courseMode === CourseMode.LIVE ? (
-          <>
-            <p className="text-[#FF6709]  text-[14px] font-semibold">
-              সময়: {formatLiveCourseTime(course?.courseLiveLinkScheduledAt)}
-            </p>
-          </>
-        ) : null}
+        <LiveCourseTime CourseMode={CourseMode} course={course} />
 
         {(progress == null || progress === "" || Number.isNaN(progress)) && (
           <p className="flex items-center space-x-2">

@@ -265,7 +265,7 @@ const SubscriptionCheckoutForm = ({
       return "ফ্রি ট্রায়াল শুরু করুন";
     }
     if (selectedPurchaseType === PurchaseType.SUBSCRIPTION) {
-      return "বিকাশে পেমেন্ট সম্পূর্ণ করুন";
+      return "বিকাশে পেমেন্ট করুন";
     }
     // Fallback to original logic
     if (hasActiveSubscription) {
@@ -274,11 +274,13 @@ const SubscriptionCheckoutForm = ({
     if (isExpiredSubscription) {
       return "প্ল্যান রিনিউ করুন"; // Renew Plan
     }
-    return "বিকাশে পেমেন্ট সম্পূর্ণ করুন";
+    return "বিকাশে পেমেন্ট করুন";
   };
   const watchedAmount = form.watch("amount");
   const selectedAmount =
     selectedPurchaseType === PurchaseType.TRIAL ? 0 : watchedAmount;
+
+  const isEmillEmtpy = !session?.user?.email && !storedEmail;
   return (
     <Card className="sm:p-1 p-0 rounded-lg h-fit">
       <CardHeader className="sm:space-y-1.5 space-y-0 sm:pb-6 pb-2.5">
@@ -696,15 +698,22 @@ const SubscriptionCheckoutForm = ({
                   )}
                 />
               </div>
-              <div className="flex justify-between items-center mt-4 text-xl font-bold border-t pr-2.5">
-                <p className="pt-2">সর্বমোট</p>
-                <p className="pt-2">৳{convertNumberToBangla(selectedAmount)}</p>
-              </div>
-              {hasCheckedSubscription && (
+              {!isEmillEmtpy && selectedPurchaseType !== PurchaseType.TRIAL && (
+                <div className="flex justify-between items-center mt-4 text-xl font-bold border-t pr-2.5">
+                  <p className="pt-2">সর্বমোট</p>
+                  <p className="pt-2">
+                    {selectedAmount === 0
+                      ? "ফ্রী"
+                      : `৳${convertNumberToBangla(selectedAmount)}`}
+                  </p>
+                </div>
+              )}
+
+              {hasCheckedSubscription && !isEmillEmtpy && (
                 <>
                   <Button
                     type="submit"
-                    className={`w-full shadow-customButton transition-colors duration-300 size-lg h-12 disabled:bg-gray-400 disabled:text-gray-200
+                    className={`w-full whitespace-nowrap shadow-customButton transition-colors duration-300 size-lg h-12 disabled:bg-gray-400 disabled:text-gray-200
         ${
           selectedPurchaseType === PurchaseType.TRIAL
             ? "bg-brand hover:bg-teal-700"

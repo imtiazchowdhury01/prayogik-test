@@ -2,11 +2,11 @@ import { db } from "@/lib/db";
 import { executePayment } from "@/services/bkash";
 import { NextResponse, NextRequest } from "next/server";
 import jwt from "jsonwebtoken";
-import { sendCredentialTemplate } from "@/lib/utils/emailTemplates/send-credential-template";
 import nodemailer from "nodemailer";
 import bcrypt from "bcrypt";
 import { sendSubscriptionCredential } from "@/lib/utils/emailTemplates/sendSubscriptionCredential";
 import preparePurchaseDetails from "@/lib/utils/preparePurchaseDetails";
+import { sendAdminNotification } from "@/lib/utils/emailTemplates/sendAdminNotification";
 
 const bkashConfig = {
   base_url: process.env.BKASH_BASE_URL!,
@@ -222,12 +222,95 @@ export async function GET(req: NextRequest) {
               };
 
               await transporter.sendMail(mailOptions);
+
+              const adminMailOptions = {
+                from: `"প্রায়োগিক সিস্টেম" <${process.env.SMTP_USERNAME}>`,
+                // to: process.env.ADMIN_RECIPIENT_EMAIL,
+                to: process.env.ADMIN_RECIPIENT_EMAIL,
+                subject: `প্রায়োগিক - ${
+                  isNewUser ? "নতুন নিবন্ধন" : "নতুন পেমেন্ট"
+                } নোটিফিকেশন`,
+                html: sendAdminNotification(
+                  payload.email,
+                  username,
+                  isNewUser,
+                  purchaseDetailsForEmail
+                ),
+              };
+              await transporter.sendMail(adminMailOptions);
             } catch (emailError) {
               console.error("Failed to send welcome email:", emailError);
             }
+          } else if (!isNewUser) {
+            // Send email to existing user without login credentials
+            try {
+              // Get course and subscription plan details for email
+              let courseForEmail = null;
+              let subscriptionPlanForEmail = null;
+
+              if (payload.subscriptionPlanId) {
+                subscriptionPlanForEmail = await db.subscriptionPlan.findUnique(
+                  {
+                    where: { id: payload.subscriptionPlanId },
+                    select: { name: true },
+                  }
+                );
+              }
+
+              // Prepare purchase details for email template
+              const purchaseDetailsForEmail = await preparePurchaseDetails(
+                payload,
+                purchase,
+                subscription,
+                courseForEmail,
+                subscriptionPlanForEmail
+              );
+              // console.log("purchaseDetailsForEmail result:", purchaseDetailsForEmail);
+              // send email for both student and admin
+              const transporter = nodemailer.createTransport({
+                service: "Gmail",
+                auth: {
+                  user: process.env.SMTP_USERNAME,
+                  pass: process.env.SMTP_APP_PASS,
+                },
+              });
+
+              const studentMailOptions = {
+                from: `"প্রায়োগিক" <${process.env.SMTP_USERNAME}>`,
+                to: payload?.email,
+                subject: "প্রয়োগিক - আপনার পেমেন্ট সফল হয়েছে!",
+                html: sendSubscriptionCredential(
+                  payload.email,
+                  null, // No username for existing users
+                  null, // No password for existing users
+                  purchaseDetailsForEmail
+                ),
+              };
+
+              await transporter.sendMail(studentMailOptions);
+
+              const adminMailOptions = {
+                from: `"প্রায়োগিক সিস্টেম" <${process.env.SMTP_USERNAME}>`,
+                // to: process.env.ADMIN_RECIPIENT_EMAIL,
+                to: process.env.ADMIN_RECIPIENT_EMAIL,
+                subject: `প্রায়োগিক - ${
+                  isNewUser ? "নতুন নিবন্ধন" : "নতুন পেমেন্ট"
+                } নোটিফিকেশন`,
+                html: sendAdminNotification(
+                  payload.email,
+                  username,
+                  isNewUser,
+                  purchaseDetailsForEmail
+                ),
+              };
+              await transporter.sendMail(adminMailOptions);
+            } catch (emailError) {
+              console.error(
+                "Failed to send purchase confirmation email:",
+                emailError
+              );
+            }
           }
-          // console.log("Purchase after payment Success:", purchase);
-          // console.log("subscription after payment Success:", subscription);
         }
 
         return NextResponse.redirect(

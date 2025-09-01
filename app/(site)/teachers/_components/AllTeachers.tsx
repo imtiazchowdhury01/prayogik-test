@@ -10,8 +10,8 @@ import { Button } from "@/components/ui/button";
 const AllTeachers = ({ initialTeachers, blurDataMap }) => {
   const [teachers, setTeachers] = useState(initialTeachers || []);
   const [isLoading, setIsLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(initialTeachers?.length === 12);
-  const [currentSkip, setCurrentSkip] = useState(12);
+  const [hasMore, setHasMore] = useState(initialTeachers?.length === 24);
+  const [currentSkip, setCurrentSkip] = useState(24);
   const [searchTerm, setSearchTerm] = useState("");
 
   // Modified search function to only find teachers with createdCourses
@@ -20,8 +20,8 @@ const AllTeachers = ({ initialTeachers, blurDataMap }) => {
       if (!term.trim()) {
         // Reset to initial state when search is cleared
         setTeachers(initialTeachers || []);
-        setHasMore(initialTeachers?.length === 12);
-        setCurrentSkip(12);
+        setHasMore(initialTeachers?.length === 24);
+        setCurrentSkip(24);
         return;
       }
 
@@ -65,7 +65,7 @@ const AllTeachers = ({ initialTeachers, blurDataMap }) => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `/api/teacher/experts/all-experts?skip=${currentSkip}&limit=12&hasCourses=true`
+        `/api/teacher/experts/all-experts?skip=${currentSkip}&limit=24&hasCourses=true`
       );
       const result = await response.json();
 

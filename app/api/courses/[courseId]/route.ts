@@ -162,7 +162,7 @@ export async function DELETE(
         for (const attachment of course.attachments) {
           try {
             const previousKey = attachment.url?.split(".amazonaws.com/")[1];
-            console.log("previousKey result:", previousKey);
+            // console.log("previousKey result:", previousKey);
             if (previousKey) {
               await deleteImageFromS3(previousKey);
             }

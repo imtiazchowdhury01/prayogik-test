@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     const paymentID = searchParams.get("paymentID");
     const status = searchParams.get("status");
 
-    console.log("Callback received:", { paymentID, status });
+    // console.log("Callback received:", { paymentID, status });
 
     if (!paymentID) {
       return NextResponse.redirect(
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
       // Execute the payment
       const executeResult = await executePayment(bkashConfig, paymentID);
 
-      console.log("Execute payment result:", executeResult);
+      // console.log("Execute payment result:", executeResult);
 
       if (executeResult && executeResult.statusCode === "0000") {
         // Payment successful

@@ -159,7 +159,7 @@ export default function TeacherForm({
       };
 
       const result = await updateTeacherByAdmin(teacherId, formattedData);
-      console.log("result result:", result);
+      // console.log("result result:", result);
 
       toast.success("Changes saved successfully");
       form.reset(data);

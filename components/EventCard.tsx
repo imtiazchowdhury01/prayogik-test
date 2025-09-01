@@ -1,70 +1,75 @@
 import Image from "next/image";
-import Link from "next/link";
 import React from "react";
-const EventCard = () => {
-  const eventDetails = [
-    {
-      id: "type",
-      title: "ফ্রি ইভেন্ট",
-      icon: "/icon/money.svg",
-    },
-    {
-      id: "location",
-      title: "জিইসি, চট্টগ্রাম",
-      icon: "/icon/location.svg",
-    },
-    {
-      id: "date",
-      title: "০৬ ফেব্রুয়ারী ২০২৫",
-      icon: "/icon/calendar.svg",
-    },
-    {
-      id: "time",
-      title: "৯:৩০ am - ১১:৩০ pm",
-      icon: "/icon/clock.svg",
-    },
-  ];
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card";
+import { Calendar, Globe, MapPin } from "lucide-react";
+import eventImage1 from "@/public/images/event/event-1.webp";
+import { textLangChecker } from "@/lib/utils/textLangChecker";
+import { getPlainTextFromHtml } from "@/lib/convertNumberToBangla";
+import { formatLiveCourseTime } from "@/lib/utils/formatLiveCourseTime";
+import Link from "next/link";
+import { buttonVariants } from "./ui/button";
+
+const EventCard = ({ event }: any) => {
   return (
-    <div className="overflow-hidden bg-white shadow-sm rounded-2xl">
-      <div className="relative w-full h-40 overflow-hidden">
-        <Image
-          src={"/course.svg"}
-          alt="course-image"
-          width={0}
-          height={0}
-          sizes="10vw"
-          className="object-cover w-full h-full "
-        />
-      </div>
-      <div className="px-5 py-4">
-        <p className="text-lg font-bold sm:text-xl text-primary-brand">
-          ডিজিটাল মার্কেটিং ইভেন্ট
-        </p>
-        <div className="flex flex-col my-4 space-y-2">
-          {eventDetails.map((detail) => {
-            return (
-              <div className="flex items-center space-x-2">
-                <Image
-                  src={detail.icon}
-                  alt={detail.title}
-                  width={20}
-                  height={20}
-                />
-                <p className="text-base text-fontcolor-description">
-                  {detail.title}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-        <Link
-          href={"/event/digital-marketing-event"}
-          className="block w-full py-3 text-sm text-center text-white transition-all duration-300 rounded-lg bg-primary-brand hover:bg-primary-700"
+    <Card key={event.id} className="bg-white rounded-lg shadow-sm flex flex-col">
+      <CardHeader className="p-0">
+        <div
+          className="relative w-full overflow-hidden rounded-t-lg"
+          style={{ aspectRatio: "16/9" }}
         >
-          রেজিস্ট্রেশন করুন
+          <Image
+            src={eventImage1}
+            alt="event image"
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+            loading="lazy"
+            placeholder="blur"
+            quality={75}
+          />
+        </div>
+      </CardHeader>
+      <CardContent className="p-4 flex-1">
+        <h3 className="text-base font-bold text-gray-900 mb-2 line-clamp-2 leading-tight">
+          {textLangChecker(event?.title)}
+        </h3>
+        {event?.description && (
+          <p className="text-sm text-gray-700 mb-4 line-clamp-2">
+            {getPlainTextFromHtml(event?.description, 125)}
+          </p>
+        )}
+        <div className="space-y-2">
+          <p className="text-[14px] font-semibold flex items-center gap-1">
+            <Calendar size={16} className="text-gray-800" />
+            {formatLiveCourseTime(event.date)}
+          </p>
+          <div className="flex items-center text-base text-gray-600">
+            {!event.isOnline ? (
+              <MapPin className="w-4 h-4 mr-1 text-gray-800" />
+            ) : (
+              <Globe className="w-4 h-4 mr-1 text-gray-800" />
+            )}
+            <span>{event.location ? event.location : "অনলাইন"}</span>
+          </div>
+        </div>
+      </CardContent>
+
+      <CardFooter className="p-4 pt-0 mt-auto">
+        <Link
+          href={`/events/${event.id}?type=${event.type}`}
+          className={`w-full h-12 text-base mt-auto ${buttonVariants({
+            variant: "default",
+          })}`}
+        >
+          বিস্তারিত দেখুন
         </Link>
-      </div>
-    </div>
+      </CardFooter>
+    </Card>
   );
 };
 

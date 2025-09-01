@@ -66,6 +66,14 @@ export const getCourseBySlug = cache(
                 select: {
                   name: true,
                   email: true,
+                  username: true,
+                  avatarUrl: true,
+                  teacherProfile: {
+                    select: {
+                      yearsOfExperience: true,
+                      subjectSpecializations: true,
+                    },
+                  },
                 },
               },
             },
@@ -130,6 +138,14 @@ export const getCourseByCourseIdForPreview = cache(async (courseId: string) => {
               select: {
                 name: true,
                 email: true,
+                username: true,
+                avatarUrl: true,
+                teacherProfile: {
+                  select: {
+                    yearsOfExperience: true,
+                    subjectSpecializations: true,
+                  },
+                },
               },
             },
           },

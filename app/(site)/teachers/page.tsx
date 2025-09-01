@@ -25,13 +25,13 @@ const TeachersPage = async () => {
   // Fetching verified teachers from the API
   try {
     // API call to get verified teachers with a limit of 8
-    data = await getTeachersDBCall(12);
+    data = await getTeachersDBCall(24);
   } catch (err) {
     console.error("Failed to fetch verified teachers details:", err);
   }
   // Generate blur data for initial teacher avatars
   const initialImageUrls = data
-    .slice(0, 12) // Only for initial 12 teachers that will be displayed
+    .slice(0, 24) // Only for initial 12 teachers that will be displayed
     .map((teacher: any) => teacher?.avatarUrl)
     .filter((url) => typeof url === "string" && url.trim() !== "");
 

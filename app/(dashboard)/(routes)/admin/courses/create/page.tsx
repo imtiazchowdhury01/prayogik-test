@@ -69,7 +69,7 @@ const CreatePage = () => {
       router.push(`/admin/courses/${response.data.id}`);
       toast.success("Course created");
     } catch (error) {
-      console.log(error?.response?.data);
+      // console.log(error?.response?.data);
 
       if (axios.isAxiosError(error) && error.response?.status === 500) {
         toast.error("This slug is preoccupied. Please use a different slug.");

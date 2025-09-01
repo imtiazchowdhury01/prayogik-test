@@ -7,6 +7,8 @@ export const sendSubscriptionCredential = (
   purchaseDetailsForEmail
 ) => {
   let contactUrl = process.env.NEXT_PUBLIC_APP_URL + "/contact";
+  const isNewUser = username && password; // Check if credentials are provided
+
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
             <html dir="ltr" lang="en">
               <head>
@@ -25,7 +27,7 @@ export const sendSubscriptionCredential = (
                   cellpadding="0"
                   cellspacing="0"
                   role="presentation"
-                  style="max-width:37.5em;background-color:#ffffff;border:1px solid #f0f0f0;padding:45px">
+                  style="max-width:45.5em;background-color:#ffffff;border:1px solid #f0f0f0;padding:45px">
                   <tbody>
                     <tr style="width:100%">
                       <td>
@@ -37,6 +39,9 @@ export const sendSubscriptionCredential = (
                         <p style="font-size:16px;line-height:26px;margin:16px 0;font-family:'Open Sans', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;font-weight:300;color:#404040">
                           হ্যালো,
                         </p>
+                        ${
+                          isNewUser
+                            ? `
                         <p
                           style="font-size:16px;line-height:26px;margin:16px 0;font-family:'Open Sans', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;font-weight:300;color:#404040">অ্যাডমিন কর্তৃক আপনার প্রয়োগিক প্ল্যাটফর্মে অ্যাকাউন্ট সফলভাবে তৈরি করা হয়েছে। প্ল্যাটফর্মে স্বাগতম!
                         </p>
@@ -44,8 +49,19 @@ export const sendSubscriptionCredential = (
                         style="font-size:16px;line-height:26px;margin:16px 0;font-family:'Open Sans', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;font-weight:300;color:#404040">
                         শুরু করতে নিচে আপনার লগইন তথ্য দেওয়া হলো:
                         </p>
+                        `
+                            : `
+                        <p
+                          style="font-size:16px;line-height:26px;margin:16px 0;font-family:'Open Sans', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;font-weight:300;color:#404040">
+                          আপনার পেমেন্ট সফলভাবে সম্পন্ন হয়েছে! আপনার সাবস্ক্রিপশন সক্রিয় করা হয়েছে।
+                        </p>
+                        `
+                        }
                         
-                        <!-- Updated Account Details Section with modern, clean design -->
+                        ${
+                          isNewUser
+                            ? `
+                        <!-- Account Details Section for New Users -->
                         <div style="background-color:#ffffff;border:1px solid #e1e5e9;border-radius:12px;padding:24px;margin:24px 0;box-shadow:0 2px 4px rgba(0,0,0,0.04);">
                           <h3 style="font-size:18px;font-weight:600;margin:0 0 20px 0;font-family:'Open Sans', Arial,sans-serif;color:#1a202c;border-bottom:1px solid #e1e5e9;padding-bottom:12px;">
                             অ্যাকাউন্টের তথ্য
@@ -56,9 +72,7 @@ export const sendSubscriptionCredential = (
                                 লগইন URL:
                               </td>
                               <td style="padding:12px 0;font-size:15px;color:#2d3748;font-family:'Open Sans', Arial,sans-serif;">
-                                <a href="${
-                                  process.env.NEXT_PUBLIC_APP_URL
-                                }/signin" 
+                                <a href="${process.env.NEXT_PUBLIC_APP_URL}/signin" 
                                    style="color:#3182ce;text-decoration:none;font-weight:500;padding:8px 12px;background-color:#f7fafc;border-radius:6px;display:inline-block;">
                                   ${process.env.NEXT_PUBLIC_APP_URL}/signin
                                 </a>
@@ -84,11 +98,42 @@ export const sendSubscriptionCredential = (
                             </tr>
                           </table>
                         </div>
-                        
-                        <!-- Updated Enrollment Details Section with modern, clean design -->
+                        `
+                            : `
+                        <!-- Login Link Section for Existing Users -->
                         <div style="background-color:#ffffff;border:1px solid #e1e5e9;border-radius:12px;padding:24px;margin:24px 0;box-shadow:0 2px 4px rgba(0,0,0,0.04);">
                           <h3 style="font-size:18px;font-weight:600;margin:0 0 20px 0;font-family:'Open Sans', Arial,sans-serif;color:#1a202c;border-bottom:1px solid #e1e5e9;padding-bottom:12px;">
-                            এনরোলমেন্ট বিবরণ
+                            প্ল্যাটফর্ম অ্যাক্সেস
+                          </h3>
+                          <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td style="padding:12px 0;font-size:15px;color:#4a5568;font-family:'Open Sans', Arial,sans-serif;font-weight:500;width:35%;">
+                                লগইন করুন:
+                              </td>
+                              <td style="padding:12px 0;font-size:15px;color:#2d3748;font-family:'Open Sans', Arial,sans-serif;">
+                                <a href="${process.env.NEXT_PUBLIC_APP_URL}/signin" 
+                                   style="color:#3182ce;text-decoration:none;font-weight:500;padding:8px 12px;background-color:#f7fafc;border-radius:6px;display:inline-block;">
+                                  ${process.env.NEXT_PUBLIC_APP_URL}/signin
+                                </a>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="padding:12px 0;font-size:15px;color:#4a5568;font-family:'Open Sans', Arial,sans-serif;font-weight:500;">
+                                আপনার ইমেইল:
+                              </td>
+                              <td style="padding:12px 0;font-size:15px;color:#2d3748;font-family:'Open Sans', Arial,sans-serif;font-weight:500;">
+                                ${email}
+                              </td>
+                            </tr>
+                          </table>
+                        </div>
+                        `
+                        }
+                        
+                        <!-- Purchase/Enrollment Details Section -->
+                        <div style="background-color:#ffffff;border:1px solid #e1e5e9;border-radius:12px;padding:24px;margin:24px 0;box-shadow:0 2px 4px rgba(0,0,0,0.04);">
+                          <h3 style="font-size:18px;font-weight:600;margin:0 0 20px 0;font-family:'Open Sans', Arial,sans-serif;color:#1a202c;border-bottom:1px solid #e1e5e9;padding-bottom:12px;">
+                            ${isNewUser ? "এনরোলমেন্ট বিবরণ" : "পেমেন্ট বিবরণ"}
                           </h3>
                           <table width="100%" border="0" cellpadding="0" cellspacing="0">
                             ${
@@ -217,10 +262,22 @@ export const sendSubscriptionCredential = (
                           </table>
                         </div>
                         
+                        ${
+                          isNewUser
+                            ? `
                         <p
                           style="font-size:16px;line-height:26px;margin:16px 0;font-family:'Open Sans', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;font-weight:300;color:#404040">
                           আপনার অ্যাকাউন্টের নিরাপত্তা নিশ্চিত করার জন্য, অনুগ্রহ করে লগইন করে দ্রুত আপনার পাসওয়ার্ড পরিবর্তন করুন।
                         </p>
+                        `
+                            : `
+                        <p
+                          style="font-size:16px;line-height:26px;margin:16px 0;font-family:'Open Sans', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;font-weight:300;color:#404040">
+                          আপনি এখন আপনার বিদ্যমান অ্যাকাউন্ট দিয়ে সমস্ত নতুন কন্টেন্ট অ্যাক্সেস করতে পারবেন।
+                        </p>
+                        `
+                        }
+                        
                         <p
                           style="font-size:16px;line-height:26px;margin:16px 0;font-family:'Open Sans', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;font-weight:300;color:#404040">
                           যদি কোনো প্রশ্ন থাকে অথবা সাহায্যের প্রয়োজন হয়, অনুগ্রহ করে <a href="${contactUrl}" style="color:#067df7;text-decoration:none" target="_blank">যোগাযোগ করুন</a>।

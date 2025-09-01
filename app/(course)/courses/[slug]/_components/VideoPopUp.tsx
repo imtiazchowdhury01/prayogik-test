@@ -73,10 +73,10 @@ export default function VideoPopUp({
       <DialogHeader>
         <DialogTitle>
           <div className="flex flex-col">
-            {/* <p
+            <p
               className="text-sm font-semibold tracking-wide"
               dangerouslySetInnerHTML={{ __html: title }}
-            /> */}
+            />
 
             <p
               className="text-sm font-semibold tracking-wide text-gray-700"

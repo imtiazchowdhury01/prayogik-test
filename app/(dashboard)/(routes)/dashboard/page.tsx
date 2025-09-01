@@ -48,7 +48,6 @@ export default async function Dashboard() {
   } catch (err) {
     console.error("Failed to fetch dashboard courses:", err);
   }
-  console.log("subscription result:", subscription);
   return (
     <div className="space-y-6">
       {subscription?.status === "EXPIRED" && (

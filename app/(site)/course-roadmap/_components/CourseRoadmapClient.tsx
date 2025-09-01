@@ -16,6 +16,7 @@ export const CourseCard = ({
   course: any;
   blurDataMap: any;
 }) => {
+  console.log("cuourse result:", course);
   if (!course) {
     return (
       <div className="bg-transparent p-4 h-28 flex items-center justify-center">
@@ -79,7 +80,9 @@ export const CourseCard = ({
               href={course.courseLink}
               className="text-white text-xs transition-colors whitespace-nowrap px-2 py-1 rounded bg-teal-600 hover:bg-teal-700"
             >
-              কোর্সটি দেখুন
+            {
+              course.status === 'COMPLETED' ? "  কোর্সটি দেখুন" : "প্রিভিউ দেখুন"
+            }
             </Link>
           ) : (
             <div className="text-white text-xs transition-colors whitespace-nowrap px-2 py-1 rounded bg-zinc-300 cursor-not-allowed">

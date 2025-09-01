@@ -154,7 +154,7 @@ export async function PUT(
 
       // Case 1: Empty array - handle subscription removal
       if (subscriptionListIds.length === 0) {
-        // console.log("FROM IF - Empty subscription list");
+        // console.log("Empty subscription list - deactivating subscription");
 
         // Only deactivate if there's an existing active subscription
         if (existingSubscription) {
@@ -168,7 +168,7 @@ export async function PUT(
       }
       // Case 2: Has subscription IDs
       else {
-        // console.log("FROM ELSE - Has subscription IDs");
+        // console.log("Processing subscription with IDs:", subscriptionListIds);
         const subscriptionPlanId = subscriptionListIds[0];
 
         const subscriptionPlan = await db.subscriptionPlan.findUnique({
@@ -187,47 +187,62 @@ export async function PUT(
         let expiresAt = new Date(now);
         let trialEndsAt = null;
         let trialStartedAt = null;
+        let remainingDays = 0;
 
         // UPGRADE LOGIC: Add remaining time from current subscription
-        if (
-          existingSubscription &&
-          existingSubscription.status === "ACTIVE" &&
-          new Date(existingSubscription.expiresAt) > now
-        ) {
-          // Calculate remaining time from current subscription
-          const remainingTime =
-            new Date(existingSubscription.expiresAt).getTime() - now.getTime();
-          const remainingDays = Math.ceil(
-            remainingTime / (1000 * 60 * 60 * 24)
-          );
+        if (existingSubscription && existingSubscription.status === "ACTIVE") {
+          const currentExpiryDate = new Date(existingSubscription.expiresAt);
 
-          // Start from current expiry date instead of now
-          expiresAt = new Date(existingSubscription.expiresAt);
+          // Only add remaining time if current subscription hasn't expired
+          if (currentExpiryDate > now) {
+            // Calculate remaining time from current subscription
+            const remainingTime = currentExpiryDate.getTime() - now.getTime();
+            remainingDays = Math.ceil(remainingTime / (1000 * 60 * 60 * 24));
 
-          console.log(
-            `Upgrade detected: Adding ${remainingDays} days from current subscription`
-          );
+            // Start from current expiry date instead of now for non-trial subscriptions
+            if (!subscriptionPlan.isTrial) {
+              expiresAt = new Date(currentExpiryDate);
+            }
+          }
         }
 
-        // Add new subscription duration
+        // Add new subscription duration based on plan type
         if (subscriptionPlan.type === "MONTHLY") {
           expiresAt.setMonth(
             expiresAt.getMonth() + (subscriptionPlan.durationInMonths || 1)
           );
+          // console.log("Added monthly duration, new expiry:", expiresAt);
         } else if (subscriptionPlan.type === "YEARLY") {
           expiresAt.setFullYear(
             expiresAt.getFullYear() + (subscriptionPlan.durationInYears || 1)
           );
-          console.log("FROM ELSE IF:", subscriptionPlan.type, expiresAt);
-        } else {
+          // console.log("Added yearly duration, new expiry:", expiresAt);
+        } else if (subscriptionPlan.isTrial) {
+          // For trial subscriptions, always start fresh (don't add remaining time)
           trialStartedAt = new Date();
           trialEndsAt = new Date();
-          trialEndsAt.setDate(
-            trialEndsAt.getDate() + (subscriptionPlan.trialDurationInDays || 30)
-          );
+          expiresAt = new Date(); // Reset to now for trial
+
+          const trialDuration = subscriptionPlan.trialDurationInDays || 30;
+          trialEndsAt.setDate(trialEndsAt.getDate() + trialDuration);
+          expiresAt.setDate(expiresAt.getDate() + trialDuration);
+
+          // console.log("Trial subscription, duration:", trialDuration, "days");
         }
 
-        // Update existing or create new
+        // Check if user has ever used a trial before
+        const hasUsedTrialBefore = await db.subscription.findFirst({
+          where: {
+            studentProfileId: existingUser.studentProfile.id,
+            isTrial: true,
+          },
+        });
+
+        // Determine if this should be treated as a trial
+        // Only allow trial if: plan is trial AND user has never used trial before
+        const isTrial = subscriptionPlan.isTrial && !hasUsedTrialBefore;
+
+        // Update existing or create new subscription
         if (existingSubscription) {
           await db.subscription.update({
             where: { id: existingSubscription.id },
@@ -235,13 +250,15 @@ export async function PUT(
               subscriptionPlanId,
               status: "ACTIVE",
               expiresAt,
-              isTrial: existingSubscription.isTrial
-                ? true
-                : subscriptionPlan?.isTrial,
-              trialStartedAt,
-              trialEndsAt,
+              trialStartedAt: isTrial
+                ? trialStartedAt
+                : existingSubscription.trialStartedAt,
+              trialEndsAt: isTrial
+                ? trialEndsAt
+                : existingSubscription.trialEndsAt,
             },
           });
+          // console.log("Updated existing subscription");
         } else {
           await db.subscription.create({
             data: {
@@ -249,17 +266,17 @@ export async function PUT(
               subscriptionPlanId,
               expiresAt,
               status: "ACTIVE",
-              isTrial: subscriptionPlan?.isTrial,
+              isTrial,
               trialStartedAt,
               trialEndsAt,
             },
           });
+          // console.log("Created new subscription");
         }
       }
     }
 
     // ======== SUBSCRIPTION HANDLING END ========
-
     // **Delete Removed Courses**
     if (removedCourseIds.length > 0) {
       await db.enrolledStudents.deleteMany({

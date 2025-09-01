@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
+import { CourseMode } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 /**
@@ -43,6 +44,7 @@ export async function GET(
     const course = await db.course.findUnique({
       where: {
         id: courseId,
+        courseMode: CourseMode.RECORDED,
         OR: [
           { teacherProfileId }, // main teacher
           {
@@ -84,4 +86,3 @@ export async function GET(
     );
   }
 }
-

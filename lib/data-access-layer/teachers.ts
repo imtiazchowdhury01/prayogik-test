@@ -44,7 +44,7 @@ async function getTeachersDBCall(limit?: number) {
         updatedAt: true,
       },
       orderBy: {
-        createdAt: "asc", // Consistent ordering
+        updatedAt: "asc", // Consistent ordering
       },
     });
 

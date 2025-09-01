@@ -21,6 +21,22 @@ async function getHomeCoursesDBCall() {
             },
           },
         },
+        lessons: {
+          where: {
+            isFree: true,
+            isPublished: true,
+          },
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            position: true,
+            videoUrl: true,
+            videoStatus: true,
+            isFree: true,
+            isPublished: true,
+          },
+        },
         enrolledStudents: {
           select: {
             id: true,

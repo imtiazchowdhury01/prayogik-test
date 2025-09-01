@@ -40,6 +40,7 @@ export function DataTable<TData, TValue>({
   columns,
   data,
   statuses,
+  plans,
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
@@ -77,7 +78,7 @@ export function DataTable<TData, TValue>({
     <div className="space-y-4 w-full">
       <PageTitle title="All Subscribers" />
       {/* {JSON.stringify(data)} */}
-      <DataTableToolbar table={table} statuses={statuses} />
+      <DataTableToolbar table={table} statuses={statuses} plans={plans} />
 
       <div className="rounded-md border relative overflow-hidden">
         <Table>

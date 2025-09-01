@@ -14,11 +14,13 @@ interface StatusOption {
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
   statuses: StatusOption[];
+  plans: any[];
 }
 
 export function DataTableToolbar<TData>({
   table,
   statuses,
+  plans,
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0;
 
@@ -39,6 +41,17 @@ export function DataTableToolbar<TData>({
             column={table.getColumn("subscriptionStatus")}
             title="Status"
             options={statuses}
+          />
+        )}
+
+        {table.getColumn("subscriptionPlanId") && (
+          <DataTableFacetedFilter
+            column={table.getColumn("subscriptionPlanId")}
+            title="Plan"
+            options={plans?.map((plan) => ({
+              value: plan.id,
+              label: plan.name,
+            }))}
           />
         )}
 

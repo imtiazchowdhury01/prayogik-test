@@ -41,7 +41,7 @@ const HowToBecomeTeacher = () => {
         <div className="mb-8 sm:mb-10 lg:mb-12">
           <h2 className="course-proposal-heading">কীভাবে যুক্ত হবেন?</h2>
           <p className="course-proposal-description max-w-3xl">
-            আপনার আগ্রহ জানাতে নিচের ধাপগুলো অনুসরণ করুন।
+            আপনার আগ্রহ জানাতে নিচের ধাপগুলো অনুসরণ করুন। 
           </p>
         </div>
 

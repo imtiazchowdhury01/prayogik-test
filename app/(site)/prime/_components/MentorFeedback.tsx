@@ -1,7 +1,7 @@
 import SectionTitle from "@/components/common/SectionTitle";
 import React from "react";
-import VideoGallery from "./VideoGallery";
 import { mentorsFeedbackData } from "../../course-roadmap/_utils/data";
+import VideoGallery from "../../course-roadmap/_components/VideoGallery";
 
 const MentorFeedback = () => {
   return (

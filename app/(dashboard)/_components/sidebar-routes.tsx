@@ -24,6 +24,7 @@ import {
   Tags,
   Mailbox,
   Megaphone,
+  BookOpenText,
 } from "lucide-react";
 
 import {
@@ -157,6 +158,11 @@ const adminRoute = [
         href: "/admin/manage/monthly-earnings",
       },
     ],
+  },
+  {
+    icon: BookOpenText,
+    label: "Events",
+    href: "/admin/events",
   },
   // {
   //   icon: Megaphone,
