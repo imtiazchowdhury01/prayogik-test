@@ -1,3 +1,225 @@
+// // @ts-nocheck
+// import {
+//   getCategoriesDBCall,
+//   getCategoryCoursesCountDBCall,
+//   getCategoryCoursesDBCall,
+// } from "@/lib/data-access-layer/categories";
+// import { 
+//   getPrimeCoursesDBCall, 
+//   getCoursesDbCall,
+//   getLiveCoursesDBCall
+// } from "@/lib/data-access-layer/course";
+// import React from "react";
+// import CategoriesWrapper from "../_components/CategoryWrapper";
+// import type { Metadata, ResolvingMetadata } from "next";
+// import {
+//   CategoryFilterSelect,
+//   GeneralFilterSelect,
+// } from "../../_components/SelectFilterOption";
+
+// // Define filter types
+// const FILTER_TYPES = ["recent", "older", "prime", "live"] as const;
+// type FilterType = (typeof FILTER_TYPES)[number];
+
+// // Generate static params only for categories that have courses AND filter types
+// export async function generateStaticParams() {
+//   const categories = await getCategoriesDBCall();
+//   const params = [];
+
+//  // Check each category for courses and only include if it has courses
+//   for (const category of categories) {
+//     const coursesCount = await getCategoryCoursesCountDBCall(category.slug);
+//     if (coursesCount > 0) {
+//       params.push({
+//         categorySlug: category.slug,
+//       });
+//     }
+//   }
+
+//   // Always include filter types as they aggregate across all courses
+//   const filterParams = FILTER_TYPES.filter((type) => type !== "older").map(
+//     (filter) => ({
+//       categorySlug: filter,
+//     })
+//   );
+
+//   return [...params, ...filterParams];
+// }
+
+// // Dynamic metadata based on slug type
+// export async function generateMetadata(
+//   { params }: { params: { categorySlug: string } },
+//   parent: ResolvingMetadata
+// ): Promise<Metadata> {
+//   const slug = params.categorySlug;
+
+//   // Check if it's a filter type
+//   if (FILTER_TYPES.includes(slug as FilterType)) {
+//     const filterMetadata = {
+//       recent: {
+//         title: "Recent Courses | Latest Online Courses in Bangla | Prayogik",
+//         description:
+//           "Explore the most recent online courses. Stay updated with the latest practical skills and career-focused topics in Bangla.",
+//       },
+//       older: {
+//         title: "Older Courses | Previous Online Courses in Bangla | Prayogik",
+//         description:
+//           "Browse through our collection of older online courses. Find established practical skills and career-focused topics in Bangla.",
+//       },
+//       prime: {
+//         title:
+//           "Prime Courses | Premium Subscription Courses in Bangla | Prayogik",
+//         description:
+//           "Access our premium subscription courses. Get exclusive content and advanced practical skills in Bangla.",
+//       },
+//       live: {
+//         title:
+//           "Live Courses | Interactive Live Classes in Bangla | Prayogik",
+//         description:
+//           "Join our interactive live courses. Learn in real-time with expert instructors and engage with fellow students in Bangla.",
+//       },
+//     };
+//     return filterMetadata[slug as FilterType];
+//   }
+
+//   // For category pages, get category name for title
+//   const categories = await getCategoriesDBCall();
+//   const category = categories.find((cat) => cat.slug === slug);
+
+//   if (category) {
+//     return {
+//       title: `${category.name} Courses | Online Learning in Bangla | Prayogik`,
+//       description: `Learn ${category.name} with practical, career-focused online courses in Bangla. Expert instruction and hands-on projects.`,
+//     };
+//   }
+
+//   // Default metadata
+//   return {
+//     title: "Courses | Online Learning Platform | Prayogik",
+//     description:
+//       "Discover online courses to boost your skills with practical, career-focused topics in Bangla.",
+//   };
+// }
+
+// const CategorySlugPage = async ({
+//   params,
+// }: {
+//   params: { categorySlug: string };
+// }) => {
+//   const slug = params.categorySlug;
+
+//   // Check if it's a filter type
+//   if (FILTER_TYPES.includes(slug as FilterType)) {
+//     return await handleFilterType(slug as FilterType);
+//   }
+
+//   // Handle as category slug (existing logic)
+//   return await handleCategorySlug(slug);
+// };
+
+// // Handle filter types (recent, older, prime, live)
+// async function handleFilterType(filterType: FilterType) {
+//   let courses;
+//   let categories: any[];
+
+//   switch (filterType) {
+//     case "recent":
+//       const [recentCoursesResponse, recentCategories] =
+//         await Promise.all([
+//           getCoursesDbCall({
+//             page: 1,
+//             limit: 24, // Initial load: 24 courses
+//             sort: "desc", // Recent first
+//           }),
+//           getCategoriesDBCall(),
+//         ]);
+//       courses = recentCoursesResponse?.courses ?? [];
+//       categories = recentCategories;
+//       break;
+
+//     case "older":
+//       const [olderCoursesResponse, olderCategories] =
+//         await Promise.all([
+//           getCoursesDbCall({
+//             page: 1,
+//             limit: 24, // Initial load: 24 courses
+//             sort: "asc", // Older first
+//           }),
+//           getCategoriesDBCall(),
+//         ]);
+//       courses = olderCoursesResponse?.courses ?? [];
+//       categories = olderCategories;
+//       break;
+
+//     case "prime":
+//       const [primeCategories, primeCourses] = await Promise.all([
+//         getCategoriesDBCall(),
+//         getPrimeCoursesDBCall(1), // Pass page 1 for initial load
+//       ]);
+//       courses = primeCourses;
+//       categories = primeCategories;
+//       break;
+
+//     case "live":
+//       const [liveCategories, liveCourses] = await Promise.all([
+//         getCategoriesDBCall(),
+//         getLiveCoursesDBCall(1), // Pass page 1 for initial load
+//       ]);
+//       courses = liveCourses;
+//       categories = liveCategories;
+//       break;
+
+//     default:
+//       courses = [];
+//       categories = [];
+//   }
+
+//   // Get category name in Bangla
+//   const getCategoryName = (filter: FilterType): string => {
+//     const nameMap = {
+//       recent: "সাম্প্রতিক",
+//       older: "পুরাতন",
+//       prime: "প্রায়োগিক প্রাইম",
+//       live: "লাইভ কোর্স",
+//     };
+//     return nameMap[filter];
+//   };
+
+//   return (
+//     <CategoriesWrapper
+//       courses={courses}
+//       categories={categories}
+//       categoryName={getCategoryName(filterType)}
+//       filterComponent={<GeneralFilterSelect currentFilter={filterType} />}
+//       pageType="filter"
+//       filter={filterType}
+//     />
+//   );
+// }
+
+// // Handle category slugs (existing logic)
+// async function handleCategorySlug(categorySlug: string) {
+//   const courses = await getCategoryCoursesDBCall(categorySlug, 1); // Pass page 1 for initial load
+//   const categories = await getCategoriesDBCall();
+
+//   const categoryName = categories.find(
+//     (category) => category.slug === categorySlug
+//   )?.name;
+
+//   return (
+//     <CategoriesWrapper
+//       courses={courses}
+//       categories={categories}
+//       categoryName={categoryName}
+//       filterComponent={<CategoryFilterSelect categorySlug={categorySlug} />}
+//       pageType="category"
+//       categorySlug={categorySlug}
+//     />
+//   );
+// }
+
+// export default CategorySlugPage;
+
 // @ts-nocheck
 import {
   getCategoriesDBCall,
@@ -21,39 +243,47 @@ import {
 const FILTER_TYPES = ["recent", "older", "prime", "live"] as const;
 type FilterType = (typeof FILTER_TYPES)[number];
 
-// Generate static params only for categories that have courses AND filter types
-export async function generateStaticParams() {
-  const categories = await getCategoriesDBCall();
-  const params = [];
+// OPTIMIZATION 1: Cache categories with course counts at build time
+let categoriesWithCoursesCache: any[] | null = null;
 
- // Check each category for courses and only include if it has courses
-  for (const category of categories) {
-    const coursesCount = await getCategoryCoursesCountDBCall(category.slug);
-    if (coursesCount > 0) {
-      params.push({
-        categorySlug: category.slug,
-      });
-    }
+async function getCategoriesWithCourses() {
+  if (categoriesWithCoursesCache) {
+    return categoriesWithCoursesCache;
   }
+  
+  const categories = await getCategoriesDBCall();
+  // Filter categories that have courses (using the _count field from getCategoriesDBCall)
+  categoriesWithCoursesCache = categories.filter(cat => cat._count?.courses > 0);
+  return categoriesWithCoursesCache;
+}
 
-  // Always include filter types as they aggregate across all courses
+// OPTIMIZATION 2: Simplified generateStaticParams - remove individual course count checks
+export async function generateStaticParams() {
+  // Get categories with courses (using the _count from getCategoriesDBCall)
+  const categoriesWithCourses = await getCategoriesWithCourses();
+  
+  const categoryParams = categoriesWithCourses.map(category => ({
+    categorySlug: category.slug,
+  }));
+
+  // Filter params (excluding 'older' as in original)
   const filterParams = FILTER_TYPES.filter((type) => type !== "older").map(
     (filter) => ({
       categorySlug: filter,
     })
   );
 
-  return [...params, ...filterParams];
+  return [...categoryParams, ...filterParams];
 }
 
-// Dynamic metadata based on slug type
+// OPTIMIZATION 3: Streamlined metadata generation
 export async function generateMetadata(
   { params }: { params: { categorySlug: string } },
   parent: ResolvingMetadata
 ): Promise<Metadata> {
   const slug = params.categorySlug;
 
-  // Check if it's a filter type
+  // Check if it's a filter type first (no DB call needed)
   if (FILTER_TYPES.includes(slug as FilterType)) {
     const filterMetadata = {
       recent: {
@@ -82,9 +312,9 @@ export async function generateMetadata(
     return filterMetadata[slug as FilterType];
   }
 
-  // For category pages, get category name for title
-  const categories = await getCategoriesDBCall();
-  const category = categories.find((cat) => cat.slug === slug);
+  // For category pages, use cached categories
+  const categoriesWithCourses = await getCategoriesWithCourses();
+  const category = categoriesWithCourses.find((cat) => cat.slug === slug);
 
   if (category) {
     return {
@@ -117,61 +347,43 @@ const CategorySlugPage = async ({
   return await handleCategorySlug(slug);
 };
 
-// Handle filter types (recent, older, prime, live)
+// OPTIMIZATION 4: Batch data fetching for filter types
 async function handleFilterType(filterType: FilterType) {
   let courses;
   let categories: any[];
 
+  // Get categories once (reuse cached version)
+  categories = await getCategoriesWithCourses();
+
   switch (filterType) {
     case "recent":
-      const [recentCoursesResponse, recentCategories] =
-        await Promise.all([
-          getCoursesDbCall({
-            page: 1,
-            limit: 24, // Initial load: 24 courses
-            sort: "desc", // Recent first
-          }),
-          getCategoriesDBCall(),
-        ]);
+      const recentCoursesResponse = await getCoursesDbCall({
+        page: 1,
+        limit: 24,
+        sort: "desc",
+      });
       courses = recentCoursesResponse?.courses ?? [];
-      categories = recentCategories;
       break;
 
     case "older":
-      const [olderCoursesResponse, olderCategories] =
-        await Promise.all([
-          getCoursesDbCall({
-            page: 1,
-            limit: 24, // Initial load: 24 courses
-            sort: "asc", // Older first
-          }),
-          getCategoriesDBCall(),
-        ]);
+      const olderCoursesResponse = await getCoursesDbCall({
+        page: 1,
+        limit: 24,
+        sort: "asc",
+      });
       courses = olderCoursesResponse?.courses ?? [];
-      categories = olderCategories;
       break;
 
     case "prime":
-      const [primeCategories, primeCourses] = await Promise.all([
-        getCategoriesDBCall(),
-        getPrimeCoursesDBCall(1), // Pass page 1 for initial load
-      ]);
-      courses = primeCourses;
-      categories = primeCategories;
+      courses = await getPrimeCoursesDBCall(1);
       break;
 
     case "live":
-      const [liveCategories, liveCourses] = await Promise.all([
-        getCategoriesDBCall(),
-        getLiveCoursesDBCall(1), // Pass page 1 for initial load
-      ]);
-      courses = liveCourses;
-      categories = liveCategories;
+      courses = await getLiveCoursesDBCall(1);
       break;
 
     default:
       courses = [];
-      categories = [];
   }
 
   // Get category name in Bangla
@@ -197,19 +409,22 @@ async function handleFilterType(filterType: FilterType) {
   );
 }
 
-// Handle category slugs (existing logic)
+// Handle category slugs - reuse cached categories
 async function handleCategorySlug(categorySlug: string) {
-  const courses = await getCategoryCoursesDBCall(categorySlug, 1); // Pass page 1 for initial load
-  const categories = await getCategoriesDBCall();
+  // OPTIMIZATION 5: Parallel data fetching
+  const [courses, categoriesWithCourses] = await Promise.all([
+    getCategoryCoursesDBCall(categorySlug, 1),
+    getCategoriesWithCourses(), // Use cached version
+  ]);
 
-  const categoryName = categories.find(
+  const categoryName = categoriesWithCourses.find(
     (category) => category.slug === categorySlug
   )?.name;
 
   return (
     <CategoriesWrapper
       courses={courses}
-      categories={categories}
+      categories={categoriesWithCourses}
       categoryName={categoryName}
       filterComponent={<CategoryFilterSelect categorySlug={categorySlug} />}
       pageType="category"
