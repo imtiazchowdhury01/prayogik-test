@@ -143,11 +143,6 @@ const adminRoute = [
     href: "/admin/manage/course-roadmap",
   },
   {
-    icon: CircleDollarSign,
-    label: "Manual Payment",
-    href: "/admin/manual-payments",
-  },
-  {
     icon: Cog,
     label: "Manage",
     isParent: true,

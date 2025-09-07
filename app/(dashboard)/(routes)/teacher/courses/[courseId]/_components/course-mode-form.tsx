@@ -422,11 +422,11 @@ export const CourseModeForm = ({
       await axios.patch(`/api/courses/${courseId}`, submitData);
       toast.success("Course updated");
       setIsEditing(false);
-      await revalidatePage([
-        { route: "/", type: "page" },
-        { route: "/home", type: "page" },
-        { route: "/live", type: "page" },
-        { route: "/courses", type: "layout" },
+       await revalidatePage([
+        { route: "/" },
+        { route: "/home" },
+        { route: "/live" },
+        { route: "/(course)/courses", type: "layout" },
       ]);
       router.refresh();
     } catch {

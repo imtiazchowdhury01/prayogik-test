@@ -3,25 +3,25 @@ export const contactFormSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(3, { message: "Username must be at least 3 characters." })
-    .max(50, { message: "Username cannot exceed 50 characters." }),
+    .min(3, { message: "নাম অন্তত ৩ অক্ষরের হতে হবে।" })
+    .max(50, { message: "নাম সর্বোচ্চ ৫০ অক্ষরের হতে পারবে।" }),
 
   email: z
     .string()
     .trim()
     .toLowerCase()
-    .email({ message: "Please enter a valid email address." })
-    .max(100, { message: "Email cannot exceed 100 characters." }),
+    .email({ message: "সঠিক ইমেইল ঠিকানা লিখুন।" })
+    .max(100, { message: "ইমেইল সর্বোচ্চ ১০০ অক্ষরের হতে পারবে।" }),
 
   subject: z
     .string()
     .trim()
-    .min(2, { message: "Subject must be at least 2 characters." })
-    .max(100, { message: "Subject cannot exceed 100 characters." }),
+    .min(2, { message: "বিষয় অন্তত ২ অক্ষরের হতে হবে।" })
+    .max(100, { message: "বিষয় সর্বোচ্চ ১০০ অক্ষরের হতে পারবে।" }),
 
   message: z
     .string()
     .trim()
-    .min(2, { message: "Message must be at least 2 characters." })
-    .max(500, { message: "Message cannot exceed 500 characters." }),
+    .min(2, { message: "অন্তত ২ অক্ষরের হতে হবে।" })
+    .max(500, { message: "সর্বোচ্চ ৫০০ অক্ষরের হতে পারবে।" }),
 });

@@ -3,21 +3,78 @@ import { contactFormSubmissionTemplate } from "@/lib/utils/emailTemplates/contac
 import { contactFormSchema } from "@/app/(site)/contact/_schema/contactFormSchema";
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
-
-// Create an extended schema that includes the reCAPTCHA token
-const extendedContactFormSchema = contactFormSchema.extend({
-  recaptchaToken: String(),
-});
+import { teachingFormSubmissionTemplate } from "@/lib/utils/emailTemplates/teaching-form-submission-template";
 
 export async function POST(req: Request) {
   try {
-    const { name, email, message, subject, recaptchaToken } = await req.json();
+    const requestData = await req.json();
+    const {
+      name,
+      email,
+      message,
+      subject,
+      recaptchaToken,
+      formType = "contact",
+      phone,
+      facebookUrl,
+      linkedinUrl,
+      youtubeUrl,
+      websiteUrl,
+      courseProposals,
+    } = requestData;
 
-    if (!name || !email || !message || !subject || !recaptchaToken) {
+    // Basic required fields validation (common for both forms)
+    if (!name || !email || !recaptchaToken) {
       return NextResponse.json(
-        { message: "All fields are required." },
+        { message: "নাম, ইমেইল এবং রিক্যাপচা আবশ্যক।" },
         { status: 400 }
       );
+    }
+
+    // Form type specific validation
+    if (formType === "contact") {
+      if (!subject || !message) {
+        return NextResponse.json(
+          { message: "বিষয় এবং বিস্তারিত ক্ষেত্রগুলি আবশ্যক।" },
+          { status: 400 }
+        );
+      }
+    } else if (formType === "teaching") {
+      if (!courseProposals || courseProposals.length === 0) {
+        return NextResponse.json(
+          { message: "অন্তত একটি কোর্স প্রস্তাবনা আবশ্যক।" },
+          { status: 400 }
+        );
+      }
+
+      // Validate each course proposal
+      // for (let i = 0; i < courseProposals.length; i++) {
+      //   const proposal = courseProposals[i];
+      //   if (
+      //     !proposal.courseTitle ||
+      //     !proposal.courseDetails ||
+      //     !proposal.category ||
+      //     proposal.category.length === 0
+      //   ) {
+      //     return NextResponse.json(
+      //       { message: `কোর্স প্রস্তাবনা ${i + 1}: সব ক্ষেত্র পূরণ করুন।` },
+      //       { status: 400 }
+      //     );
+      //   }
+      // }
+      for (let i = 0; i < courseProposals.length; i++) {
+        const proposal = courseProposals[i];
+        if (
+          !proposal.courseTitle ||
+          !proposal.courseDetails ||
+          !proposal.category
+        ) {
+          return NextResponse.json(
+            { message: `কোর্স প্রস্তাবনা ${i + 1}: সব ক্ষেত্র পূরণ করুন।` },
+            { status: 400 }
+          );
+        }
+      }
     }
 
     // Verify reCAPTCHA v2 token
@@ -45,21 +102,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Validate form data
-    const validation = contactFormSchema.safeParse({
-      name,
-      email,
-      message,
-      subject,
-    });
-
-    if (!validation.success) {
-      return NextResponse.json(
-        { message: "Validation failed", details: validation.error.format() },
-        { status: 400 }
-      );
-    }
-
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -69,25 +111,54 @@ export async function POST(req: Request) {
     });
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL + "";
-    const mailOptions = {
-      from: "Prayogik",
-      replyTo: email,
-      to: process.env.ADMIN_RECIPIENT_EMAIL,
-      subject: `Prayogik: New Entry from Prayogik`,
-      html: contactFormSubmissionTemplate(
+
+    // Generate email content based on form type
+    let emailHtml;
+    let emailSubject;
+
+    if (formType === "teaching") {
+      emailHtml = teachingFormSubmissionTemplate(
+        name,
+        email,
+        message,
+        phone || "",
+        facebookUrl || "",
+        linkedinUrl || "",
+        youtubeUrl || "",
+        websiteUrl || "",
+        courseProposals || [],
+        baseUrl
+      );
+     emailSubject = `প্রায়োগিক - নতুন শিক্ষক আবেদন।`;
+    } else {
+      emailHtml = contactFormSubmissionTemplate(
         name,
         email,
         subject,
         message,
         baseUrl
-      ),
+      );
+      emailSubject = `প্রায়োগিক - নতুন যোগাযোগ ফর্ম জমা হয়েছে।`;
+    }
+
+    const mailOptions = {
+      from: "Prayogik",
+      replyTo: email,
+      to: process.env.ADMIN_RECIPIENT_EMAIL,
+      subject: emailSubject,
+      html: emailHtml,
     };
 
     await transporter.sendMail(mailOptions);
 
+    const successMessage =
+      formType === "teaching"
+        ? "আপনার শিক্ষকতার আবেদন সফলভাবে জমা দেওয়া হয়েছে!"
+        : "ইমেল সফলভাবে পাঠানো হয়েছে!";
+
     return NextResponse.json({
       success: true,
-      message: "ইমেল সফলভাবে পাঠানো হয়েছে!",
+      message: successMessage,
     });
   } catch (error) {
     console.error("Email send error:", error);

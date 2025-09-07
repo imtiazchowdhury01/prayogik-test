@@ -3,65 +3,29 @@ import { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
-import * as z from "zod";
 import { createEvent, updateEvent } from "@/lib/event/event";
-import { uploadEventImageToS3, uploadSpeakerImageToS3 } from "@/actions/upload-aws";
+import {
+  uploadEventImageToS3,
+  uploadSpeakerImageToS3,
+} from "@/actions/upload-aws";
 import { formatDateForInput } from "@/lib/formatDateForInput";
 import { baseJoditConfig } from "@/lib/config/jodit-config";
-import { EVENT_TYPES } from "@/data/event-constant";
+import { revalidatePage } from "@/actions/revalidatePage";
+import { CreateEventInput, CreateEventSchema } from "@/schemas/event-schema";
 
-const faqSchema = z.object({
-  question: z.string().min(1, "Question is required"),
-  answer: z.string().min(1, "Answer is required"),
-});
+// Event status options based on Prisma schema
+const EVENT_STATUS_OPTIONS = [
+  { value: "DRAFT", label: "Draft" },
+  { value: "UPCOMING", label: "Upcoming" },
+  { value: "WAITING", label: "Waiting" },
+  { value: "CLOSED", label: "Closed" },
+] as const;
 
-const speakerSchema = z.object({
-  name: z.string().min(1, "Speaker name is required"),
-  designation: z.string().optional(),
-  avatarUrl: z.string().min(1, "Speaker image is required"),
-});
-
-const formSchema = z
-  .object({
-    title: z.string().min(1, "Title is required"),
-    slug: z.string().min(1, "Slug is required"),
-    description: z.string().optional(),
-    date: z.string({ required_error: "Date is required" }),
-    type: z.enum(EVENT_TYPES.map(e => e.value) as [typeof EVENT_TYPES[number]["value"], ...string[]], {
-      required_error: "Event type is required",
-      message: "Please select an event type from the list",
-    }),
-    isOnline: z.boolean().default(false),
-    location: z.string().optional(),
-    zoomLink: z.string().url().optional().or(z.literal("")),
-    imageUrl: z.string().optional(),
-    mapLocation: z.string().optional(),
-    speakers: z.array(speakerSchema).default([]),
-    faqs: z.array(faqSchema).default([]),
-  })
-  .refine(
-    (data) => {
-      if (!data.isOnline && !data.location) return false;
-      if (
-        data.isOnline &&
-        data.zoomLink &&
-        !z.string().url().safeParse(data.zoomLink).success
-      )
-        return false;
-      return true;
-    },
-    {
-      message:
-        "Location is required for offline events, and Zoom link must be a valid URL for online events",
-      path: ["location"],
-    }
-  );
-
-type FormData = z.infer<typeof formSchema>;
-
-export const useEventForm = (initialData?: any, mode: "create" | "update" = "create") => {
+export const useEventForm = (
+  initialData?: any,
+  mode: "create" | "update" = "create"
+) => {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [speakerImageUploading, setSpeakerImageUploading] = useState<{
@@ -70,14 +34,15 @@ export const useEventForm = (initialData?: any, mode: "create" | "update" = "cre
   const [currentStep, setCurrentStep] = useState("basic");
 
   const router = useRouter();
-  const { data: sessionData } = useSession();
 
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<CreateEventInput>({
+    resolver: zodResolver(CreateEventSchema),
     defaultValues: {
       title: initialData?.title || "",
       slug: initialData?.slug || "",
       description: initialData?.description || "",
+      price: initialData?.price || undefined,
+      status: initialData?.status || "DRAFT",
       date:
         initialData && initialData.date
           ? formatDateForInput(initialData.date)
@@ -95,6 +60,7 @@ export const useEventForm = (initialData?: any, mode: "create" | "update" = "cre
 
   const watchIsOnline = form.watch("isOnline");
   const watchTitle = form.watch("title");
+  const watchType = form.watch("type");
 
   // Auto-generate slug from title
   useEffect(() => {
@@ -106,6 +72,13 @@ export const useEventForm = (initialData?: any, mode: "create" | "update" = "cre
       form.setValue("slug", slug);
     }
   }, [watchTitle, form, mode]);
+
+  // Clear price when event type changes to FREE
+  useEffect(() => {
+    if (watchType === "FREE") {
+      form.setValue("price", undefined);
+    }
+  }, [watchType, form]);
 
   const joditConfig = useMemo(() => baseJoditConfig, []);
 
@@ -171,13 +144,16 @@ export const useEventForm = (initialData?: any, mode: "create" | "update" = "cre
     }
   };
 
-  const onSubmit = async (values: FormData) => {
+  const onSubmit = async (values: CreateEventInput) => {
+    console.log(values, "values");
     setLoading(true);
     try {
       const eventData = {
         title: values.title,
         slug: values.slug,
         description: values.description || undefined,
+        price: values.type === "PAID" ? Number(values.price) : null,
+        status: values.status,
         date: values.date,
         type: values.type,
         isOnline: values.isOnline,
@@ -200,6 +176,7 @@ export const useEventForm = (initialData?: any, mode: "create" | "update" = "cre
         result = await createEvent(eventData);
         if (result.success) {
           toast.success("Event created successfully");
+          revalidatePage([{ route: "/home" }, { route: "/events" }]);
           router.push(`/admin/events`);
         }
       } else {
@@ -215,6 +192,10 @@ export const useEventForm = (initialData?: any, mode: "create" | "update" = "cre
           updateData.slug = eventData.slug;
         if (eventData.description !== initialData.description)
           updateData.description = eventData.description;
+        if (eventData.price !== initialData.price)
+          updateData.price = eventData.price;
+        if (eventData.status !== initialData.status)
+          updateData.status = eventData.status;
         if (eventData.date !== initialData.date)
           updateData.date = eventData.date;
         if (eventData.type !== initialData.type)
@@ -237,7 +218,8 @@ export const useEventForm = (initialData?: any, mode: "create" | "update" = "cre
         result = await updateEvent(initialData.id, updateData);
         if (result.success) {
           toast.success("Event updated successfully");
-          router.refresh();
+          revalidatePage([{ route: "/home" }, { route: "/events" }]);
+           router.push(`/admin/events`);
         }
       }
 
@@ -271,9 +253,11 @@ export const useEventForm = (initialData?: any, mode: "create" | "update" = "cre
     setCurrentStep,
     watchIsOnline,
     watchTitle,
+    watchType,
     joditConfig,
     handleEventImageUpload,
     handleSpeakerImageUpload,
     onSubmit,
+    EVENT_STATUS_OPTIONS,
   };
 };

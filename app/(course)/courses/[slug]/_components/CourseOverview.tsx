@@ -8,10 +8,8 @@ import VideoDialog from "./VideoDialog";
 
 const CourseOverview = ({
   course,
-  blurDataURL,
 }: {
   course: any;
-  blurDataURL?: string | null; // Make it optional
 }) => {
   const freeLesson = course?.lessons?.find(
     (lesson: any) => lesson.isFree && lesson.videoUrl
@@ -21,7 +19,7 @@ const CourseOverview = ({
     <section id="overview" className="my-8">
       <VideoDialog course={course} freeLesson={freeLesson}>
         <div
-          className={`w-full ${
+          className={`w-full hidden md:block ${
             !freeLesson && "pointer-events-none"
           } relative aspect-[16/9] overflow-hidden rounded-lg`}
         >
@@ -31,9 +29,7 @@ const CourseOverview = ({
             width={0}
             height={0}
             sizes="100vw"
-            className="object-cover w-full h-full rounded-lg bg-gray-50"
-            placeholder={blurDataURL ? "blur" : "empty"} // Conditionally set placeholder
-            blurDataURL={blurDataURL || ""} // Will be undefined if not provided
+            className="object-cover w-full h-full rounded-lg bg-[#F9FAFB]"
             quality={75}
             priority={false}
           />

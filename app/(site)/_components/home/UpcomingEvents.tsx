@@ -1,12 +1,15 @@
 import EventCard from "@/components/EventCard";
-import { getEventsDBCall } from "@/lib/data-access-layer/events";
+import {  getFilteredEventsDBCall } from "@/lib/data-access-layer/events";
 
 export default async function UpcomingEvents() {
-  const events = await getEventsDBCall();
+  const events = await getFilteredEventsDBCall();
  
+  if(events?.length === 0){
+    return null
+  }
 
   return (
-    <section className="px-6 md:px-8 lg:px-8 xl:px-8 2xl:px-0 py-24 max-w-7xl mx-auto ">
+    <section className="px-6 md:px-8 lg:px-8 xl:px-8 2xl:px-0 pt-24 max-w-7xl mx-auto ">
       <div className="mb-8">
         <h2 className="font-bold md:text-left text-center text-3xl sm:text-4xl md:text-[40px]">
           আপকামিং ইভেন্ট

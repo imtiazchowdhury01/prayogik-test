@@ -42,7 +42,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import EducationsInput from "@/app/(dashboard)/(routes)/apply-for-teaching/_components/EducationsInput";
 import { z } from "zod";
 import { TeacherExpertiseLevel } from "@prisma/client";
 import MultiSelect from "@/components/ui/multi-select";
@@ -166,11 +165,9 @@ export default function TeacherForm({
       await revalidatePage([
         {
           route: "/teachers",
-          type: "page",
         },
         {
-          route: `/teachers/${initialData?.username}`,
-          type: "page",
+          route: "/home",
         },
       ]);
     } catch (err) {

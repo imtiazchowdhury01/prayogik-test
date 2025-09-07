@@ -1,7 +1,6 @@
 // @ts-nocheck
 import CourseCard from "@/components/CourseCard";
 import { Button } from "@/components/ui/button";
-import { generateMultipleBlurDataURLs } from "@/lib/blurGenerator";
 import { getLiveCoursesDBCall } from "@/lib/data-access-layer/getHomeCourses";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
@@ -10,11 +9,6 @@ const LiveCourses = async ({ isLivePage = false }) => {
   const courses = await getLiveCoursesDBCall();
 
   if ((!courses || courses.length === 0) && !isLivePage) return null;
-  // Generate blur data URLs for all course images
-  const imageUrls = courses
-    ?.map((course) => course.imageUrl)
-    .filter(Boolean) as string[];
-  const blurDataMap = await generateMultipleBlurDataURLs(imageUrls);
 
   return (
     <section
@@ -46,9 +40,6 @@ const LiveCourses = async ({ isLivePage = false }) => {
                   key={ind}
                   course={data}
                   instructor={data?.teacherProfile?.user?.name}
-                  blurDataURL={
-                    data.imageUrl ? blurDataMap[data.imageUrl] : undefined
-                  }
                 />
               );
             })}

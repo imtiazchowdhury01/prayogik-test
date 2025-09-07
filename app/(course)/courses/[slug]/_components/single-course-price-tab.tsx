@@ -329,11 +329,11 @@ const SingleCoursePriceTab = ({
     return (
       <motion.div
         className={twMerge(
-          "border-[1px] rounded-lg p-6 cursor-pointer transition-colors duration-300",
+          "border-[1px] rounded-lg p-4 lg:p-6 cursor-pointer transition-colors duration-300",
           isActive
             ? "bg-[#E7F5F4] border-[#4AAFA6]"
             : "border-[#BFC3C2] bg-transparent",
-          preview && "cursor-not-allowed opacity-75" // Add visual indication for preview mode
+          preview && "cursor-not-allowed opacity-75"
         )}
         onClick={() => !preview && setSelectedPriceOption(value)} // Disable click in preview mode
       >
@@ -342,8 +342,7 @@ const SingleCoursePriceTab = ({
             value={value}
             id={`${value}-price`}
             disabled={preview} // Disable radio button in preview mode
-            style={{ width: "18px", height: "18px", borderRadius: "100%" }}
-            className="text-primary-brand border-primary-brand ring-offset-0 focus:ring-0 focus-visible:ring-0"
+            className="text-primary-brand border-primary-brand ring-offset-0 focus:ring-0 focus-visible:ring-0 w-[20px] h-[18px] md:w-[20px] md:h-[18px] rounded-full"
           />
           <div className="w-full">
             <p className="text-sm text-fontcolor-title font-medium">{title}</p>

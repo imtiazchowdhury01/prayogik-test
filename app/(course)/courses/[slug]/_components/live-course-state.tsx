@@ -53,7 +53,10 @@ const LiveCourseState = ({ course }: any) => {
   return (
     <div className="flex flex-wrap gap-3">
       {stateItems.map((item, index) => (
-        <div key={index} className="bg-[#FFF5E6] rounded px-2 py-1 text-sm">
+        <div
+          key={index}
+          className="bg-[#FFF5E6] rounded px-2 py-1 md:text-sm text-[13px]"
+        >
           <span className="font-semibold">{item?.label}</span>{" "}
           <span className="text-gray-700">{item?.value}</span>
         </div>

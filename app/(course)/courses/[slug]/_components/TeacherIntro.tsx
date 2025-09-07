@@ -8,10 +8,9 @@ import { CourseMode } from "@prisma/client";
 
 interface TeacherIntroProps {
   course: any;
-  blurDataURL: any;
 }
 
-const TeacherIntro = ({ course, blurDataURL }: TeacherIntroProps) => {
+const TeacherIntro = ({ course }: TeacherIntroProps) => {
   const avatarSrc =
     course?.teacherProfile?.user?.avatarUrl || "/default-avatar.png";
 
@@ -31,9 +30,7 @@ const TeacherIntro = ({ course, blurDataURL }: TeacherIntroProps) => {
                 alt="instructor"
                 width={100}
                 height={100}
-                className="object-cover w-full h-full rounded-lg"
-                placeholder={blurDataURL ? "blur" : "empty"}
-                blurDataURL={blurDataURL || undefined}
+                className="object-cover w-full h-full rounded-lg bg-[#F9FAFB]"
               />
             </div>
 

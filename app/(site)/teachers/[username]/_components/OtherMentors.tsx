@@ -3,7 +3,7 @@ import React from "react";
 import ExpertCard from "@/components/ExpertCard";
 import MoreBtn from "@/components/more-btn";
 
-export function OtherMentors({ allTeacher, blurDataMap }) {
+export function OtherMentors({ allTeacher }) {
   return (
     <section className="w-full pb-16">
       <div className="app-container">
@@ -26,14 +26,10 @@ export function OtherMentors({ allTeacher, blurDataMap }) {
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {allTeacher &&
             allTeacher.slice(0, 4)?.map((teacher, index) => {
-              const blurDataURL = teacher?.avatarUrl
-                ? blurDataMap[teacher.avatarUrl]
-                : null;
               return (
                 <ExpertCard
                   key={index}
                   teacher={teacher}
-                  blurDataURL={blurDataURL}
                 />
               );
             })}

@@ -13,8 +13,17 @@ const bkashConfig = {
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, subscriptionPlanId, courseId, amount, type } =
-      await req.json();
+    const {
+      email,
+      subscriptionPlanId,
+      courseId,
+      amount,
+      type,
+      eventId,
+      phoneNumber,
+      profession,
+      name,
+    } = await req.json();
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
 
@@ -25,11 +34,15 @@ export async function POST(req: NextRequest) {
         subscriptionPlanId: subscriptionPlanId,
         courseId: courseId,
         purchaseType: type,
+        eventId,
+        phoneNumber,
+        profession,
+        name,
       },
     });
 
     if (!order) {
-      return NextResponse.json({ message: "Payment Failed" });
+      return NextResponse.json({ message: "Payment order creation Failed" });
     }
 
     const paymentDetails = {

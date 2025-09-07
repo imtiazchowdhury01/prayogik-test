@@ -1,21 +1,16 @@
 // @ts-nocheck
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+// import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { db } from "@/lib/db";
 
 export async function POST(request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user?.id) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized. Please log in." },
-        { status: 401 }
-      );
-    }
+    // const session = await getServerSession(authOptions);
 
     const data = await request.json();
     const {
+      email,
       bio,
       dateOfBirth,
       gender,
@@ -70,20 +65,26 @@ export async function POST(request) {
     if (website !== undefined) updateData.website = website;
     if (twitter !== undefined) updateData.twitter = twitter;
     if (phoneNumber !== undefined) updateData.phoneNumber = phoneNumber;
+    if (email !== undefined) updateData.email = email;
+
+    const user = await db.user.findUnique({
+      where: {
+        email,
+      },
+    });
 
     // Find teacher if exist
     const exisitingTeacherProfile = await db.teacherProfile.findFirst({
       where: {
-        userId: session.user.id
-      }
-    })
+        userId: user.id,
+      },
+    });
 
     // Update user information
-    const updatedUser = await db.user.update({  
-      where: { id: session.user.id },
+    const updatedUser = await db.user.update({
+      where: { id: user.id },
       data: updateData,
     });
-  
 
     if (exisitingTeacherProfile) {
       return NextResponse.json(
@@ -95,7 +96,7 @@ export async function POST(request) {
     // Create a teacher profile
     const teacherProfile = await db.teacherProfile.create({
       data: {
-        userId: session.user.id,
+        userId: user.id,
         subjectSpecializations: subjectSpecializations || [],
         expertiseLevel,
         teacherRankId: ranks[0]?.id,
@@ -104,8 +105,6 @@ export async function POST(request) {
         teacherStatus: "PENDING",
       },
     });
-
-    
 
     return NextResponse.json(
       { success: true, message: "Application submitted successfully!" },

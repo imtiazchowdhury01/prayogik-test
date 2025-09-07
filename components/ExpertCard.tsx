@@ -5,11 +5,12 @@ import Image from "next/image";
 import Link from "next/link";
 import React, { useState } from "react";
 
-const ExpertCard = ({ teacher, blurDataURL }) => {
+const ExpertCard = ({ teacher }) => {
   const [imgSrc, setImgSrc] = useState(
     teacher?.avatarUrl || "/default-avatar.png"
   );
   const imageErrorHandler = () => setImgSrc("/default-avatar.png");
+
   return (
     <Link href={`/teachers/${teacher?.username}`} className="group">
       <div className="relative w-full rounded-lg transition-shadow duration-300 overflow-hidden">
@@ -23,9 +24,7 @@ const ExpertCard = ({ teacher, blurDataURL }) => {
               height={400}
               quality={75}
               onError={imageErrorHandler}
-              placeholder={blurDataURL ? "blur" : "empty"}
-              blurDataURL={blurDataURL || undefined}
-              className="object-cover rounded-lg w-full h-full"
+              className="object-cover rounded-lg w-full h-full bg-[#F9FAFB]"
             />
           </div>
         </div>

@@ -54,12 +54,12 @@ export const AttachmentForm = ({
       await axios.post(`/api/courses/${courseId}/attachments`, values);
       toast.success("Course updated");
       toggleEdit();
-        await revalidatePage([
-      { route: "/", type: "page" },
-        { route: "/home", type: "page" },
-        { route: "/live", type: "page" },
-        { route: "/courses", type: "layout" },
-    ]);
+      await revalidatePage([
+        { route: "/" },
+        { route: "/home" },
+        { route: "/live" },
+        { route: "/(course)/courses", type: "layout" },
+      ]);
       router.refresh();
     } catch {
       toast.error("Something went wrong");
@@ -78,12 +78,12 @@ export const AttachmentForm = ({
       if (previousKey) await deleteImageFromS3(previousKey);
 
       toast.success("Attachment deleted");
-        await revalidatePage([
-      { route: "/", type: "page" },
-        { route: "/home", type: "page" },
-        { route: "/live", type: "page" },
-        { route: "/courses", type: "layout" },
-    ]);
+      await revalidatePage([
+        { route: "/" },
+        { route: "/home" },
+        { route: "/live" },
+        { route: "/(course)/courses", type: "layout" },
+      ]);
       router.refresh();
     } catch {
       toast.error("Something went wrong");

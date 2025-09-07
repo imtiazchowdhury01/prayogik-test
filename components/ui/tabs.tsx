@@ -36,7 +36,7 @@ const TabsTrigger = React.forwardRef<
   >
     <span className="relative z-10">{props.children}</span>
     {/* Animated Border */}
-    <span className="absolute bottom-0 left-0 h-0 w-[4px]  bg-teal-600  group-data-[state=active]:h-full"></span>
+    {/* <span className="absolute bottom-0 left-0 h-0 w-[4px]  bg-teal-600  group-data-[state=active]:h-full"></span> */}
   </TabsPrimitive.Trigger>
 ));
 TabsTrigger.displayName = TabsPrimitive.Trigger.displayName;

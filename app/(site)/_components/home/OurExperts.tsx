@@ -8,7 +8,6 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { z } from "zod";
 import TeacherCarousal from "../teacher/TeacherCarousal";
-import { generateMultipleBlurDataURLs } from "@/lib/blurGenerator";
 import TeachersGrid from "../teacher/TeachersGrid";
 
 // Define the type for TeacherWithProfile using the schema
@@ -70,14 +69,7 @@ const OurExperts = async () => {
   } catch (err) {
     console.error("Page : Failed to fetch teachers details:", err);
   }
-  // Collect all image URLs from the course (filtering out null values)
-  const imageUrls = [
-    ...(teachers
-      ?.map((teacher: any) => teacher?.avatarUrl)
-      .filter((url) => typeof url === "string" && url.trim() !== "") || []),
-  ];
-  // Generate blur data for all images in parallel
-  const blurDataMap = await generateMultipleBlurDataURLs(imageUrls);
+
 
   return (
     <section className="w-full">
@@ -92,10 +84,8 @@ const OurExperts = async () => {
             </p>
           </div>
         </div>
-        {/* -----------Experts Carousel-------------- */}
-        {/* <TeacherCarousal teachers={teachers} blurDataMap={blurDataMap} /> */}
         {/* -----------Experts Grid ----------------- */}
-        <TeachersGrid teachers={teachers} blurDataMap={blurDataMap} />
+        <TeachersGrid teachers={teachers} />
       </div>
     </section>
   );

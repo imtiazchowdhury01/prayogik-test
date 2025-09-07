@@ -15,10 +15,6 @@ body,
   --font-noto-serif-bengali-fallback: "Noto Serif Bengali Fallback";
 }
 
-body.fonts-loaded {
-  visibility: visible;
-}
-
 @layer base {
   :root {
     /* custom color starts-- */
@@ -457,4 +453,3 @@ table {
     height: 500px !important;
   }
 }
-

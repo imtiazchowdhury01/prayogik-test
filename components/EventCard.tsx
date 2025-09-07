@@ -16,7 +16,10 @@ import { formatEventTime } from "@/lib/utils/formatLiveCourseTime";
 
 const EventCard = ({ event }: any) => {
   return (
-    <Card key={event.id} className="bg-white rounded-lg shadow-sm flex flex-col">
+    <Card
+      key={event.id}
+      className="bg-white rounded-lg shadow-sm flex flex-col"
+    >
       <CardHeader className="p-0">
         <div
           className="relative w-full overflow-hidden rounded-t-lg"
@@ -35,7 +38,7 @@ const EventCard = ({ event }: any) => {
         </div>
       </CardHeader>
       <CardContent className="p-4 flex-1">
-        <h3 className="text-base font-bold text-gray-900 mb-2 line-clamp-2 leading-tight">
+        <h3 className="text-base font-bold text-gray-900 mb-2 line-clamp-1 leading-tight">
           {textLangChecker(event?.title)}
         </h3>
         {event?.description && (
@@ -54,14 +57,14 @@ const EventCard = ({ event }: any) => {
             ) : (
               <Globe className="w-4 h-4 mr-1 text-gray-800" />
             )}
-            <span>{event.location ? event.location : "অনলাইন"}</span>
+            <span className="text-[14px]">{!event.isOnline ? event.location : "অনলাইন"}</span>
           </div>
         </div>
       </CardContent>
 
       <CardFooter className="p-4 pt-0 mt-auto">
         <Link
-          href={`/events/${event.id}?type=${event.type}`}
+          href={`/events/${event.slug}`}
           className={`w-full h-12 text-base mt-auto ${buttonVariants({
             variant: "default",
           })}`}

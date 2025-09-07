@@ -139,7 +139,7 @@ const TeacherApplicationStatusCard = ({ status, applicationDetails }: any) => {
   };
 
   return (
-    <div className="space-y-6 mt-6">
+    <div className="space-y-6 mt-6 pt-16 pb-24">
       {/* Main Status Card */}
       <div
         className={`${config.bgColor} ${config.borderColor} border-2 rounded-lg`}

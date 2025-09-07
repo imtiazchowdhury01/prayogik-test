@@ -1,5 +1,7 @@
 // app/api/admin/events/[id]/route.ts
 import { db } from "@/lib/db";
+import { checkSlugUniqueness, createEventErrorResponse, createEventSuccessResponse, processEventData } from "@/lib/utils/event/event-api-response";
+import { UpdateEventSchema } from "@/schemas/event-schema";
 import { NextRequest, NextResponse } from "next/server";
 
 interface RouteContext {
@@ -52,10 +54,15 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
   }
 }
 
-// PUT /api/admin/events/[id] - Update an event
+
 export async function PUT(request: NextRequest, { params }: RouteContext) {
   try {
     const { id } = params;
+    
+    if (!id) {
+      return createEventErrorResponse("Event ID is required", 400);
+    }
+
     const body = await request.json();
 
     // Check if event exists
@@ -64,160 +71,54 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
     });
 
     if (!existingEvent) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Event not found",
-        },
-        { status: 404 }
+      return createEventErrorResponse("Event not found", 404);
+    }
+
+    // Validate request body
+    const validationResult = UpdateEventSchema.safeParse(body);
+    if (!validationResult.success) {
+      const errorMessages = validationResult.error.errors
+        .map(err => `${err.path.join('.')}: ${err.message}`)
+        .join(', ');
+      
+      return createEventErrorResponse(
+        "Validation error",
+        400,
+        errorMessages
       );
     }
+
+    const validatedData = validationResult.data;
 
     // Check slug uniqueness if slug is being updated
-    if (body.slug && body.slug !== existingEvent.slug) {
-      const slugExists = await db.event.findUnique({
-        where: { slug: body.slug },
-      });
-
-      if (slugExists) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Event slug already exists",
-            details: "slug already exists",
-          },
-          { status: 409 }
+    if (validatedData.slug && validatedData.slug !== existingEvent.slug) {
+      const isSlugUnique = await checkSlugUniqueness(validatedData.slug, id);
+      if (!isSlugUnique) {
+        return createEventErrorResponse(
+          "Event slug already exists",
+          409,
+          "Please choose a different slug"
         );
       }
     }
 
-    // Validate date if provided
-    if (body.date) {
-      const eventDate = new Date(body.date);
-      if (isNaN(eventDate.getTime())) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Invalid date format",
-          },
-          { status: 400 }
-        );
-      }
-      body.date = eventDate;
-    }
-
-    // Validate online/offline constraints
-    const isOnline =
-      body.isOnline !== undefined ? body.isOnline : existingEvent.isOnline;
-    const location =
-      body.location !== undefined ? body.location : existingEvent.location;
-    const zoomLink =
-      body.zoomLink !== undefined ? body.zoomLink : existingEvent.zoomLink;
-
-    if (!isOnline && !location) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Offline events must have a location",
-        },
-        { status: 400 }
+    // Additional validation for location when switching to offline
+    if (validatedData.isOnline === false && !validatedData.location && !existingEvent.location) {
+      return createEventErrorResponse(
+        "Location is required for offline events",
+        400
       );
     }
 
-    // Validate zoom link URL format if provided
-    if (body.zoomLink) {
-      try {
-        new URL(body.zoomLink);
-      } catch {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Invalid zoom link URL format",
-          },
-          { status: 400 }
-        );
-      }
-    }
+    // Process the validated data
+    const processedData = processEventData(validatedData);
 
-    // Prepare update data object
-    const updateData: any = {};
+    // Remove undefined values to avoid overwriting with undefined
+    const updateData = Object.fromEntries(
+      Object.entries(processedData).filter(([_, value]) => value !== undefined)
+    );
 
-    // Only add fields that are provided in the request body
-    if (body.title !== undefined) updateData.title = body.title.trim();
-    if (body.slug !== undefined) updateData.slug = body.slug.trim();
-    if (body.description !== undefined)
-      updateData.description = body.description
-        ? body.description.trim()
-        : null;
-    if (body.date !== undefined) updateData.date = body.date;
-    if (body.isOnline !== undefined) updateData.isOnline = body.isOnline;
-    if (body.location !== undefined)
-      updateData.location = body.location ? body.location.trim() : null;
-    if (body.zoomLink !== undefined)
-      updateData.zoomLink = body.zoomLink ? body.zoomLink.trim() : null;
-    if (body.imageUrl !== undefined)
-      updateData.imageUrl = body.imageUrl ? body.imageUrl.trim() : null;
-    if (body.mapLocation !== undefined)
-      updateData.mapLocation = body.mapLocation
-        ? body.mapLocation.trim()
-        : null;
-    if (body.isPublished !== undefined)
-      updateData.isPublished = body.isPublished;
-
-    // Handle speakers (embedded type)
-    if (body.speakers !== undefined) {
-      if (Array.isArray(body.speakers)) {
-        const processedSpeakers = body.speakers
-          .filter(
-            (speaker: any) =>
-              speaker.name &&
-              speaker.name.trim() &&
-              speaker.avatarUrl &&
-              typeof speaker.name === "string" &&
-              typeof speaker.avatarUrl === "string"
-          )
-          .map((speaker: any) => ({
-            name: speaker.name.trim(),
-            designation: speaker.designation
-              ? speaker.designation.trim()
-              : null,
-            avatarUrl: speaker.avatarUrl,
-          }));
-
-        updateData.speakers = processedSpeakers;
-      } else {
-        // Clear speakers if not an array
-        updateData.speakers = [];
-      }
-    }
-
-    // Handle FAQs (embedded type)
-    if (body.faqs !== undefined) {
-      if (Array.isArray(body.faqs)) {
-        const processedFaqs = body.faqs
-          .filter(
-            (faq: any) =>
-              faq.question &&
-              faq.answer &&
-              faq.question.trim() &&
-              faq.answer.trim() &&
-              typeof faq.question === "string" &&
-              typeof faq.answer === "string"
-          )
-          .map((faq: any) => ({
-            question: faq.question.trim(),
-            answer: faq.answer.trim(),
-          }));
-
-        updateData.faqs = processedFaqs;
-      } else {
-        // Clear FAQs if not an array
-        updateData.faqs = [];
-      }
-    }
-
-    console.log("Update data:", updateData); // Debug log
-
+    // Update the event
     const updatedEvent = await db.event.update({
       where: { id },
       data: updateData,
@@ -226,35 +127,34 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      data: updatedEvent,
-    });
+    return createEventSuccessResponse(updatedEvent);
+
   } catch (error) {
     console.error("Error updating event:", error);
 
-    // Handle Prisma unique constraint errors
-    if (error instanceof Error && error.message.includes("Unique constraint")) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Event slug already exists",
-          details: "slug already exists",
-        },
-        { status: 409 }
-      );
+    // Handle specific Prisma errors
+    if (error instanceof Error) {
+      if (error.message.includes("Unique constraint")) {
+        return createEventErrorResponse(
+          "Event slug already exists",
+          409,
+          "Please choose a different slug"
+        );
+      }
+      
+      if (error.message.includes("Record to update not found")) {
+        return createEventErrorResponse("Event not found", 404);
+      }
     }
 
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to update event",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
+    return createEventErrorResponse(
+      "Failed to update event",
+      500,
+      error instanceof Error ? error.message : "Unknown error"
     );
   }
 }
+
 
 // DELETE /api/admin/events/[id] - Delete an event
 export async function DELETE(request: NextRequest, { params }: RouteContext) {

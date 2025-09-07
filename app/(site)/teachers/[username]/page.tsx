@@ -11,18 +11,17 @@ import {
 } from "@/lib/data-access-layer/teachers";
 import { notFound } from "next/navigation";
 import { Course } from "@prisma/client";
-import { generateMultipleBlurDataURLs } from "@/lib/blurGenerator";
 
 // Generate static params for all teachers
-export async function generateStaticParams() {
-  try {
-    // const teachers = await getTeachersDBCall();
-    return [{ username: "prayogik_team" }];
-  } catch (error) {
-    console.error("Error generating static params:", error);
-    return [];
-  }
-}
+// export async function generateStaticParams() {
+//   try {
+//     // const teachers = await getTeachersDBCall();
+//     return [{ username: "prayogik_team" }];
+//   } catch (error) {
+//     console.error("Error generating static params:", error);
+//     return [];
+//   }
+// }
 
 export async function generateMetadata({
   params,
@@ -66,31 +65,12 @@ const TeacherDetails = async ({ params }: { params: { username: string } }) => {
       )
   );
 
-  // / Collect all image URLs that need blur data
-  const imageUrls = [
-    // Current teacher avatar (for TeacherHero)
-    currentTeacher?.avatarUrl,
-    // Course instructor avatars (for TeacherCourses)
-    ...teacherCourses?.map((course: any) => course?.teacher?.user?.avatarUrl),
-    // Other mentors avatars (for OtherMentors)
-    ...filteredTeachers.map((teacher: any) => teacher?.avatarUrl),
-  ].filter((url) => typeof url === "string" && url.trim() !== "");
-
-  const blurDataMap = await generateMultipleBlurDataURLs(imageUrls);
-
   return (
     <div className="flex flex-col overflow-hidden bg-white">
-      <TeacherHero
-        teacher={currentTeacher}
-        blurDataURL={
-          currentTeacher?.avatarUrl
-            ? blurDataMap[currentTeacher.avatarUrl]
-            : null
-        }
-      />
+      <TeacherHero teacher={currentTeacher} />
       <TeacherCourses courses={teacherCourses} />
       {filteredTeachers.length > 0 && (
-        <OtherMentors allTeacher={filteredTeachers} blurDataMap={blurDataMap} />
+        <OtherMentors allTeacher={filteredTeachers} />
       )}
     </div>
   );

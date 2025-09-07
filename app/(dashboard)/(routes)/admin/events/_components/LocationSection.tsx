@@ -48,11 +48,11 @@ export const LocationSection: React.FC<LocationSectionProps> = ({
                     <Checkbox
                       checked={field.value}
                       onCheckedChange={field.onChange}
-                      className="data-[state=checked]:bg-accent data-[state=checked]:border-accent"
+                      className="data-[state=checked]:bg-brand data-[state=checked]:border-brand"
                     />
                   </FormControl>
                   <div className="flex items-center gap-2">
-                    <Globe className="h-4 w-4 text-accent" />
+                    <Globe className="h-4 w-4 text-brand/70" />
                     <FormLabel className="text-base font-medium cursor-pointer">
                       This is an online event
                     </FormLabel>

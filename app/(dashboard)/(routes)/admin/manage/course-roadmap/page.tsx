@@ -19,6 +19,7 @@ const AdminCourseRoadmap = async () => {
     });
 
     data = convertData(response.body.data || []);
+
     const teacherResponse = await clientApi.getTeacherProfiles({});
     if (teacherResponse.status === 200) {
       teachers = teacherResponse.body;
@@ -46,6 +47,7 @@ const convertData = (data) => {
     difficulty: item.difficulty,
     prerequisites: item.prerequisites,
     courseLink: item.courseLink,
+    teacher: item?.teacher,
     teacherId: item.teacherId ? item.teacherId : null,
   }));
 };

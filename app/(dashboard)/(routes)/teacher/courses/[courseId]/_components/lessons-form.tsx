@@ -97,11 +97,11 @@ export const LessonsForm = ({
       await axios.post(`/api/courses/${courseId}/lessons`, { title, slug });
       toast.success("Lesson created");
       toggleCreating();
-      await revalidatePage([
-        { route: "/", type: "page" },
-        { route: "/home", type: "page" },
-        { route: "/live", type: "page" },
-        { route: "/courses", type: "layout" },
+       await revalidatePage([
+        { route: "/" },
+        { route: "/home" },
+        { route: "/live" },
+        { route: "/(course)/courses", type: "layout" },
       ]);
       router.refresh();
     } catch (error) {

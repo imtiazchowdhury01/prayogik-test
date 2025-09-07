@@ -16,7 +16,7 @@ interface TeacherCarousalProps {
   teachers: TeacherWithProfile[];
 }
 
-const TeacherCarousal = ({ teachers, blurDataMap }: TeacherCarousalProps) => {
+const TeacherCarousal = ({ teachers }: TeacherCarousalProps) => {
   const [showPrev, setShowPrev] = useState(false);
   const [showNext, setShowNext] = useState(true);
   const swiperRef = useRef<any>(null);
@@ -90,13 +90,10 @@ const TeacherCarousal = ({ teachers, blurDataMap }: TeacherCarousalProps) => {
         }}
       >
         {teachers.map((teacher, index) => {
-          const blurDataURL = teacher?.avatarUrl
-            ? blurDataMap[teacher.avatarUrl]
-            : null;
           return (
             <SwiperSlide key={teacher.id || index} className="h-auto">
               <div className="h-full">
-                <ExpertCard teacher={teacher} blurDataURL={blurDataURL} />
+                <ExpertCard teacher={teacher} />
               </div>
             </SwiperSlide>
           );

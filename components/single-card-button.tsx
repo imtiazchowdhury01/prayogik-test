@@ -15,13 +15,13 @@ export const SingleCardButton = ({
   slug,
   lessons,
   variant,
-  courseMode
+  courseMode,
 }) => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   return (
     <div className="">
-      {courseMode === CourseMode.RECORDED && progress !== null  ? (
+      {courseMode === CourseMode.RECORDED && progress !== null ? (
         <div className="flex flex-col gap-2">
           {
             <div className="">
@@ -73,7 +73,11 @@ export const SingleCardButton = ({
             {loading ? (
               <Loader className="w-4 h-4 animate-spin" />
             ) : (
-              <span className="ml-2">কোর্সটি দেখুন</span>
+              <span className="ml-2">
+                {courseMode === CourseMode.RECORDED
+                  ? "কোর্সটি দেখুন"
+                  : "বিস্তারিত দেখুন"}
+              </span>
             )}
           </Link>
         </div>

@@ -4,16 +4,20 @@ import MoreBtn from "@/components/more-btn";
 import { getCoursesDbCall } from "@/lib/data-access-layer/course";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 import { clientApi } from "@/lib/utils/openai/client";
+import { CourseMode } from "@prisma/client";
 import { cookies } from "next/headers";
 import React from "react";
 
-const RelatedCourse = async ({ course, blurDataURL }) => {
+const RelatedCourse = async ({ course }) => {
   const { courses } = await getCoursesDbCall({
     category: course.category?.slug,
     limit: 6,
   });
 
-  const relatedCourses = courses?.filter((v) => v?.id !== course?.id) || [];
+  const relatedCourses =
+    courses?.filter(
+      (v) => v?.id !== course?.id && v?.courseMode !== CourseMode.LIVE
+    ) || [];
 
   if (relatedCourses.length === 0) return null;
 
@@ -43,7 +47,6 @@ const RelatedCourse = async ({ course, blurDataURL }) => {
               userId={null}
               instructor={item?.teacherProfile?.user?.name}
               className="rounded-b-lg shadow-sm"
-              blurDataURL={blurDataURL}
             />
           );
         })}

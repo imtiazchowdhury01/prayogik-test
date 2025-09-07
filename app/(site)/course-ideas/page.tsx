@@ -26,7 +26,8 @@ const CourseIdeas = () => {
                 আপনার দক্ষতার ওপর ভিত্তি করে নতুন কোর্স আইডিয়া প্রস্তাব করতে
                 পারেন। আমরা সব ধরনের ইনোভেটিভ আইডিয়া স্বাগত জানাই।
               </p>
-              <Link href={`${process.env.NEXT_PUBLIC_TEACHER_APP_URL}`}>
+              {/* <Link href={`${process.env.NEXT_PUBLIC_TEACHER_APP_URL}`}> */}
+              <Link href="/apply-for-teaching">
                 <Button
                   size="lg"
                   className="px-8 font-medium transition-all bg-white shadow-md hover:bg-white/90 text-tertiary-700 hover:shadow-xl"

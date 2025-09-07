@@ -48,6 +48,7 @@ export default function ProfileFormWrapper({
   initialCategories,
   userId,
 }: ProfileClientProps) {
+  const [activeTab, setActiveTab] = useState("account");
   const [isSubmitting, setIsSubmitting] = useState({
     form: "",
     submitted: false,
@@ -86,44 +87,75 @@ export default function ProfileFormWrapper({
       setIsSubmitting({ form: "", submitted: false });
     }
   };
-  // console.log("parsedEducation result:", parsedEducation);
+
+  const tabs = [
+    { id: "account", label: "Account" },
+    ...(formData?.hasPassword ? [{ id: "password", label: "Password" }] : []),
+  ];
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen py-8">
       <div className="max-w-5xl mx-auto">
-        <RequiredFieldText className="mb-1 text-gray-500 font-normal" />
+        {/* Tab Navigation */}
+        <div className="mb-6">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`py-2 px-4 border-b-2 font-medium text-md ${
+                    activeTab === tab.id
+                      ? "border-teal-500 text-teal-600 bg-brand/5 rounded-t-lg"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+        </div>
 
-        {/* Personal information form */}
-        <PersonalInfoForm
-          onSubmit={(data) => handleSubmit(data, "personal")}
-          defaultValues={formData}
-          isLoading={false}
-          isSubmitting={isSubmitting}
-          parsedEducation={parsedEducation}
-        />
+        {/* Tab Content */}
+        {activeTab === "account" && (
+          <>
+            <RequiredFieldText className="mb-1 text-gray-500 font-normal" />
+            {/* Personal information form */}
+            <PersonalInfoForm
+              onSubmit={(data) => handleSubmit(data, "personal")}
+              defaultValues={formData}
+              isLoading={false}
+              isSubmitting={isSubmitting}
+              parsedEducation={parsedEducation}
+            />
 
-        {/* Contact information form */}
-        <ContactInfoForm
-          onSubmit={(data) => handleSubmit(data, "contact")}
-          defaultValues={formData}
-          isLoading={false}
-          isSubmitting={isSubmitting}
-        />
-
-        {/* Teacher form - only show if verified */}
-        {formData?.teacherProfile &&
-          formData?.teacherProfile?.teacherStatus.toLowerCase() ===
-            "verified" && (
-            <TeacherInfoForm
-              onSubmit={(data) => handleSubmit(data, "teacher")}
-              defaultValues={teacherFormData}
-              categories={categories}
+            {/* Contact information form */}
+            <ContactInfoForm
+              onSubmit={(data) => handleSubmit(data, "contact")}
+              defaultValues={formData}
               isLoading={false}
               isSubmitting={isSubmitting}
             />
-          )}
 
-        {/* Reset password section if password is available */}
-        {formData?.hasPassword && <ResetProfileUserPass />}
+            {/* Teacher form - only show if verified */}
+            {formData?.teacherProfile &&
+              formData?.teacherProfile?.teacherStatus.toLowerCase() ===
+                "verified" && (
+                <TeacherInfoForm
+                  onSubmit={(data) => handleSubmit(data, "teacher")}
+                  defaultValues={teacherFormData}
+                  categories={categories}
+                  isLoading={false}
+                  isSubmitting={isSubmitting}
+                />
+              )}
+          </>
+        )}
+
+        {activeTab === "password" && formData?.hasPassword && (
+          <ResetProfileUserPass />
+        )}
       </div>
     </div>
   );

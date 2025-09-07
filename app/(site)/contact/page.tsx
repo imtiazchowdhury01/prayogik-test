@@ -82,9 +82,8 @@ export default function ContactPage() {
       <div className="flex flex-col-reverse py-10 sm:pt-16 sm:pb-16 gap-y-10 md:gap-y-0 md:space-x-5 md:flex-row lg:space-x-8 app-container">
         {/* Server-side rendered contact info */}
         <ContactInfo />
-
         {/* Client-side contact form */}
-        <ContactFormClient />
+        <ContactFormClient formType="contact" />
       </div>
     </div>
   );

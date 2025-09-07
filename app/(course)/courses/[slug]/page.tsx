@@ -17,13 +17,13 @@ import {
 } from "@/lib/data-access-layer/course";
 import { getSubscriptionDBCall } from "@/lib/data-access-layer/subscriptions";
 import SingleCoursePriceTab from "./_components/single-course-price-tab";
-import { generateMultipleBlurDataURLs } from "@/lib/blurGenerator";
 import CourseBreadCrumb from "./_components/CourseBreadCrumb";
 import RelatedCourse from "./_components/RelatedCourse";
 import { CourseMode } from "@prisma/client";
 import LiveCourseIcon from "@/components/LiveCourseIcon";
 import LiveCourseState from "./_components/live-course-state";
 import LiveScheduleDetails from "./_components/live-schedule-details";
+import VideoDialog from "./_components/VideoDialog";
 
 // Generate static params for all courses
 export async function generateStaticParams() {
@@ -56,18 +56,10 @@ const CourseDetailsPage = async ({ params }: { params: { slug: string } }) => {
   if (!course) {
     redirect("/");
   }
-
-  // Collect all image URLs from the course (filtering out null values)
-  const imageUrls = [
-    course?.imageUrl,
-    ...(course?.lessons
-      ?.map((lesson: any) => lesson.thumbnailUrl)
-      .filter(Boolean) || []),
-    course?.teacherProfile?.user?.avatarUrl,
-  ].filter((url): url is string => url !== null && url !== undefined);
-
-  // Generate blur data for all images in parallel
-  const blurDataMap = await generateMultipleBlurDataURLs(imageUrls);
+  
+  const freeLesson = course?.lessons?.find(
+    (lesson: any) => lesson.isFree && lesson.videoUrl
+  );
 
   return (
     <section className="min-h-[70vh] w-full">
@@ -79,22 +71,47 @@ const CourseDetailsPage = async ({ params }: { params: { slug: string } }) => {
       </div>
 
       {/* Main content */}
-      <div className="relative flex flex-col items-start lg:space-x-12 lg:flex-row app-container">
+      <div className="relative flex flex-col items-start md:space-x-12 md:flex-row app-container">
         {/* left grid-- */}
-        <div className="w-full md:mt-6 sm:mt-8 lg:w-[70%]">
+        <div className="w-full md:mt-6 sm:mt-0 md:w-[60%] lg:w-[70%]">
+          {/* -----------------on mobile screen course image and video--------  */}
+          <VideoDialog course={course} freeLesson={freeLesson}>
+            <div
+              className={`w-full mt-6 md:hidden block ${
+                !freeLesson && "pointer-events-none"
+              } relative aspect-[16/9] overflow-hidden rounded-lg`}
+            >
+              <Image
+                src={course?.imageUrl || "/default-image.jpg"}
+                alt="course"
+                width={0}
+                height={0}
+                sizes="100vw"
+                className="object-cover w-full h-full rounded-lg bg-gray-50"
+                quality={75}
+                priority={false}
+              />
+              {freeLesson && (
+                <button className="w-12 h-12 flex items-center justify-center rounded-full cursor-pointer transition-all duration-300 hover:opacity-70 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                  <Image
+                    src="/icon/playvideo.svg"
+                    alt="play-video-icon"
+                    width={18}
+                    height={22}
+                  />
+                </button>
+              )}
+            </div>
+          </VideoDialog>
+
           <div>
             {course?.courseMode === CourseMode.LIVE && (
               <LiveCourseIcon isCourseCard={false} />
             )}
-            <h2
-              style={{
-                lineHeight: "3.2rem",
-              }}
-              className="mt-4 text-3xl sm:text-4xl font-bold text-fontcolor-title"
-            >
+            <h2 className="mt-4 text-2xl sm:text-2xl md:text-4xl font-bold text-fontcolor-title md:leading-[3.2rem]">
               {textLangChecker(course?.title)}
             </h2>
-            <p className="my-3 text-base text-fontcolor-description">
+            <p className="my-3 text-[14px] md:text-base text-fontcolor-description md:text-left text-justify">
               ইন্সট্রাক্টর{" "}
               <span className="text-base font-bold text-fontcolor-title">
                 {textLangChecker(course?.teacherProfile?.user?.name)},{" "}
@@ -115,24 +132,25 @@ const CourseDetailsPage = async ({ params }: { params: { slug: string } }) => {
           </div>
 
           <div className="flex flex-wrap items-center gap-4">
-            {course?.enrolledStudents.length > 0 && (
-              <>
-                <div className="flex items-center space-x-[6px]">
-                  <Image
-                    src="/icon/user.svg"
-                    alt="user-icon"
-                    width={15}
-                    height={15}
-                    className="w-4 h-4 object-contain"
-                  />
-                  <p className="text-base text-fontcolor-description">
-                    {convertNumberToBangla(course?.enrolledStudents.length)} জন
-                    নবীন শিক্ষার্থী
-                  </p>
-                </div>
-                <Separator className="w-[1px] h-4" orientation="vertical" />
-              </>
-            )}
+            {course?.courseMode === "RECORDED" &&
+              course?.enrolledStudents.length > 0 && (
+                <>
+                  <div className="flex items-center space-x-[6px]">
+                    <Image
+                      src="/icon/user.svg"
+                      alt="user-icon"
+                      width={15}
+                      height={15}
+                      className="w-4 h-4 object-contain"
+                    />
+                    <p className="text-base text-fontcolor-description">
+                      {convertNumberToBangla(course?.enrolledStudents.length)}{" "}
+                      জন নবীন শিক্ষার্থী
+                    </p>
+                  </div>
+                  <Separator className="w-[1px] h-4" orientation="vertical" />
+                </>
+              )}
             {course?.totalDuration ? (
               <>
                 <div className="flex items-center space-x-[6px]">
@@ -170,14 +188,17 @@ const CourseDetailsPage = async ({ params }: { params: { slug: string } }) => {
               <LiveCourseState course={course} />
             )}
           </div>
-
+          {/* -------------------on mobile screen ------------------- */}
+          <div className="mt-10 md:bg-gray-50 md:p-4 rounded-lg md:hidden block">
+            <SingleCoursePriceTab
+              course={course}
+              plan={plan}
+              defaultDiscount={plan?.subscriptionDiscount}
+            />
+          </div>
+          {/* tab section  */}
           <SectionNavigation course={course} />
-          <CourseOverview
-            course={course}
-            blurDataURL={
-              course?.imageUrl ? blurDataMap[course.imageUrl] : undefined
-            }
-          />
+          <CourseOverview course={course} />
 
           <section id="other-facilities">
             {course.learningOutcomes.length > 0 ? (
@@ -236,31 +257,20 @@ const CourseDetailsPage = async ({ params }: { params: { slug: string } }) => {
           )}
 
           <Syllabas course={course} />
-          <TeacherIntro
-            course={course}
-            blurDataURL={
-              course?.teacherProfile?.user?.avatarUrl
-                ? blurDataMap[course?.teacherProfile?.user?.avatarUrl]
-                : undefined
-            }
-          />
-          <RelatedCourse
-            course={course}
-            blurDataURL={
-              course?.imageUrl ? blurDataMap[course.imageUrl] : undefined
-            }
-          />
+          <TeacherIntro course={course} />
+          <RelatedCourse course={course} />
         </div>
 
         {/* right grid-- */}
-        <div className="w-full md:mt-8 mb-16 lg:top-20 lg:sticky lg:w-[30%] p-2">
-          <div className="lg:mt-6 bg-gray-50 p-4 rounded-lg">
+        <div className="w-full md:mt-8 mb-16 md:top-20 md:sticky md:w-[40%] lg:w-[30%] md:pl-2 pl-0">
+          <div className="md:mt-6 bg-gray-50 p-4 rounded-lg hidden md:block">
             <SingleCoursePriceTab
               course={course}
               plan={plan}
               defaultDiscount={plan?.subscriptionDiscount}
             />
           </div>
+          {/* course details subscriptions */}
           <BecomeAProMember plan={plan} />
         </div>
       </div>

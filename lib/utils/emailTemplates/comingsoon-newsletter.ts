@@ -129,7 +129,11 @@ export const newsletterAdminNotificationTemplate = (
                             <tr>
                               <td style="text-align:center;">
                                 <p style="margin:0;font-family:'Open Sans', 'Helvetica Neue', Arial;font-size:12px;color:#666;">
-                                  এই ইমেইলটি ${baseUrl} থেকে স্বয়ংক্রিয়ভাবে পাঠানো হয়েছে।
+                                  এই ইমেইলটি 
+                                  <a href="${baseUrl}" target="_blank" style="color:#4f46e5; text-decoration:none; font-weight:600;">
+                                    Prayogik
+                                  </a> 
+                                  থেকে স্বয়ংক্রিয়ভাবে পাঠানো হয়েছে।
                                 </p>
                               </td>
                             </tr>

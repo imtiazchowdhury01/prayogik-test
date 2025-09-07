@@ -65,6 +65,7 @@ const CourseCheckout = async ({
   // Set default selected plan to the first available plan
   const defaultSelectedPlan =
     savedSelectedPlan || availableSubscriptionPlans[0]?.id || "";
+  // const defaultSelectedPlan = savedSelectedPlan || undefined;
 
   return (
     <div className="bg-[#F3F9F9] flex justify-center items-center p-6 xl:p-14 border-b">
@@ -138,7 +139,7 @@ const CourseCheckout = async ({
                   {hasDiscount && (
                     <div className="">
                       <span className="text-sm text-brand font-medium">
-                        Discounted Price:
+                        ডিসকাউন্টেড প্রাইস:
                       </span>
                       <span className="text-xl font-bold text-brand">
                         ৳{convertNumberToBangla(discountedAmount)}

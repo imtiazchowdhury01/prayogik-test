@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -52,9 +52,9 @@ import {
 } from "@prisma/client";
 import RequiredFieldText from "@/components/common/requiredFieldText";
 import RequiredFieldStar from "@/components/common/requiredFieldStar";
-import EducationsInput from "@/app/(dashboard)/(routes)/apply-for-teaching/_components/EducationsInput";
-import CertificationsInput from "@/app/(dashboard)/(routes)/apply-for-teaching/_components/CertificationsInput";
-import UserAvatar from "@/app/(dashboard)/(routes)/profile/_components/avatar";
+import EducationsInput from "@/app/(site)/prev-apply-for-teaching/_components/EducationsInput";
+import CertificationsInput from "@/app/(site)/prev-apply-for-teaching/_components/CertificationsInput";
+
 import DBUserAvatar from "@/components/user-avatar";
 import { revalidatePage } from "@/actions/revalidatePage";
 
@@ -264,11 +264,6 @@ const UserDetailForm = ({
           ? [
               {
                 route: "/teachers",
-                type: "page",
-              },
-              {
-                route: `/teachers/${initialData?.username}`,
-                type: "page",
               },
             ]
           : []),

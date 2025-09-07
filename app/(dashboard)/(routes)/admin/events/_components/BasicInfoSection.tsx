@@ -1,7 +1,7 @@
 // components/event-form/BasicInfoSection.tsx
 import React from "react";
 import { UseFormReturn } from "react-hook-form";
-import { Calendar } from "lucide-react";
+import { Calendar, DollarSign, FileText } from "lucide-react";
 import { Element } from "react-scroll";
 import {
   FormField,
@@ -24,13 +24,17 @@ import JoditEditor from "jodit-react";
 interface BasicInfoSectionProps {
   form: UseFormReturn<any>;
   eventTypes: ReadonlyArray<{ value: string; label: string }>;
+  eventStatusOptions: ReadonlyArray<{ value: string; label: string }>;
   joditConfig: any;
+  watchType?: string;
 }
 
 export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
   form,
   eventTypes,
+  eventStatusOptions,
   joditConfig,
+  watchType,
 }) => {
   return (
     <Element name="section-basic" id="section-basic">
@@ -159,6 +163,73 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
                       {eventTypes.map((type) => (
                         <SelectItem key={type.value} value={type.value}>
                           {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Price field - only show for PAID events */}
+            {watchType === "PAID" && (
+              <FormField
+                control={form.control}
+                name="price"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2 text-base font-medium">
+                      <DollarSign className="h-4 w-4" />
+                      <span className="text-destructive mr-1">*</span>
+                      Price
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="0.00"
+                        className="h-12 text-base"
+                        {...field}
+                        value={field.value || ""}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          field.onChange(value === "" ? undefined : value);
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2 text-base font-medium">
+                    <FileText className="h-4 w-4" />
+                    <span className="text-destructive mr-1">*</span>
+                    Status
+                  </FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="h-12 text-base">
+                        <SelectValue placeholder="Select event status" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {eventStatusOptions.map((status) => (
+                        <SelectItem key={status.value} value={status.value}>
+                          {status.label}
                         </SelectItem>
                       ))}
                     </SelectContent>

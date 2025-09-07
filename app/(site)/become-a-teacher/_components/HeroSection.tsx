@@ -1,6 +1,5 @@
 import React from "react";
 import Image from "next/image";
-// import becometeacherhero from "@/public/site/become-teacher/become-teacher-hero.webp";
 import becometeacherhero from "@/public/course-proposals/course-proposal-hero.webp";
 
 const HeroSection = () => {
@@ -27,7 +26,7 @@ const HeroSection = () => {
               প্রায়োগিকের সাথে মেন্টর <br className="hidden md:block" /> হিসাবে
               যুক্ত হোন
             </h1>
-            <p className="text-lg md:text-lg font-normal text-gray-100 max-w-3xl md:leading-8 mt-3 md:mt-4 lg:mt-6 font-primary">
+            <p className="text-lg md:text-lg font-normal text-gray-100 max-w-full md:max-w-xl md:leading-8 mt-3 md:mt-2 lg:mt-2">
               আপনি যদি সিনিয়র ও অভিজ্ঞ  প্রফেশনাল হন, তবে আপনার স্কিল ও অভিজ্ঞতা
               দিয়ে অন্যদের ক্যারিয়ার গড়তে অবদান রাখুন। কোর্স তৈরি করুন, লাইভ
               ট্রেনিং নিন এবং ওয়ার্কশপ ও সেমিনারে কী-নোট স্পিকার হিসেবে যুক্ত

@@ -33,12 +33,12 @@ const TeacherApplicationButton = ({
     variantClasses[variant]
   } ${hoverClasses} ${className} ${isTeacher ? disabledClasses : ""}`.trim();
 
-  const handleClick = (e) => {
-    if (status !== "authenticated") {
-      e.preventDefault();
-      router.push(`/signin?redirect=/apply-for-teaching`);
-    }
-  };
+  // const handleClick = (e) => {
+  //   if (status !== "authenticated") {
+  //     e.preventDefault();
+  //     router.push(`/signin?redirect=/apply-for-teaching`);
+  //   }
+  // };
 
   if (isTeacher) {
     return (
@@ -52,7 +52,7 @@ const TeacherApplicationButton = ({
     <Link
       href="/apply-for-teaching"
       className={finalClasses}
-      onClick={handleClick}
+      // onClick={handleClick}
     >
       {children}
     </Link>

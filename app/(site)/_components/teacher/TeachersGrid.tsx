@@ -11,10 +11,9 @@ type TeacherWithProfile = z.infer<typeof TeacherWithProfileSchema>;
 
 interface TeachersGridProps {
   teachers: TeacherWithProfile[];
-  blurDataMap: Record<string, string>;
 }
 
-const TeachersGrid = ({ teachers, blurDataMap }: TeachersGridProps) => {
+const TeachersGrid = ({ teachers }: TeachersGridProps) => {
   if (!teachers || teachers.length === 0) {
     return (
       <div className="py-8 text-center">
@@ -27,15 +26,12 @@ const TeachersGrid = ({ teachers, blurDataMap }: TeachersGridProps) => {
     <div className="px-1 py-2">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 md:grid-cols-3 md:gap-8 lg:grid-cols-4 lg:gap-10">
         {teachers.map((teacher, index) => {
-          const blurDataURL = teacher?.avatarUrl
-            ? blurDataMap[teacher.avatarUrl]
-            : null;
           return (
             <div
               key={teacher.id || index}
               className="h-full transition-transform duration-300 ease-in-out hover:-translate-y-1"
             >
-              <ExpertCard teacher={teacher} blurDataURL={blurDataURL} />
+              <ExpertCard teacher={teacher} />
             </div>
           );
         })}
@@ -46,11 +42,9 @@ const TeachersGrid = ({ teachers, blurDataMap }: TeachersGridProps) => {
           <Link href="/teachers">
             <Button
               variant={"default"}
-               className="bg-secondary-button hover:bg-secondary-button hover:opacity-95 transition-all duration-300 py-4 h-12 md:flex"
-              // className="text-gray-700 border-gray-300 transition-all duration-300 py-4 h-12 md:flex bg-transparent"
+              className="bg-secondary-button hover:bg-secondary-button hover:opacity-95 transition-all duration-300 py-4 h-12 md:flex"
             >
-              আরো দেখুন{" "}
-              <ArrowRight className="w-5 h-5 ml-1 font-extralight" />
+              আরো দেখুন <ArrowRight className="w-5 h-5 ml-1 font-extralight" />
             </Button>
           </Link>
         )}

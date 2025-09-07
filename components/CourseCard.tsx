@@ -12,7 +12,6 @@ import { Clock, UserRound } from "lucide-react";
 import { GradientBorderBadge } from "./ui/badge";
 import { CourseMode } from "@prisma/client";
 import LiveCourseIcon from "./LiveCourseIcon";
-import { headers } from "next/headers";
 import LiveCourseTime from "./liveCourseTime";
 
 const CourseCard = ({
@@ -20,7 +19,6 @@ const CourseCard = ({
   course,
   className,
   instructor,
-  blurDataURL,
   pathname,
 }: {
   variant?: "light" | "dark";
@@ -29,7 +27,6 @@ const CourseCard = ({
   instructor?: string;
   userId?: string;
   purchasedCourseIds?: string[];
-  blurDataURL?: string;
   pathname?: string;
 }) => {
   
@@ -37,13 +34,8 @@ const CourseCard = ({
   const freeLesson = lessons?.find(
     (lesson: any) => lesson.isFree && lesson.videoUrl
   );
-
   let formattedDuration = formatDuration(course?.totalDuration);
-  const isDiscountExpired = (expiresAt: string) => {
-    const currentDate = new Date();
-    const discountExpiryDate = new Date(expiresAt);
-    return currentDate.getTime() > discountExpiryDate.getTime();
-  };
+
 
   return (
     <div
@@ -68,12 +60,11 @@ const CourseCard = ({
             src={imageUrl || "/default-image.jpg"}
             alt="course-card-image"
             fill
-            className="object-cover w-full h-full rounded-t-lg"
+            className="object-cover w-full h-full rounded-t-lg bg-[#F9FAFB]"
             sizes="(max-width: 768px) 100vw, 400px"
             priority
             quality={75}
-            placeholder={blurDataURL ? "blur" : "empty"}
-            blurDataURL={blurDataURL || undefined}
+           
           />
         )}
         {/* Live course badge - positioned at top right */}
@@ -186,14 +177,12 @@ const CourseCard = ({
             ) : (
               <span className="text-lg font-bold text-card-highlighted">
                 ৳{" "}
-                {/* !isDiscountExpired(course?.prices[0]?.discountExpiresOn) && */}
                 {course?.prices[0]?.discountedAmount
                   ? convertNumberToBangla(course?.prices[0]?.discountedAmount)
                   : convertNumberToBangla(course?.prices[0]?.regularAmount)}
               </span>
             )}
 
-            {/* !isDiscountExpired(course?.prices[0]?.discountExpiresOn) && */}
             {course?.prices[0]?.discountedAmount ? (
               <span
                 className={`line-through ${

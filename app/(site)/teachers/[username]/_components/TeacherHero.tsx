@@ -8,7 +8,7 @@ import { textLangChecker } from "@/lib/utils/textLangChecker";
 import { fetchCategories } from "@/services";
 import { getCategoriesDBCall } from "@/lib/data-access-layer/categories";
 
-export async function TeacherHero({ teacher, blurDataURL }) {
+export async function TeacherHero({ teacher }) {
   const categories = await getCategoriesDBCall();
   return (
     <section
@@ -32,11 +32,10 @@ export async function TeacherHero({ teacher, blurDataURL }) {
             width={0}
             height={0}
             sizes="300px"
-            className="w-[250px] h-[250px] rounded-lg object-cover"
+            className="w-[250px] h-[250px] rounded-lg object-cover bg-[#F9FAFB]"
             priority
             quality={75}
-            placeholder={blurDataURL ? "blur" : "empty"}
-            blurDataURL={blurDataURL || undefined}
+            
           />
           <div className="flex flex-col items-start justify-center flex-1">
             <div className="self-stretch w-full text-white">

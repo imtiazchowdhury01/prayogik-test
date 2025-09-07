@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 type ShoppingCartCheckout = {
   items: any[]; // Change `any[]` to your specific item type if available
   total?: number;
-  type: "SUBSCRIPTION" | "COURSE" | "NONE"; // Extend with more plan types if needed
+  type: "SUBSCRIPTION" | "COURSE" | "NONE" | "EVENT"; // Extend with more plan types if needed
   itemCount?: number;
   currency?: "BDT"; // Extend with more currencies if needed
   lastUpdated?: string; // ISO date string

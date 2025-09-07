@@ -55,3 +55,43 @@ export const CheckoutStorage = {
     manageLocalStorage.remove(this.STORAGE_KEY);
   },
 };
+
+// Specific functions for checkout user details
+export const UserStorage = {
+  STORAGE_KEYS: {
+    NAME: "user_name",
+    PHONE: "user_phone",
+    PROFESSION: "user_profession",
+  },
+  TTL: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
+
+  saveName(name: string) {
+    manageLocalStorage.setWithExpiry(this.STORAGE_KEYS.NAME, name, this.TTL);
+  },
+  getName() {
+    return manageLocalStorage.getWithExpiry(this.STORAGE_KEYS.NAME);
+  },
+  clearName() {
+    manageLocalStorage.remove(this.STORAGE_KEYS.NAME);
+  },
+
+  savePhone(phoneNumber: string) {
+    manageLocalStorage.setWithExpiry(this.STORAGE_KEYS.PHONE, phoneNumber, this.TTL);
+  },
+  getPhone() {
+    return manageLocalStorage.getWithExpiry(this.STORAGE_KEYS.PHONE);
+  },
+  clearPhone() {
+    manageLocalStorage.remove(this.STORAGE_KEYS.PHONE);
+  },
+
+  saveProfession(profession: string) {
+    manageLocalStorage.setWithExpiry(this.STORAGE_KEYS.PROFESSION, profession, this.TTL);
+  },
+  getProfession() {
+    return manageLocalStorage.getWithExpiry(this.STORAGE_KEYS.PROFESSION);
+  },
+  clearProfession() {
+    manageLocalStorage.remove(this.STORAGE_KEYS.PROFESSION);
+  },
+};

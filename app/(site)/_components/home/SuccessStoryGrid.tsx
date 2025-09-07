@@ -1,4 +1,5 @@
 //@ts-nocheck
+import TestimonialModal from "@/components/common/TestimonialModal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
@@ -9,7 +10,7 @@ const SuccessStoryGrid = ({ testimonials }) => {
   return (
     <>
       {/* title and description */}
-      <div className="mb-8 flex justify-between items-start">
+      <div className="mb-8 flex justify-between items-start pt-24">
         <div>
           <h2 className="font-bold text-left text-2xl sm:text-4xl md:text-[40px]">
             লার্নারদের মন্তব্য
@@ -48,18 +49,15 @@ const SuccessStoryGrid = ({ testimonials }) => {
                   />
                 </svg>
               </div>
-
               {/* Testimonial Text */}
-              <p className="text-gray-900 mb-6 leading-relaxed text-base flex-grow md:line-clamp-3 md:overflow-hidden md:text-ellipsis">
-                {testimonial.text}
-              </p>
-
-              <hr className="mb-6" />
+              <TestimonialModal testimonial={testimonial} />
+              {/* Shadcn Button for Read More / Show Less */}
+              <hr className="mb-6 border-gray-300" />
               {/* Profile Section */}
               <div className="flex items-center gap-3 mt-auto">
                 <div className="relative aspect-square w-10 h-10">
                   <Image
-                    src={testimonial.avatar}
+                    src={testimonial.avatar || "/reviews/default.png"}
                     alt={`${testimonial.name}'s profile picture`}
                     width={80}
                     height={80}

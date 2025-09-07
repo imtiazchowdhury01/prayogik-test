@@ -1,7 +1,5 @@
 import SectionTitle from "@/components/common/SectionTitle";
 import React from "react";
-// import OfferActionBanner from "./OfferActionBanner";
-// import { actionBannerData } from "../_utils/data";
 import FaqComponent from "@/components/FaqComponent";
 
 const OfferFaq = () => {
@@ -38,16 +36,6 @@ const OfferFaq = () => {
           <FaqComponent faqItems={faqItems} showRightSection={false} />
       </div>
       </div>
-      {/* <OfferActionBanner
-        actionBannerData={actionBannerData}
-        sectionBadge="রেগুলার ফি: "
-        title="লঞ্চ অফার ফি: "
-        description="মূল্য বৃদ্ধির আগেই সাবস্ক্রিপশন নিশ্চিত করুন। পরবর্তী মূল্য বৃদ্ধির তারিখঃ "
-        buttonText="সাবস্ক্রাইব করুন"
-        buttonLink="/prime"
-        backgroundImage=""
-        className="mb-0 xl:mb-28"
-      /> */}
     </div>
   );
 };

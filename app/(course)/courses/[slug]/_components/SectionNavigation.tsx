@@ -19,9 +19,9 @@ const SectionNavigation = ({ course }: { course: any }) => {
   } else {
     navigation = [
       ...navigation,
+      { name: "সময়সূচী ও ক্লাসসংখ্যা", href: "live-schedule" },
       { name: "সিলেবাস", href: "syllabas" },
       { name: "ইন্সট্রাক্টর পরিচিতি", href: "instructor" },
-      { name: "সময়সূচী ও ক্লাসসংখ্যা", href: "live-schedule" },
     ];
   }
 

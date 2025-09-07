@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import TeacherApplicationButton from "@/app/(site)/become-a-teacher/_components/TeacherApplicationButton";
 
 interface ActionBannerProps {
   title: string;
@@ -8,6 +9,11 @@ interface ActionBannerProps {
   buttonLink: string;
   backgroundImage: string;
   className?: string; // Add optional className
+  customLink?: {
+    href: string;
+    label: string;
+  };
+  showTeacherButton?: boolean; // 👈 NEW
 }
 
 const ActionBanner: React.FC<ActionBannerProps> = ({
@@ -17,6 +23,7 @@ const ActionBanner: React.FC<ActionBannerProps> = ({
   buttonLink,
   backgroundImage,
   className,
+  showTeacherButton = false,
 }) => {
   return (
     <section
@@ -44,12 +51,21 @@ const ActionBanner: React.FC<ActionBannerProps> = ({
         <p className="text-sm sm:text-base md:text-lg font-light text-white max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl px-2 sm:px-4 leading-5 sm:leading-6 md:leading-7 mb-6 sm:mb-7 md:mb-8 mt-1 sm:mt-2">
           {description}
         </p>
-        <Link
-          href={buttonLink}
-          className="block w-auto bg-secondary-button hover:bg-secondary-button hover:opacity-95 px-4 py-3 text-md md:text-base text-center text-white transition-all duration-300 rounded-md sm:inline-block sm:px-4 sm:py-3"
-        >
-          {buttonText}
-        </Link>
+        {/* Teacher application button */}
+        {showTeacherButton && (
+          <TeacherApplicationButton className="px-4 py-3 text-md md:text-base">
+            রেজিস্ট্রেশন করুন
+          </TeacherApplicationButton>
+        )}
+        {/* Default  link button */}
+        {buttonLink && (
+          <Link
+            href={buttonLink}
+            className="block w-auto bg-secondary-button hover:bg-secondary-button hover:opacity-95 px-4 py-3 text-md md:text-base text-center text-white transition-all duration-300 rounded-md sm:inline-block sm:px-4 sm:py-3"
+          >
+            {buttonText}
+          </Link>
+        )}
       </div>
     </section>
   );

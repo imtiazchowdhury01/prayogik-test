@@ -1,30 +1,53 @@
+
 import { db } from "../db";
+
+type purchaseDetails = {
+  purchaseId: string | null;
+  purchaseType: any;
+  transactionId: any;
+  amount: any;
+  expiresAt: any;
+  isTrial: boolean;
+  courseName: string | null;
+  subscriptionPlanName: string | null;
+  eventName: string | null;
+  eventDate: any;
+  eventType: string | null;
+  eventLocation: string | null;
+  isOnlineEvent: boolean;
+  eventPrice: number | null;
+  eventZoomLink: string | null;
+  trialStartDate: any;
+  trialEndDate: any;
+};
 
 const preparePurchaseDetails = async (
   payload: any,
   purchase: any,
   subscription: any,
   course: any = null,
-  subscriptionPlan: any = null
+  subscriptionPlan: any = null,
+  event: any = null
 ) => {
-  const purchaseDetails: {
-    purchaseId: string | null;
-    purchaseType: any;
-    transactionId: any;
-    amount: any;
-    expiresAt: any;
-    isTrial: boolean;
-    courseName: string | null;
-    subscriptionPlanName: string | null;
-  } = {
-    purchaseId: purchase?.id || null, // Added purchase ID
-    purchaseType: payload.type,
+ 
+  const purchaseDetails: purchaseDetails = {
+    purchaseId: purchase?.id || null,
+    purchaseType: payload.purchaseType,
     transactionId: payload.trxID || null,
     amount: payload.amount || null,
     expiresAt: purchase?.expiresAt || subscription?.expiresAt || null,
     isTrial: subscription?.isTrial || false,
     courseName: null,
-    subscriptionPlanName: null,
+    subscriptionPlanName: subscription?.subscriptionPlan?.name || null,
+    eventName: null,
+    eventDate: null,
+    eventType: null,
+    eventLocation: null,
+    isOnlineEvent: false,
+    eventPrice: null,
+    eventZoomLink: null,
+    trialStartDate: subscription?.startDate || subscription?.createdAt || null,
+    trialEndDate: subscription?.expiresAt || null,
   };
 
   // Get course details if courseId exists
@@ -47,6 +70,39 @@ const preparePurchaseDetails = async (
     purchaseDetails.subscriptionPlanName = subscriptionPlanData?.name || null;
   } else if (subscriptionPlan) {
     purchaseDetails.subscriptionPlanName = subscriptionPlan.name;
+  }
+
+  // Get event details if eventId exists
+  if (payload.eventId && !event) {
+    const eventData = await db.event.findUnique({
+      where: { id: payload.eventId },
+      select: {
+        title: true,
+        date: true,
+        type: true,
+        location: true,
+        isOnline: true,
+        price: true,
+        zoomLink: true,
+      },
+    });
+    if (eventData) {
+      purchaseDetails.eventName = eventData.title;
+      purchaseDetails.eventDate = eventData.date;
+      purchaseDetails.eventType = eventData.type;
+      purchaseDetails.eventLocation = eventData.location;
+      purchaseDetails.isOnlineEvent = eventData.isOnline;
+      purchaseDetails.eventPrice = eventData.price;
+      purchaseDetails.eventZoomLink = eventData.zoomLink;
+    }
+  } else if (event) {
+    purchaseDetails.eventName = event.title;
+    purchaseDetails.eventDate = event.date;
+    purchaseDetails.eventType = event.type;
+    purchaseDetails.eventLocation = event.location;
+    purchaseDetails.isOnlineEvent = event.isOnline;
+    purchaseDetails.eventPrice = event.price;
+    purchaseDetails.eventZoomLink = event.zoomLink;
   }
 
   return purchaseDetails;

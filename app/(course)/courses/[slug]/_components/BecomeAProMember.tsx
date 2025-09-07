@@ -7,7 +7,7 @@ const BecomeAProMember = async ({
   plan?: any;
 }) => {
   return (
-    <div className="relative bg-[#096961] p-8 mt-10 rounded-lg overflow-hidden">
+    <div className="relative bg-[#096961] p-8 mt-0 md:mt-10 rounded-lg overflow-hidden">
       <p className="text-white text-xl font-light">
         প্রাইম মেম্বার হয়ে
       </p>

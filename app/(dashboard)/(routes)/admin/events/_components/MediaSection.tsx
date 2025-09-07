@@ -43,9 +43,7 @@ export const MediaSection: React.FC<MediaSectionProps> = ({
                   height={240}
                   className="rounded-xl object-cover shadow-md"
                 />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
-                  <Badge variant="secondary">Current Event Image</Badge>
-                </div>
+                
               </div>
             )}
             <div>

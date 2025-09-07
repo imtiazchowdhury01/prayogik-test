@@ -1,6 +1,4 @@
 import {
-  bkashManualPaymentStatus,
-  BkashManualPaymentType,
   CourseRoadmapStatus,
   DifficultyLevel,
   Role,
@@ -513,39 +511,6 @@ export const TeacherWithProfileSchema = z.object({
 });
 // TypeScript type for TeacherWithProfile
 export type TeacherWithProfile = z.infer<typeof TeacherWithProfileSchema>;
-export const BkashManualPaymentBodySchema = z.object({
-  id: z.string().optional(),
-  userId: z.string(),
-  user: z.object({
-    name: z.string(),
-    email: z.string(),
-  }),
-  course: z.object({
-    title: z.string(),
-  }),
-  courseId: z.string(),
-  payFrom: z.array(z.string()),
-  trxId: z.array(z.string()),
-  amount: z.number().optional(),
-  payableAmount: z.number().optional(),
-  type: z.enum([
-    BkashManualPaymentType.REGULAR,
-    BkashManualPaymentType.SUBSCRIPTION,
-    BkashManualPaymentType.OFFER,
-  ]),
-  subscriptionPlan: z.object({
-    name: z.string(),
-  }),
-  status: z
-    .enum([
-      bkashManualPaymentStatus.PENDING,
-      bkashManualPaymentStatus.SUCCESS,
-      bkashManualPaymentStatus.FAILED,
-    ])
-    .optional(),
-  createdAt: z.string().optional(),
-  updatedAt: z.string().optional(),
-});
 
 // Overview Schema
 export const teacherOverviewQuerySchema = z.object({

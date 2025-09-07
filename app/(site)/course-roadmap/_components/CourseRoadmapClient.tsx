@@ -9,14 +9,7 @@ import SectionTitle from "@/components/common/SectionTitle";
 import { convertNumberToBangla } from "@/lib/convertNumberToBangla";
 
 // Course Card Component
-export const CourseCard = ({
-  course,
-  blurDataMap,
-}: {
-  course: any;
-  blurDataMap: any;
-}) => {
-  // console.log("cuourse result:", course);
+export const CourseCard = ({ course }: { course: any }) => {
   if (!course) {
     return (
       <div className="bg-transparent p-4 h-28 flex items-center justify-center">
@@ -27,7 +20,6 @@ export const CourseCard = ({
 
   const hasValidCourseLink = course?.courseLink;
   const avatarUrl = course?.teacher?.user?.avatarUrl;
-  const blurDataURL = avatarUrl ? blurDataMap[avatarUrl] : null;
 
   return (
     <div className="bg-transparent p-4 min-h-28 w-full flex items-start gap-3">
@@ -35,17 +27,15 @@ export const CourseCard = ({
       <div className="w-[118px] h-[118px] rounded-lg overflow-hidden flex-shrink-0">
         <div className="relative w-[118px] h-[118px] rounded-lg overflow-hidden flex-shrink-0">
           <Image
-            src={avatarUrl || "/placeholder.svg?height=116&width=116"}
+            src={avatarUrl || "/placeholder.svg"}
             alt={course?.teacher?.user?.name || "Instructor"}
             fill
             sizes="118px"
-            className="object-cover"
-            placeholder={blurDataURL ? "blur" : "empty"}
-            blurDataURL={blurDataURL || undefined}
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = "/placeholder.svg?height=116&width=116";
-            }}
+            className="object-cover bg-[#F9FAFB]"
+            // onError={(e) => {
+            //   const target = e.target as HTMLImageElement;
+            //   target.src = "/placeholder.svg?height=116&width=116";
+            // }}
           />
         </div>
       </div>
@@ -80,9 +70,9 @@ export const CourseCard = ({
               href={course.courseLink}
               className="text-white text-xs transition-colors whitespace-nowrap px-2 py-1 rounded bg-teal-600 hover:bg-teal-700"
             >
-            {
-              course.status === 'COMPLETED' ? "  কোর্সটি দেখুন" : "প্রিভিউ দেখুন"
-            }
+              {course.status === "COMPLETED"
+                ? "  কোর্সটি দেখুন"
+                : "প্রিভিউ দেখুন"}
             </Link>
           ) : (
             <div className="text-white text-xs transition-colors whitespace-nowrap px-2 py-1 rounded bg-zinc-300 cursor-not-allowed">
@@ -102,14 +92,12 @@ export const CourseColumn = ({
   description,
   showAllCoursesButton = false,
   columnBg,
-  blurDataMap,
 }: {
   courses: any[];
   title: string;
   description: string;
   showAllCoursesButton?: boolean;
   columnBg?: string;
-  blurDataMap: Record<string, string | null>;
 }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const coursesPerPage = 4;
@@ -183,7 +171,7 @@ export const CourseColumn = ({
                       key={course?.id || index}
                       className="border-b border-gray-200 last:border-b-0"
                     >
-                      <CourseCard course={course} blurDataMap={blurDataMap} />
+                      <CourseCard course={course} />
                     </div>
                   ))}
                 </motion.div>
@@ -261,14 +249,12 @@ export const CourseRoadmapClient = ({
   liveNowCourses,
   wipCourses,
   plannedCourses,
-  blurDataMap,
   updatedAt,
   showSectionHeader = true,
 }: {
   liveNowCourses: any[];
   wipCourses: any[];
   plannedCourses: any[];
-  blurDataMap: Record<string, string | null>;
   updatedAt: any;
   showSectionHeader?: boolean;
 }) => {
@@ -312,7 +298,6 @@ export const CourseRoadmapClient = ({
               description="তৈরি হয়েছে"
               showAllCoursesButton={true}
               columnBg="bg-brand-primary-light"
-              blurDataMap={blurDataMap}
             />
           </div>
 
@@ -323,7 +308,6 @@ export const CourseRoadmapClient = ({
               title="শীঘ্রই আসছে যেসব কোর্স"
               description="তৈরি হচ্ছে"
               columnBg="bg-secondary-brand-accent-light"
-              blurDataMap={blurDataMap}
             />
           </div>
 
@@ -334,7 +318,6 @@ export const CourseRoadmapClient = ({
               title="ভবিষ্যতে যেসব কোর্স পাবেন"
               description="প্লানে আছে"
               columnBg="bg-green-deep-light"
-              blurDataMap={blurDataMap}
             />
           </div>
         </div>

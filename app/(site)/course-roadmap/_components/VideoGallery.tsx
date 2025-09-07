@@ -80,6 +80,7 @@ const VideoGallery: FC<VideoGalleryProps> = ({ videos }) => {
           allow="autoplay; fullscreen; picture-in-picture"
           allowFullScreen
           style={{ objectFit: "cover" }}
+          loading="lazy"
         />
       );
     } else if (videoType === "vdocipher") {
@@ -126,7 +127,7 @@ const VideoGallery: FC<VideoGalleryProps> = ({ videos }) => {
   return (
     <section className="px-6 md:px-8 lg:px-8 xl:px-8 2xl:px-0 max-w-7xl mx-auto">
       {/* Video Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6 justify-items-center">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-12 justify-items-center">
         {videos.map((video, idx) => {
           const isVideoEmpty = !video.src || video.src.trim() === "";
           const videoType = getVideoType(video.src);
@@ -134,7 +135,7 @@ const VideoGallery: FC<VideoGalleryProps> = ({ videos }) => {
           return (
             <div
               key={idx}
-              className="relative rounded-lg overflow-hidden bg-gray-100 w-full aspect-[9/16] max-w-[280px]"
+              className="relative rounded-lg overflow-hidden bg-gray-100 w-full aspect-[9/16] xl:max-w-[300px] max-w-full"
             >
               {isVideoEmpty || videoType === "unknown"
                 ? renderPlaceholder(video, idx)

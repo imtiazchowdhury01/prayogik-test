@@ -12,6 +12,25 @@ const getEventsDBCall = async () => {
   return events;
 };
 
+const getFilteredEventsDBCall = async () => {
+  const events = db.event.findMany({
+     where: {
+      status: {
+        in: ["UPCOMING", "WAITING"], 
+      },
+    },
+    include: {
+      attendees: true,
+    },
+    orderBy: {
+      date: "desc",
+    },
+  });
+  return events;
+};
+
+
+
 const getEventByIdDBCall = async (id: string) => {
   const event = db.event.findUnique({
     where: { id },
@@ -21,4 +40,14 @@ const getEventByIdDBCall = async (id: string) => {
   });
   return event;
 };
-export { getEventsDBCall, getEventByIdDBCall };
+
+const getEventBySlugDBCall = async (slug: string) => {
+  const event = db.event.findUnique({
+    where: { slug },
+    include: {
+      attendees: true,
+    },
+  });
+  return event;
+};
+export { getEventsDBCall,getFilteredEventsDBCall, getEventByIdDBCall, getEventBySlugDBCall };

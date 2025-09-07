@@ -129,9 +129,6 @@ const updateTeacherByAdmin = async (teacherId: string, formData: any) => {
     if (!response.ok) {
       throw new Error("Failed to save changes");
     }
-
-    // Revalidate the path to update the UI
-    revalidatePath(`/admin/teachers/${teacherId}`);
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };

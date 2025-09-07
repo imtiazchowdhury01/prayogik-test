@@ -7,7 +7,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import debounce from "lodash/debounce";
 import { Button } from "@/components/ui/button";
 
-const AllTeachers = ({ initialTeachers, blurDataMap }) => {
+const AllTeachers = ({ initialTeachers }) => {
   const [teachers, setTeachers] = useState(initialTeachers || []);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(initialTeachers?.length === 24);
@@ -121,14 +121,10 @@ const AllTeachers = ({ initialTeachers, blurDataMap }) => {
         {teachers.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {teachers.map((teacher) => {
-              const blurDataURL = teacher?.avatarUrl
-                ? blurDataMap[teacher.avatarUrl]
-                : null;
               return (
                 <ExpertCard
                   key={teacher.id}
                   teacher={teacher}
-                  blurDataURL={blurDataURL}
                 />
               );
             })}

@@ -51,11 +51,11 @@ export const SubscriptionStatus = ({ initialData, courseId }) => {
       toast.success("Subscription settings updated successfully!");
       toggleEdit();
         await revalidatePage([
-      { route: "/", type: "page" },
-        { route: "/home", type: "page" },
-        { route: "/live", type: "page" },
-        { route: "/courses", type: "layout" },
-    ]);
+        { route: "/" },
+        { route: "/home" },
+        { route: "/live" },
+        { route: "/(course)/courses", type: "layout" },
+      ]);
       router.refresh();
     } catch (error) {
       toast.error(

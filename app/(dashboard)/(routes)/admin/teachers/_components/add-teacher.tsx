@@ -113,15 +113,12 @@ const AddTeacher = ({ open, setOpen }) => {
         await revalidatePage([
           {
             route: "/",
-            type: "page",
           },
           {
             route: "/home",
-            type: "page",
           },
           {
             route: "/teachers",
-            type: "page",
           },
         ]);
         router.refresh();

@@ -56,11 +56,11 @@ export const updateCourse = async ({
     await axios.patch(apiRoute, values);
     toast.success(successMessage || "Course updated");
     await revalidatePage([
-      { route: "/", type: "page" },
-      { route: "/home", type: "page" },
-      { route: "/live", type: "page" },
-      { route: "/courses", type: "layout" },
-    ]);
+        { route: "/" },
+        { route: "/home" },
+        { route: "/live" },
+        { route: "/(course)/courses", type: "layout" },
+      ]);
     if (toggleEdit) {
       toggleEdit();
     }

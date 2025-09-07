@@ -66,6 +66,7 @@ const SubscriptionCheckoutForm = ({
   const [isCheckingSubscription, setIsCheckingSubscription] = useState(false);
   const [currentSubscription, setCurrentSubscription] = useState(null);
   const [showSubscriptionMessage, setShowSubscriptionMessage] = useState(false);
+  
   const [hasCheckedSubscription, setHasCheckedSubscription] = useState(
     !!session?.user?.email
   );

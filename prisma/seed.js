@@ -86,11 +86,6 @@ const categoryData = [
     isChild: false,
   },
   {
-    name: "সোশ্যাল মিডিয়া",
-    slug: "social-media",
-    isChild: false,
-  },
-  {
     name: "বিজনেস",
     slug: "business",
     isChild: false,

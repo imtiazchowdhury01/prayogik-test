@@ -33,7 +33,6 @@ import {
   ResetPasswordRequestSchema,
   ResetPasswordResponseSchema,
   TeacherWithProfileSchema,
-  BkashManualPaymentBodySchema,
   TeacherUserSchema,
   teacherOverviewQuerySchema,
   teacherPaymentHistoryQuerySchema,
@@ -46,7 +45,7 @@ import {
   courseRoadmapSchema,
 } from "./types";
 import { initContract } from "@ts-rest/core";
-import { BkashManualPaymentType, PurchaseType } from "@prisma/client";
+import { PurchaseType } from "@prisma/client";
 
 const c = initContract();
 
@@ -1232,79 +1231,7 @@ export const ApiContractV1 = c.router({
     },
     summary: "Fetch verified teachers with published courses",
   },
-  // bkash manual payment
-  createBkashPayment: {
-    method: "POST",
-    path: "/api/bkash-manual-payment",
-    body: z.object({
-      courseId: z.string().optional(),
-      subscriptionId: z.string().optional(),
-      payFrom: z.array(z.string()),
-      trxId: z.array(z.string()),
-      payableAmount: z.number(),
-      type: z.enum([
-        BkashManualPaymentType.REGULAR,
-        BkashManualPaymentType.SUBSCRIPTION,
-        BkashManualPaymentType.OFFER,
-      ]),
-      title: z.string(),
-    }),
-    responses: {
-      201: z.object({
-        msg: z.string(),
-        data: z.object({
-          success: z.boolean(),
-          message: z.string(),
-        }),
-      }),
-      500: z.object({
-        error: z.boolean(),
-        message: z.string(),
-      }),
-    },
-  },
 
-  // get all bkashpayments for admin
-  getBkashPaymentsForAdmin: {
-    method: "GET",
-    path: "/api/bkash-manual-payment",
-    responses: {
-      200: z.object({
-        msg: z.string(),
-        data: z.array(BkashManualPaymentBodySchema),
-      }),
-      400: z.object({ error: z.string() }),
-      500: z.object({ error: z.string() }),
-    },
-  },
-
-  // update bkash manual payment by id
-  updateBkashPaymentById: {
-    method: "PUT",
-    path: "/api/bkash-manual-payment/:id",
-    body: BkashManualPaymentBodySchema,
-    responses: {
-      200: z.object({
-        msg: z.string(),
-        data: BkashManualPaymentBodySchema,
-      }),
-      400: z.object({ error: z.string() }),
-      500: z.object({ error: z.string() }),
-    },
-  },
-  // delete bkash manual payment by id
-  deleteBkashPaymentById: {
-    method: "DELETE",
-    path: "/api/bkash-manual-payment/:id",
-    responses: {
-      200: z.object({
-        msg: z.string(),
-        deletedId: z.string(), // or z.number() depending on your ID type
-      }),
-      404: z.object({ error: z.string() }), // For not found
-      500: z.object({ error: z.string() }),
-    },
-  },
   // get all subscribers
   getSubscribers: {
     method: "GET",
@@ -1387,19 +1314,7 @@ export const ApiContractV1 = c.router({
       }),
     },
   },
-  // get bkash manual payment by id
-  getBkashManualSinglePayment: {
-    method: "GET",
-    path: "/api/bkash-manual-payment/:paymentId",
-    pathParams: z.object({
-      paymentId: z.string(),
-    }),
-    responses: {
-      200: BkashManualPaymentBodySchema,
-      404: z.object({ error: z.string() }),
-      500: z.object({ error: z.string() }),
-    },
-  },
+
   // Access course for free
   createFreeCourseAccess: {
     method: "POST",

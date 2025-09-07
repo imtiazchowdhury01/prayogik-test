@@ -38,6 +38,7 @@ enum PurchaseType {
   SUBSCRIPTION
   TRIAL
   OFFER
+  EVENT
 }
 
 enum CourseOwnership {
@@ -132,6 +133,7 @@ model User {
   education              String[]
   nationality            String?
   phoneNumber            String?
+  profession             String?
   city                   String?
   state                  String?
   country                String?
@@ -148,8 +150,8 @@ model User {
   teacherProfile TeacherProfile?
   studentProfile StudentProfile?
 
-  createdAt         DateTime?           @default(now())
-  updatedAt         DateTime?           @updatedAt
+  createdAt          DateTime?           @default(now())
+  updatedAt          DateTime?           @updatedAt
   eventRegistrations EventRegistration[]
 }
 
@@ -444,13 +446,14 @@ model Purchase {
   studentProfileId String         @db.ObjectId
   studentProfile   StudentProfile @relation("StudentPurchases", fields: [studentProfileId], references: [id])
 
-  teacherProfileId String?         @db.ObjectId
-  teacherProfile   TeacherProfile? @relation(fields: [teacherProfileId], references: [id])
-  courseId         String?         @db.ObjectId
-  course           Course?         @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  membershipPlanId String?         @db.ObjectId
-  membershipPlan   MembershipPlan? @relation(fields: [membershipPlanId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
+  teacherProfileId   String?           @db.ObjectId
+  teacherProfile     TeacherProfile?   @relation(fields: [teacherProfileId], references: [id])
+  courseId           String?           @db.ObjectId
+  course             Course?           @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  membershipPlanId   String?           @db.ObjectId
+  membershipPlan     MembershipPlan?   @relation(fields: [membershipPlanId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  eventId            String?           @db.ObjectId
+  event              Event?            @relation(fields: [eventId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   subscriptionPlanId String?           @db.ObjectId
   subscription       SubscriptionPlan? @relation(fields: [subscriptionPlanId], references: [id])
   purchaseType       PurchaseType
@@ -674,39 +677,6 @@ model CourseRoadmap {
   updatedAt DateTime @updatedAt
 }
 
-enum bkashManualPaymentStatus {
-  PENDING
-  SUCCESS
-  FAILED
-}
-
-enum BkashManualPaymentType {
-  REGULAR
-  SUBSCRIPTION
-  OFFER
-}
-
-model BkashManualPayment {
-  id            String                   @id @default(auto()) @map("_id") @db.ObjectId
-  payFrom       String[]
-  trxId         String[]
-  type          BkashManualPaymentType
-  amount        Float?                   @default(0.0)
-  payableAmount Float?                   @default(0.0)
-  createdAt     DateTime                 @default(now())
-  updatedAt     DateTime                 @updatedAt
-  status        bkashManualPaymentStatus @default(PENDING)
-
-  // subscriptionPlanId String?           @db.ObjectId
-  // subscriptionPlan   SubscriptionPlan? @relation(fields: [subscriptionPlanId], references: [id])
-
-  // courseId String? @db.ObjectId
-  // course   Course? @relation(fields: [courseId], references: [id])
-  // title    String?
-  // userId   String  @db.ObjectId
-  // user     User    @relation(fields: [userId], references: [id])
-}
-
 model NewsletterSubscriber {
   id        String         @id @default(auto()) @map("_id") @db.ObjectId
   email     String         @unique
@@ -738,12 +708,16 @@ model BkashPurchaseHistory {
 
   bkashPaymentId     String?
   email              String
+  phoneNumber        String?
+  profession         String?
+  name               String?
   amount             Float
   subscriptionPlanId String?           @db.ObjectId
   subscriptionPlan   SubscriptionPlan? @relation(fields: [subscriptionPlanId], references: [id])
-
-  courseId String? @db.ObjectId
-  course   Course? @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  eventId            String?           @db.ObjectId
+  event              Event?            @relation(fields: [eventId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  courseId           String?           @db.ObjectId
+  course             Course?           @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   purchaseType PurchaseType
 
@@ -756,26 +730,38 @@ enum EventType {
   FREE
 }
 
+enum EventStatus {
+  DRAFT
+  UPCOMING
+  WAITING
+  CLOSED
+}
+
 model Event {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
   title       String
   slug        String    @unique
   description String?
+  price       Float?
   date        DateTime
+  // eventStatus EventStatus @default(DRAFT)
   isOnline    Boolean   @default(false)
   location    String? // For offline events
   zoomLink    String? // For online events
   imageUrl    String? // Event banner/cover image
   isPublished Boolean   @default(false)
   mapLocation String?
-  type        EventType @default(PAID)
+  type        EventType @default(FREE)
+  status      EventStatus @default(DRAFT)
   // FAQs as embedded array of objects
   faqs        Faq[]
   speakers    Speaker[]
 
-  createdAt DateTime            @default(now())
-  updatedAt DateTime            @updatedAt
-  attendees EventRegistration[]
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  attendees            EventRegistration[]
+  bkashPurchaseHistory BkashPurchaseHistory[]
+  purchase             Purchase[]
 }
 
 model EventRegistration {

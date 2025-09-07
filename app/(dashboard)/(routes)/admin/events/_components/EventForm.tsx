@@ -2,7 +2,14 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { Calendar, MapPin, ImageIcon, User, HelpCircle, Loader } from "lucide-react";
+import {
+  Calendar,
+  MapPin,
+  ImageIcon,
+  User,
+  HelpCircle,
+  Loader,
+} from "lucide-react";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { EventFormProgress } from "./EventFormProgress";
@@ -41,8 +48,9 @@ export const EventForm: React.FC<EventFormProps> = ({ initialData, mode }) => {
     handleEventImageUpload,
     handleSpeakerImageUpload,
     onSubmit,
+    EVENT_STATUS_OPTIONS
   } = useEventForm(initialData, mode);
-
+const watchType = form.watch("type");
   useScrollSpy(FORM_STEPS, setCurrentStep);
 
   // Apply Jodit styles
@@ -90,18 +98,10 @@ export const EventForm: React.FC<EventFormProps> = ({ initialData, mode }) => {
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-accent/10 text-accent rounded-full text-sm font-medium mb-4">
-            <Calendar className="h-4 w-4" />
-            Event Management
-          </div>
-          <h1 className="text-4xl font-bold text-foreground mb-3 text-balance">
+          
+          <h1 className="text-4xl font-bold text-foreground mb-2 text-balance">
             {mode === "create" ? "Create New Event" : "Edit Event"}
           </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto text-pretty">
-            {mode === "create"
-              ? "Transform your vision into reality with our comprehensive event creation platform"
-              : "Update and refine your event details to perfection"}
-          </p>
         </div>
 
         <EventFormProgress steps={FORM_STEPS} currentStep={currentStep} />
@@ -112,6 +112,8 @@ export const EventForm: React.FC<EventFormProps> = ({ initialData, mode }) => {
               form={form}
               eventTypes={EVENT_TYPES}
               joditConfig={joditConfig}
+              eventStatusOptions={EVENT_STATUS_OPTIONS}
+              watchType={watchType}
             />
 
             <LocationSection form={form} watchIsOnline={watchIsOnline} />

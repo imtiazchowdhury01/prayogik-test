@@ -29,7 +29,7 @@ import { format } from "date-fns";
 import { CalendarIcon, Loader } from "lucide-react";
 import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import EducationsInput from "../../apply-for-teaching/_components/EducationsInput";
+import EducationsInput from "../../../../(site)/prev-apply-for-teaching/_components/EducationsInput";
 import UserAvatar from "./avatar";
 import { generalSchema } from "./schema";
 

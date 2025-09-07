@@ -13,14 +13,18 @@ export const courseEnrollmentNotificationTemplate = (
   enrolledCourses: { title: string; slug: string }[],
   baseUrl: string
 ) => {
-  const courseList = enrolledCourses.map(course => `
+  const courseList = enrolledCourses
+    .map(
+      (course) => `
     <li style="margin:8px 0;">
       <a href="${baseUrl}/courses/${course.slug}" 
          style="color:#14b8a9;text-decoration:underline;">
         ${course.title}
       </a>
     </li>
-  `).join('');
+  `
+    )
+    .join("");
 
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
     <html dir="ltr" lang="bn">
@@ -107,7 +111,11 @@ export const courseEnrollmentNotificationTemplate = (
                             <tr>
                               <td>
                                 <h3 style="margin:0 0 15px 0;font-family:'Open Sans', 'Helvetica Neue', Arial;font-size:18px;font-weight:600;color:#115e57;">
-                                    আপনার ${enrolledCourses.length > 1 ? 'কোর্সসমূহ' : 'কোর্স'}:
+                                    আপনার ${
+                                      enrolledCourses.length > 1
+                                        ? "কোর্সসমূহ"
+                                        : "কোর্স"
+                                    }:
                                 </h3>
                                 <ul style="margin:10px 0;padding-left:20px;font-family:'Open Sans', 'Helvetica Neue', Arial;font-size:15px;line-height:24px;color:#404040 !important;">
                                     ${courseList}
@@ -139,8 +147,12 @@ export const courseEnrollmentNotificationTemplate = (
                           <tbody>
                             <tr>
                               <td style="text-align:center;">
-                                <p style="margin:0;font-family:'Open Sans', 'Helvetica Neue', Arial;font-size:12px;color:#666;">
-                                  এই ইমেইলটি ${baseUrl} থেকে স্বয়ংক্রিয়ভাবে পাঠানো হয়েছে।
+                               <p style="margin:0;font-family:'Open Sans', 'Helvetica Neue', Arial;font-size:12px;color:#666;">
+                                  এই ইমেইলটি 
+                                  <a href="${baseUrl}" target="_blank" style="color:#4f46e5; text-decoration:none; font-weight:600;">
+                                    Prayogik
+                                  </a> 
+                                  থেকে স্বয়ংক্রিয়ভাবে পাঠানো হয়েছে।
                                 </p>
                               </td>
                             </tr>

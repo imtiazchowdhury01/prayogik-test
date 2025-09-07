@@ -5,13 +5,11 @@ import RequiredFieldStar from "@/components/common/requiredFieldStar";
 import { Button } from "@/components/ui/button";
 import {
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import MultiSelect from "@/components/ui/multi-select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
@@ -26,9 +24,17 @@ import { TeacherExpertiseLevel } from "@prisma/client";
 import { Loader } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import ProfileFormSkeleton from "../../profile/_components/profile-form-skeleton";
 import { teacherFormSchema } from "./schema";
-import toast from "react-hot-toast";
+import CertificationsInput from "@/app/(site)/prev-apply-for-teaching/_components/CertificationsInput";
+
+export const yearOfExperienceValues = [
+  "০-১ বছর",
+  "১-২ বছর",
+  "২-৪ বছর",
+  "৪-৬ বছর",
+  "৬-১০ বছর",
+  "১০+ বছর",
+];
 
 interface TeacherInfoFormProps {
   onSubmit: (data: any) => void;
@@ -42,14 +48,16 @@ export const TeacherInfoForm = ({
   onSubmit,
   defaultValues,
   categories,
-  isLoading,
   isSubmitting,
 }: TeacherInfoFormProps) => {
-  const [inputCertificateUrl, setInputCertificateUrl] = useState("");
-
   const teacherInfoForm = useForm({
     resolver: zodResolver(teacherFormSchema),
-    defaultValues,
+    defaultValues: {
+      subjectSpecializations: [],
+      expertiseLevel: TeacherExpertiseLevel.ENTRY_LEVEL,
+      certifications: [],
+      yearsOfExperience: defaultValues?.yearsOfExperience || "",
+    },
   });
 
   const {
@@ -57,71 +65,25 @@ export const TeacherInfoForm = ({
     reset: resetTeacherInfo,
   } = teacherInfoForm;
 
-  const [certificates, setCertificates] = useState<string[]>(
-    defaultValues.certifications || []
-  );
-
-  // Custom URL validation function
-  const isValidUrl = (url: string) => {
-    try {
-      let temp = new URL(url); // Use the browser's built-in URL parser
-
-      if (certificates.some((cert) => cert === url)) {
-        return false;
-      }
-      return true;
-    } catch (error) {
-      return false;
-    }
-  };
-
-  // Handle certificate change
-  const handleCertificateChange = (value: string) => {
-    if (value.endsWith(",")) {
-      const newCert = value.slice(0, -1).trim(); // Remove comma and trim whitespace
-
-      if (newCert) {
-        if (isValidUrl(newCert)) {
-          const updatedCertificates = [...certificates, newCert];
-          setCertificates(updatedCertificates);
-          teacherInfoForm.setValue("certifications", updatedCertificates, {
-            shouldValidate: true,
-            shouldDirty: true,
-          });
-        } else {
-          console.error("Invalid URL:", newCert); // Debugging log
-          toast.error(
-            "Invalid URL format or already exist in the list. Please enter a valid URL."
-          );
-        }
-      }
-
-      setInputCertificateUrl(""); // Reset the input field after a comma
-    } else {
-      setInputCertificateUrl(value); // Update input field as user types
-    }
-  };
-
-  // Remove certificate by index
-  const removeCertificate = (index: number) => {
-    const updatedCertificates = certificates.filter((_, i) => i !== index);
-    setCertificates(updatedCertificates);
-    teacherInfoForm.setValue("certifications", updatedCertificates, {
-      shouldDirty: true,
-    }); // Update form state and mark as dirty
-  };
-
   // Reset form with defaultValues when they change
   useEffect(() => {
     if (defaultValues) {
-      resetTeacherInfo(defaultValues);
-      setCertificates(defaultValues.certifications || []); // Reset certificates state
+      // Create a proper defaultValues object with fallbacks
+      const formattedDefaultValues = {
+        subjectSpecializations: defaultValues.subjectSpecializations || [],
+        expertiseLevel:
+          defaultValues.expertiseLevel || TeacherExpertiseLevel.ENTRY_LEVEL,
+        certifications: defaultValues.certifications || [],
+        yearsOfExperience:
+          defaultValues.yearsOfExperience || yearOfExperienceValues[0],
+      };
+      resetTeacherInfo(formattedDefaultValues);
     }
   }, [defaultValues, resetTeacherInfo]);
 
   return (
     <div className="bg-white p-6 border rounded-lg shadow-md mt-8">
-      <h1 className="text-2xl font-bold">Teaching Information</h1>
+      <h1 className="text-2xl font-bold">শিক্ষকতার তথ্য</h1>
       <hr className="border-gray-200 mt-3 mb-6" />
       <FormProvider {...teacherInfoForm}>
         <form
@@ -138,7 +100,7 @@ export const TeacherInfoForm = ({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        <RequiredFieldStar labelText="Specialized Area" />
+                        <RequiredFieldStar labelText="বিশেষায়িত ক্ষেত্র" />
                       </FormLabel>
                       <FormControl>
                         <MultiSelect
@@ -150,11 +112,11 @@ export const TeacherInfoForm = ({
                           }
                           onValueChange={field.onChange}
                           defaultValue={field.value}
-                          placeholder="Select skills"
+                          placeholder="বিষয় নির্বাচন করুন"
                         />
                       </FormControl>
                       <FormMessage>
-                        {teacherInfoErrors.name?.message}
+                        {teacherInfoErrors.subjectSpecializations?.message}
                       </FormMessage>
                     </FormItem>
                   )}
@@ -162,9 +124,9 @@ export const TeacherInfoForm = ({
               </div>
             </div>
           </div>
-          {/* expertiseLevel */}
-          <div className="flex gap-4 mt-4">
-            <div className="w-full">
+          <div className="flex justify-between md:flex-row flex-col items-center gap-4">
+            {/* expertiseLevel */}
+            <div className="flex gap-4 mt-4 w-full">
               <div className="w-full">
                 <FormField
                   control={teacherInfoForm.control}
@@ -172,7 +134,7 @@ export const TeacherInfoForm = ({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        <RequiredFieldStar labelText=" Expertise Level" />
+                        <RequiredFieldStar labelText="অভিজ্ঞতার স্তর" />
                       </FormLabel>
                       <FormControl>
                         <RadioGroup
@@ -214,104 +176,65 @@ export const TeacherInfoForm = ({
                         </RadioGroup>
                       </FormControl>
                       <FormMessage>
-                        {teacherInfoErrors.name?.message}
+                        {teacherInfoErrors.expertiseLevel?.message}
                       </FormMessage>
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="w-full">
+                {/* yearsOfExperience */}
+                <FormField
+                  name="yearsOfExperience"
+                  control={teacherInfoForm.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <RequiredFieldStar labelText="অভিজ্ঞতার বছর" />
+                      <FormControl>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select years of experience" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="0-1 year">০-১ বছর</SelectItem>
+                            <SelectItem value="1-2 years">১-২ বছর</SelectItem>
+                            <SelectItem value="2-4 years">২-৪ বছর</SelectItem>
+                            <SelectItem value="4-6 years">৪-৬ বছর</SelectItem>
+                            <SelectItem value="6-10 years">৬-১০ বছর</SelectItem>
+                            <SelectItem value="10+ years">১০+ বছর</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
             </div>
           </div>
-          {/* yearsOfExperience */}
-          <div className="flex gap-4 mt-4">
-            <FormField
-              control={teacherInfoForm.control}
-              name="yearsOfExperience"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    <RequiredFieldStar labelText="Years of Experience" />
-                  </FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="0-1 year">0-1 year</SelectItem>
-                      <SelectItem value="1-2 years">1-2 years</SelectItem>
-                      <SelectItem value="2-4 years">2-4 years</SelectItem>
-                      <SelectItem value="4-6 years">4-6 years</SelectItem>
-                      <SelectItem value="6-10 years">6-10 years</SelectItem>
-                      <SelectItem value="10+ years">10+ years</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage>{teacherInfoErrors.name?.message}</FormMessage>
-                </FormItem>
-              )}
-            />
-          </div>
           {/* certifications */}
-          <div className="flex gap-4 mt-4">
+          <div className="flex gap-4 mt-4 p-4 border rounded-lg bg-gray-50">
             <div className="w-full">
               <FormField
                 name="certifications"
                 control={teacherInfoForm.control}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Certifications</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Enter Certifications"
-                        value={inputCertificateUrl}
-                        onChange={(e) =>
-                          handleCertificateChange(e.target.value)
-                        }
+                      <CertificationsInput
+                        initialCertifications={field.value || []}
+                        onUpdateCertifications={(updatedCertifications) => {
+                          field.onChange(updatedCertifications);
+                        }}
                       />
                     </FormControl>
-                    <FormDescription>
-                      Write certifications with "," as separator
-                    </FormDescription>
-                    <FormMessage>
-                      {teacherInfoErrors.certifications?.message}
-                    </FormMessage>
                   </FormItem>
                 )}
               />
             </div>
-          </div>
-
-          {/* Display certificates with delete option */}
-          <div className="flex flex-wrap gap-2 mt-2">
-            {certificates.map((cert, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-2 bg-gray-200 px-2 py-1 rounded text-sm"
-              >
-                <span>{cert}</span>
-                <button
-                  type="button"
-                  onClick={() => removeCertificate(index)}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
-            ))}
           </div>
 
           <div className="flex justify-end gap-2">

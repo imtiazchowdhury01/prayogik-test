@@ -5,8 +5,6 @@ import { db } from "@/lib/db";
 import nodemailer from "nodemailer";
 import { sendSubscriptionCredential } from "@/lib/utils/emailTemplates/sendSubscriptionCredential";
 import preparePurchaseDetails from "@/lib/utils/preparePurchaseDetails";
-import { courseEnrollmentNotificationTemplate } from "@/lib/utils/emailTemplates/course-enrollment-notification-template";
-import { newsletterAdminNotificationTemplate } from "@/lib/utils/emailTemplates/comingsoon-newsletter";
 import { sendAdminNotification } from "@/lib/utils/emailTemplates/sendAdminNotification";
 
 // Types for the trial callback payload
@@ -188,10 +186,16 @@ export async function POST(request: NextRequest) {
   try {
     const payload: TrialCallbackPayload = await request.json();
     // Validate required fields
-    if (!payload.subscriptionPlanId) {
-      return createErrorResponse("Subscription plan ID is required");
-    }
+    // if (!payload.subscriptionPlanId) {
+    //   return createErrorResponse("Subscription plan ID is required");
+    // }
+    const trialSubscriptionPlan = await db.subscriptionPlan.findFirst({
+      where: {
+        isTrial: true,
+      },
+    });
 
+    payload.subscriptionPlanId = trialSubscriptionPlan?.id!;
     // Get authenticated user (if any)
     const authenticatedUser = await getAuthenticatedUser(request);
     let user: any = authenticatedUser;
