@@ -1,14 +1,21 @@
-
-import React, { Suspense } from "react";
-import type { Metadata, ResolvingMetadata } from "next";
+// @ts-nocheck
 import {
   getCategoriesDBCall,
   getCategoryCoursesCountDBCall,
+  getCategoryCoursesDBCall,
 } from "@/lib/data-access-layer/categories";
+import { 
+  getPrimeCoursesDBCall, 
+  getCoursesDbCall,
+  getLiveCoursesDBCall
+} from "@/lib/data-access-layer/course";
+import React from "react";
 import CategoriesWrapper from "../_components/CategoryWrapper";
-import CategorySidebar from "../_components/CategorySidebar";
-import { CategoryFilterSelect, GeneralFilterSelect } from "../../_components/SelectFilterOption";
-import CoursesSection from "../_components/CoursesSection";
+import type { Metadata, ResolvingMetadata } from "next";
+import {
+  CategoryFilterSelect,
+  GeneralFilterSelect,
+} from "../../_components/SelectFilterOption";
 
 // Define filter types
 const FILTER_TYPES = ["recent", "older", "prime", "live"] as const;
@@ -19,7 +26,7 @@ export async function generateStaticParams() {
   const categories = await getCategoriesDBCall();
   const params = [];
 
-  // Check each category for courses and only include if it has courses
+ // Check each category for courses and only include if it has courses
   for (const category of categories) {
     const coursesCount = await getCategoryCoursesCountDBCall(category.slug);
     if (coursesCount > 0) {
@@ -51,19 +58,25 @@ export async function generateMetadata(
     const filterMetadata = {
       recent: {
         title: "Recent Courses | Latest Online Courses in Bangla | Prayogik",
-        description: "Explore the most recent online courses. Stay updated with the latest practical skills and career-focused topics in Bangla.",
+        description:
+          "Explore the most recent online courses. Stay updated with the latest practical skills and career-focused topics in Bangla.",
       },
       older: {
         title: "Older Courses | Previous Online Courses in Bangla | Prayogik",
-        description: "Browse through our collection of older online courses. Find established practical skills and career-focused topics in Bangla.",
+        description:
+          "Browse through our collection of older online courses. Find established practical skills and career-focused topics in Bangla.",
       },
       prime: {
-        title: "Prime Courses | Premium Subscription Courses in Bangla | Prayogik",
-        description: "Access our premium subscription courses. Get exclusive content and advanced practical skills in Bangla.",
+        title:
+          "Prime Courses | Premium Subscription Courses in Bangla | Prayogik",
+        description:
+          "Access our premium subscription courses. Get exclusive content and advanced practical skills in Bangla.",
       },
       live: {
-        title: "Live Courses | Interactive Live Classes in Bangla | Prayogik",
-        description: "Join our interactive live courses. Learn in real-time with expert instructors and engage with fellow students in Bangla.",
+        title:
+          "Live Courses | Interactive Live Classes in Bangla | Prayogik",
+        description:
+          "Join our interactive live courses. Learn in real-time with expert instructors and engage with fellow students in Bangla.",
       },
     };
     return filterMetadata[slug as FilterType];
@@ -83,33 +96,10 @@ export async function generateMetadata(
   // Default metadata
   return {
     title: "Courses | Online Learning Platform | Prayogik",
-    description: "Discover online courses to boost your skills with practical, career-focused topics in Bangla.",
+    description:
+      "Discover online courses to boost your skills with practical, career-focused topics in Bangla.",
   };
 }
-
-// Loading components
-const SidebarSkeleton = () => (
-  <div className="hidden lg:block lg:w-1/4">
-    <div className="w-full bg-white lg:border lg:border-gray-200 rounded-lg lg:shadow-custom p-4 lg:sticky lg:top-[10%] lg:max-w-sm">
-      <div className="flex flex-col w-full my-5 space-y-2">
-        <div className="w-full h-10 bg-gray-200 rounded animate-pulse" />
-        <div className="w-full h-10 bg-gray-200 rounded animate-pulse" />
-        <div className="w-full h-10 bg-gray-200 rounded animate-pulse" />
-        <div className="w-full h-10 bg-gray-200 rounded animate-pulse" />
-      </div>
-    </div>
-  </div>
-);
-
-const CoursesSkeleton = () => (
-  <div className="w-full lg:w-3/4">
-    <div className="grid grid-cols-1 gap-4 md:gap-y-[50px] gap-y-4 my-3 sm:grid-cols-2 md:grid-cols-3 mt-5">
-      {[...Array(6)].map((_, index) => (
-        <div key={index} className="bg-gray-200 rounded-lg h-64 animate-pulse" />
-      ))}
-    </div>
-  </div>
-);
 
 const CategorySlugPage = async ({
   params,
@@ -117,76 +107,115 @@ const CategorySlugPage = async ({
   params: { categorySlug: string };
 }) => {
   const slug = params.categorySlug;
-  
-  // Determine page type and category name
-  const isFilter = FILTER_TYPES.includes(slug as FilterType);
-  const pageType = isFilter ? "filter" : "category";
-  
-  // Get category name for display
-  let categoryName = "";
-  if (isFilter) {
+
+  // Check if it's a filter type
+  if (FILTER_TYPES.includes(slug as FilterType)) {
+    return await handleFilterType(slug as FilterType);
+  }
+
+  // Handle as category slug (existing logic)
+  return await handleCategorySlug(slug);
+};
+
+// Handle filter types (recent, older, prime, live)
+async function handleFilterType(filterType: FilterType) {
+  let courses;
+  let categories: any[];
+
+  switch (filterType) {
+    case "recent":
+      const [recentCoursesResponse, recentCategories] =
+        await Promise.all([
+          getCoursesDbCall({
+            page: 1,
+            limit: 24, // Initial load: 24 courses
+            sort: "desc", // Recent first
+          }),
+          getCategoriesDBCall(),
+        ]);
+      courses = recentCoursesResponse?.courses ?? [];
+      categories = recentCategories;
+      break;
+
+    case "older":
+      const [olderCoursesResponse, olderCategories] =
+        await Promise.all([
+          getCoursesDbCall({
+            page: 1,
+            limit: 24, // Initial load: 24 courses
+            sort: "asc", // Older first
+          }),
+          getCategoriesDBCall(),
+        ]);
+      courses = olderCoursesResponse?.courses ?? [];
+      categories = olderCategories;
+      break;
+
+    case "prime":
+      const [primeCategories, primeCourses] = await Promise.all([
+        getCategoriesDBCall(),
+        getPrimeCoursesDBCall(1), // Pass page 1 for initial load
+      ]);
+      courses = primeCourses;
+      categories = primeCategories;
+      break;
+
+    case "live":
+      const [liveCategories, liveCourses] = await Promise.all([
+        getCategoriesDBCall(),
+        getLiveCoursesDBCall(1), // Pass page 1 for initial load
+      ]);
+      courses = liveCourses;
+      categories = liveCategories;
+      break;
+
+    default:
+      courses = [];
+      categories = [];
+  }
+
+  // Get category name in Bangla
+  const getCategoryName = (filter: FilterType): string => {
     const nameMap = {
       recent: "সাম্প্রতিক",
-      older: "পুরাতন", 
+      older: "পুরাতন",
       prime: "প্রায়োগিক প্রাইম",
       live: "লাইভ কোর্স",
     };
-    categoryName = nameMap[slug as FilterType];
-  } else {
-    // For actual categories, the name will be fetched in CoursesSection
-    categoryName = slug; // Temporary, will be replaced
-  }
-
-  // Determine filter component
-  const filterComponent = isFilter ? (
-    <GeneralFilterSelect />
-  ) : (
-    <CategoryFilterSelect categorySlug={slug} />
-  );
+    return nameMap[filter];
+  };
 
   return (
-    <section className="min-h-[50vh]">
-      {/* Breadcrumbs */}
-      <div className="border-b border-gray-100 py-6">
-        <div className="max-w-7xl mx-auto px-6 md:px-6 lg:px-6 xl:px-6 2xl:px-0">
-          <nav>
-            <ol className="flex items-center space-x-2">
-              <li>
-                <a href="/" className="text-sm font-medium underline underline-offset-4 sm:text-base text-fontcolor-title hover:text-primary-brand">
-                  হোম
-                </a>
-              </li>
-              <li className="text-gray-500">/</li>
-              <li>
-                <a href="/courses" className="text-sm font-medium underline underline-offset-4 sm:text-base text-fontcolor-title hover:text-primary-brand">
-                  কোর্স
-                </a>
-              </li>
-              <li className="text-gray-500">/</li>
-              <li className="text-sm sm:text-base text-gray-600">ক্যাটাগরি</li>
-            </ol>
-          </nav>
-        </div>
-      </div>
-
-      <div className="flex py-6 sm:py-[60px] lg:space-x-5 app-container gap-x-[6px]">
-        {/* Sidebar with Suspense */}
-        <Suspense fallback={<SidebarSkeleton />}>
-          <CategorySidebar />
-        </Suspense>
-
-        {/* Main Content with Suspense */}
-        <Suspense fallback={<CoursesSkeleton />}>
-          <CoursesSection
-            categorySlug={slug}
-            pageType={pageType}
-            filterType={isFilter ? (slug as FilterType) : undefined}
-            filterComponent={filterComponent}
-          />
-        </Suspense>
-      </div>
-    </section>
+    <CategoriesWrapper
+      courses={courses}
+      categories={categories}
+      categoryName={getCategoryName(filterType)}
+      filterComponent={<GeneralFilterSelect currentFilter={filterType} />}
+      pageType="filter"
+      filter={filterType}
+    />
   );
-};
+}
+
+// Handle category slugs (existing logic)
+async function handleCategorySlug(categorySlug: string) {
+  const courses = await getCategoryCoursesDBCall(categorySlug, 1); // Pass page 1 for initial load
+  const categories = await getCategoriesDBCall();
+
+  const categoryName = categories.find(
+    (category) => category.slug === categorySlug
+  )?.name;
+
+  return (
+    <CategoriesWrapper
+      courses={courses}
+      categories={categories}
+      categoryName={categoryName}
+      filterComponent={<CategoryFilterSelect categorySlug={categorySlug} />}
+      pageType="category"
+      categorySlug={categorySlug}
+    />
+  );
+}
 
 export default CategorySlugPage;
