@@ -150,7 +150,7 @@ export const courseEnrollmentNotificationTemplate = (
                                <p style="margin:0;font-family:'Open Sans', 'Helvetica Neue', Arial;font-size:12px;color:#666;">
                                   এই ইমেইলটি 
                                   <a href="${baseUrl}" target="_blank" style="color:#4f46e5; text-decoration:none; font-weight:600;">
-                                    Prayogik
+                                    প্রায়োগিক
                                   </a> 
                                   থেকে স্বয়ংক্রিয়ভাবে পাঠানো হয়েছে।
                                 </p>

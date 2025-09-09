@@ -76,7 +76,7 @@ const CourseProposals = async () => {
           </div>
           <FaqComponent faqItems={faqItems} />
         </div>
-        <div>
+        {/* <div>
           <ActionBanner
             title="শিক্ষক হিসেবে যোগদান করতে চান?"
             description="আপনার দক্ষতা শেয়ার করুন, আয় করুন নিজের নিয়মে, আর গড়ে তুলুন শিক্ষার্থীদের শেখার নতুন সম্ভাবনা প্রয়োগিকে প্ল্যাটফর্মে।"
@@ -86,7 +86,7 @@ const CourseProposals = async () => {
             className="mb-0 md:mb-28"
             showTeacherButton={true}
           />
-        </div>
+        </div> */}
       </div>
     </div>
   );

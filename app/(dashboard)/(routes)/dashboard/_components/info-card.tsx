@@ -1,22 +1,22 @@
 import { LucideIcon } from "lucide-react";
-
 import { IconBadge } from "@/components/icon-badge";
 import { cn } from "@/lib/utils";
+import { ReactNode } from "react";
 
 interface InfoCardProps {
-  numberOfItems: number;
   variant?: "default" | "success";
   label: string;
   icon: LucideIcon;
   className: string;
+  countComponent: ReactNode; // Changed from numberOfItems to countComponent
 }
 
 export const InfoCard = ({
   variant,
   icon: Icon,
-  numberOfItems,
   label,
   className,
+  countComponent,
 }: InfoCardProps) => {
   return (
     <div
@@ -28,9 +28,7 @@ export const InfoCard = ({
       <IconBadge variant={variant} icon={Icon} />
       <div>
         <p className="font-medium">{label}</p>
-        <p className="text-gray-500 text-sm">
-          {numberOfItems} {numberOfItems === 1 ? "Course" : "Courses"}
-        </p>
+        {countComponent}
       </div>
     </div>
   );

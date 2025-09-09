@@ -26,7 +26,7 @@ const EventCard = ({ event }: any) => {
           style={{ aspectRatio: "16/9" }}
         >
           <Image
-            src={eventImage1}
+            src={event?.imageUrl ? event.imageUrl : eventImage1}
             alt="event image"
             fill
             className="object-cover"

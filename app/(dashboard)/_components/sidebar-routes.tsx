@@ -40,7 +40,7 @@ import { useEffect, useState } from "react";
 
 const studentRoutes = [
   { icon: Layout, label: "Dashboard", href: "/dashboard", isParent: true },
-  { icon: Compass, label: "Browse", href: "/search", isParent: true },
+  // { icon: Compass, label: "Browse", href: "/search", isParent: true },
   { icon: User, label: "Profile", href: "/profile", isParent: true },
 ];
 
@@ -137,6 +137,11 @@ const adminRoute = [
       },
     ],
   },
+    {
+    icon: BookOpenText,
+    label: "Events",
+    href: "/admin/events",
+  },
   {
     icon: Layers,
     label: "Course Roadmap",
@@ -153,11 +158,6 @@ const adminRoute = [
         href: "/admin/manage/monthly-earnings",
       },
     ],
-  },
-  {
-    icon: BookOpenText,
-    label: "Events",
-    href: "/admin/events",
   },
   // {
   //   icon: Megaphone,

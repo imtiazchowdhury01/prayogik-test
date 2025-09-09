@@ -1,22 +1,8 @@
 // lib/event/event.ts
+import { revalidatePage } from "@/actions/revalidatePage";
+import { CreateEventInput, UpdateEventInput } from "@/schemas/event-schema";
 import axios from "axios";
-
-export interface EventFormData {
-  title: string;
-  slug: string;
-  description?: string;
-  date: string; // ISO string
-  isOnline: boolean;
-  location?: string;
-  zoomLink?: string;
-  imageUrl?: string;
-  isPublished?: boolean;
-  speakerIds?: string[];
-  faqs?: Array<{
-    question: string;
-    answer: string;
-  }>;
-}
+import toast from "react-hot-toast";
 
 export interface EventResponse {
   id: string;
@@ -64,14 +50,20 @@ export interface ApiResponse<T = any> {
   count?: number;
 }
 
-export async function createEvent(
-  eventData: EventFormData
-): Promise<ApiResponse<EventResponse>> {
+interface UpdateEventOptions {
+  eventId: string;
+  values: UpdateEventInput;
+  toggleEdit?: () => void;
+  setLoading: (loading: boolean) => void;
+  router: any; // Next.js router
+  successMessage?: string;
+  api?: string;
+}
+
+export async function createEvent(eventData: { title: string; slug: string }) {
   try {
     const response = await axios.post("/api/admin/event", {
       ...eventData,
-      // Ensure date is properly formatted
-      date: new Date(eventData.date).toISOString(),
     });
 
     return response.data;
@@ -90,35 +82,53 @@ export async function createEvent(
   }
 }
 
-export async function updateEvent(
-  eventId: string,
-  eventData: Partial<EventFormData>
-): Promise<ApiResponse<EventResponse>> {
-  try {
-    const updateData = { ...eventData };
+export const updateEvent = async ({
+  eventId,
+  values,
+  toggleEdit,
+  setLoading,
+  router,
+  successMessage,
+  api,
+}: UpdateEventOptions) => {
+  const apiRoute = api || `/api/admin/event/${eventId}`;
+  setLoading(true);
 
+  try {
     // Ensure date is properly formatted if provided
+    const updateData = { ...values };
     if (updateData.date) {
       updateData.date = new Date(updateData.date).toISOString();
     }
 
-    const response = await axios.put(`/api/admin/event/${eventId}`, updateData);
+    await axios.put(apiRoute, updateData);
+    toast.success(successMessage || "Event updated");
 
-    return response.data;
+    // Revalidate relevant pages
+    revalidatePage([
+      { route: "/" },
+      { route: "/home" },
+      { route: "/events" },
+      { route: "/admin/events" },
+    ]);
+
+    if (toggleEdit) {
+      toggleEdit();
+    }
+    router.refresh();
   } catch (error: any) {
     console.error("Error updating event:", error);
 
-    if (error.response?.data) {
-      return error.response.data;
+    // Handle specific error messages from API response
+    if (error.response?.data?.error) {
+      toast.error(error.response.data.error);
+    } else {
+      toast.error("Something went wrong");
     }
-
-    return {
-      success: false,
-      error: "Failed to update event",
-      details: error.message || "Unknown error occurred",
-    };
+  } finally {
+    setLoading(false);
   }
-}
+};
 
 export async function getEvent(
   eventId: string
@@ -207,38 +217,4 @@ export async function deleteEvent(eventId: string): Promise<ApiResponse> {
       details: error.message || "Unknown error occurred",
     };
   }
-}
-
-// Helper function to format event data for form initialization
-export function formatEventForForm(event: EventResponse): EventFormData & {
-  id: string;
-  isPublished: boolean;
-  speakers?: Array<{
-    id: string;
-    name: string;
-    email: string;
-    avatarUrl?: string;
-  }>;
-} {
-  return {
-    id: event.id,
-    title: event.title,
-    slug: event.slug,
-    description: event.description || "",
-    date: new Date(event.date).toISOString().slice(0, 16), // Format for datetime-local input
-    isOnline: event.isOnline,
-    location: event.location || "",
-    zoomLink: event.zoomLink || "",
-    imageUrl: event.imageUrl || "",
-    isPublished: event.isPublished,
-    speakerIds: event.speakerIds,
-    faqs: event.faqs || [],
-    speakers:
-      event.speakers?.map((speaker) => ({
-        id: speaker.id,
-        name: speaker.user.name,
-        email: speaker.user.email,
-        avatarUrl: speaker.user.avatarUrl,
-      })) || [],
-  };
 }

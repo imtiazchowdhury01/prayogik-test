@@ -164,59 +164,63 @@ export const NavbarRoutes = ({ session, status }) => {
 
         {!teacherLoading && (
           <>
-            {isVerifiedTeacher ? (
-              isTeacherPage && userRole === "TEACHER" ? (
-                <Button
-                  onClick={() => handleSwitchRole("STUDENT")}
-                  size="sm"
-                  variant="outline"
-                  disabled={studentSwitchLoading}
-                >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  {studentSwitchLoading ? (
-                    <Loader2 className="animate-spin h-4 w-4" />
-                  ) : (
-                    "Exit"
-                  )}
-                </Button>
-              ) : (
-                <div className="cursor-pointer" disabled={teacherSwitchLoading}>
+            {
+              isVerifiedTeacher ? (
+                isTeacherPage && userRole === "TEACHER" ? (
                   <Button
-                    title="Switch To Teacher"
+                    onClick={() => handleSwitchRole("STUDENT")}
                     size="sm"
                     variant="outline"
-                    className="text-nowrap"
-                    onClick={() => handleSwitchRole("TEACHER")}
-                    disabled={teacherSwitchLoading}
+                    disabled={studentSwitchLoading}
                   >
-                    {teacherSwitchLoading ? (
+                    <LogOut className="h-4 w-4 mr-2" />
+                    {studentSwitchLoading ? (
                       <Loader2 className="animate-spin h-4 w-4" />
                     ) : (
-                      <div>
-                        <span className="hidden lg:block">
-                          Switch To Teacher Mode
-                        </span>
-                        <span className="lg:hidden">Teacher</span>
-                      </div>
+                      "Exit"
                     )}
                   </Button>
-                </div>
-              )
-            ) : (
-              <div
-                className="cursor-pointer"
-                onClick={() => router.push("/apply-for-teaching")}
-              >
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-nowrap"
-                  data-testid="apply-teaching-button"
-                >
-                  Apply for Teaching
-                </Button>
-              </div>
-            )}
+                ) : (
+                  <div
+                    className="cursor-pointer"
+                    disabled={teacherSwitchLoading}
+                  >
+                    <Button
+                      title="Switch To Teacher"
+                      size="sm"
+                      variant="outline"
+                      className="text-nowrap"
+                      onClick={() => handleSwitchRole("TEACHER")}
+                      disabled={teacherSwitchLoading}
+                    >
+                      {teacherSwitchLoading ? (
+                        <Loader2 className="animate-spin h-4 w-4" />
+                      ) : (
+                        <div>
+                          <span className="hidden lg:block">
+                            Switch To Teacher Mode
+                          </span>
+                          <span className="lg:hidden">Teacher</span>
+                        </div>
+                      )}
+                    </Button>
+                  </div>
+                )
+              ) : null
+              // <div
+              //   className="cursor-pointer"
+              //   onClick={() => router.push("/submit-course-proposal")}
+              // >
+              //   <Button
+              //     size="sm"
+              //     variant="outline"
+              //     className="text-nowrap"
+              //     data-testid="apply-teaching-button"
+              //   >
+              //     Apply for Teaching
+              //   </Button>
+              // </div>
+            }
           </>
         )}
 

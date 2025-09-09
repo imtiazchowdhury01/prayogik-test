@@ -67,7 +67,7 @@ const HowToBecomeTeacher = () => {
         {/* CTA */}
         <div className="flex items-center justify-center mt-8">
           <TeacherApplicationButton>
-            শিক্ষকতার জন্য আবেদন
+            প্রস্তাব জমা দিন
           </TeacherApplicationButton>
         </div>
       </div>

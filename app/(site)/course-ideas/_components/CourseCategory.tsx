@@ -334,6 +334,7 @@ const CourseCategory = () => {
 
                 <div className="flex items-center justify-between pt-2 border-t border-tertiary-100">
                   <p className="font-bold text-tertiary-950">৳{course.price}</p>
+
                   <Button
                     variant="ghost"
                     size="sm"
@@ -402,12 +403,14 @@ const CourseCategory = () => {
             <Button variant="outline" onClick={() => setIsModalOpen(false)}>
               বাতিল করুন
             </Button>
-            <Button
-              className="text-white bg-tertiary hover:bg-tertiary-600"
-              onClick={openApplyModal}
-            >
-              এই কোর্স তৈরি করতে আবেদন করুন
-            </Button>
+            <Link href="/submit-course-proposal">
+              <Button
+                className="text-white bg-tertiary hover:bg-tertiary-600"
+                // onClick={openApplyModal}
+              >
+                এই কোর্স তৈরি করতে আবেদন করুন
+              </Button>
+            </Link>
           </DialogFooter>
         </DialogContent>
       </Dialog>

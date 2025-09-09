@@ -1,0 +1,81 @@
+import { Button } from "@/components/ui/button";
+import { clientApi } from "@/lib/utils/openai/client";
+import { formatDateToBangla } from "@/lib/utils/stringUtils";
+import { Info } from "lucide-react";
+import { cookies } from "next/headers";
+import Link from "next/link";
+import React from "react";
+
+const DashboardSubscriptionMessage = async () => {
+  // Fetch subscription data for the subscription message (non-blocking)
+  let subscription = null;
+  try {
+    const response = await clientApi.getDashboardCourses({
+      extraHeaders: {
+        Cookie: cookies().toString(),
+      },
+    });
+
+    if (response.status === 200) {
+      subscription = response.body.subscription;
+    }
+  } catch (err) {
+    console.error("Failed to fetch subscription:", err);
+  }
+
+  return (
+    <>
+      {/* Subscription notifications */}
+      {subscription?.isTrial && subscription?.status === "ACTIVE" && (
+        <div className="flex items-center justify-between gap-4 p-4 rounded-lg shadow-sm bg-yellow-200/50 border-yellow-30 text-primary">
+          <div className="flex items-center gap-2">
+            <Info className="w-4 h-4 text-yellow-600" />
+            <span className="text-yellow-700">
+              আপনার ট্রায়াল সাবস্ক্রিপশন চলছে।{" "}
+              {(() => {
+                const today = new Date();
+                const expiresAt = new Date(subscription?.expiresAt);
+                const remainingDays = Math.max(
+                  0,
+                  Math.ceil(
+                    (expiresAt.getTime() - today.getTime()) /
+                      (1000 * 60 * 60 * 24)
+                  )
+                );
+                return ` আপনার সাবস্ক্রিপশন আর ${remainingDays} দিন বাকি রয়েছে।`;
+              })()}
+            </span>
+          </div>
+          <Link href="/prime">
+            <Button className="bg-secondary-button transition-all duration-300 hover:bg-secondary-button hover:opacity-85 text-white">
+              প্ল্যান আপগ্রেড করুন
+            </Button>
+          </Link>
+        </div>
+      )}
+
+      {subscription?.status === "EXPIRED" && (
+        <div className="flex items-center justify-between gap-4 p-4 rounded-lg shadow-sm bg-yellow-200/50 border-yellow-30 text-primary">
+          <div className="flex items-center gap-2">
+            <Info className="w-4 h-4 text-yellow-600" />
+            <span className="text-yellow-700">
+              আপনার সাবস্ক্রিপশনের মেয়াদ শেষ হয়েছে{" "}
+              {formatDateToBangla(new Date(subscription?.expiresAt))}। সকল
+              কোর্সের ফ্রি এক্সেস পেতে অনুগ্রহ করে সাবস্ক্রাইব করুন।
+            </span>
+          </div>
+          <Link href="/prime">
+            <Button className="bg-secondary-button transition-all duration-300 hover:bg-secondary-button hover:opacity-85 text-white">
+              {subscription?.type === "Trial" &&
+              subscription?.status === "EXPIRED"
+                ? "রিনিউ করুন"
+                : "আপগ্রেড করুন "}
+            </Button>
+          </Link>
+        </div>
+      )}
+    </>
+  );
+};
+
+export default DashboardSubscriptionMessage;

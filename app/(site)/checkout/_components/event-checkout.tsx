@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+// @ts-nocheck
 import {
   Card,
   CardContent,

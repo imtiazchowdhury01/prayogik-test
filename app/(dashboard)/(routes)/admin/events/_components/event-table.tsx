@@ -1,8 +1,20 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useState, useMemo, useCallback } from "react"
+import {
+  ColumnDef,
+  ColumnFiltersState,
+  SortingState,
+  VisibilityState,
+  flexRender,
+  getCoreRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table"
 import {
   Table,
   TableBody,
@@ -10,14 +22,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import {
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-  getPaginationRowModel,
-  getFilteredRowModel,
-} from "@tanstack/react-table";
+} from "@/components/ui/table"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,112 +32,120 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { PlusCircle, Loader2 } from "lucide-react";
-import { createColumns, type Event } from "./columns";
-import { revalidatePage } from "@/actions/revalidatePage";
-import toast from "react-hot-toast";
-import Link from "next/link";
+} from "@/components/ui/alert-dialog"
+import { Loader2 } from "lucide-react"
+import { createColumns, type Event } from "./columns"
+import { revalidatePage } from "@/actions/revalidatePage"
+import toast from "react-hot-toast"
+import PageTitle from "@/components/pageTitle"
+import { EventFilters } from "./data-table-toolbar"
+import { DataTablePagination } from "./table-pagination"
+
 
 interface EventTableProps {
-  data: Event[];
+  data: Event[]
 }
 
 export function EventTable({ data }: EventTableProps) {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [rowSelection, setRowSelection] = useState({})
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [sorting, setSorting] = useState<SortingState>([])
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
+  const handleDelete = useCallback((event: Event) => {
+    setSelectedEvent(event)
+    setIsDeleteDialogOpen(true)
+  }, [])
 
-  const handleDelete = (event: Event) => {
-    setSelectedEvent(event);
-    setIsDeleteDialogOpen(true);
-  };
+  const confirmDelete = useCallback(async () => {
+    if (!selectedEvent) return
 
-  const confirmDelete = async () => {
-    if (!selectedEvent) return;
-
-    setIsDeleting(true);
+    setIsDeleting(true)
     try {
       const response = await fetch(`/api/admin/event/${selectedEvent.id}`, {
         method: "DELETE",
-      });
+      })
 
-      const result = await response.json();
+      const result = await response.json()
 
       if (!response.ok) {
-        throw new Error(result.error || "Failed to delete event");
+        throw new Error(result.error || "Failed to delete event")
       }
 
-      toast.success("Event deleted successfully");
+      toast.success("Event deleted successfully")
+      await revalidatePage("/(dashboard)/(route)/admin/events")
 
-      // Revalidate the admin events page
-      await revalidatePage("/(dashboard)/(route)/admin/events");
-
-      // Close dialog and reset state
-      setIsDeleteDialogOpen(false);
-      setSelectedEvent(null);
+      setIsDeleteDialogOpen(false)
+      setSelectedEvent(null)
     } catch (error) {
-      console.error("Error deleting event:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to delete event. Please try again."
-      );
+      console.error("Error deleting event:", error)
+      toast.error(error instanceof Error ? error.message : "Failed to delete event. Please try again.")
     } finally {
-      setIsDeleting(false);
+      setIsDeleting(false)
     }
-  };
+  }, [selectedEvent])
 
-
-  const columns = createColumns({onDelete: handleDelete });
+  // Memoize columns to prevent recreation on every render
+  const columns = useMemo(() => createColumns({ onDelete: handleDelete }), [handleDelete])
 
   const table = useReactTable({
     data,
     columns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     state: {
-      globalFilter: searchTerm,
+      sorting,
+      columnVisibility,
+      rowSelection,
+      columnFilters,
     },
-    onGlobalFilterChange: setSearchTerm,
-  });
+    enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
+  })
+
+  // Extract unique values for filter options - Fixed the format extraction
+  const eventTypes = useMemo(() => 
+    Array.from(new Set(data.map(event => event.type))).filter(Boolean)
+  , [data])
+
+  const eventStatuses = useMemo(() => 
+    Array.from(new Set(data.map(event => event.status))).filter(Boolean)
+  , [data])
+
+  // Fixed: Extract format values correctly based on your column definition
+  const eventFormats = useMemo(() => {
+    const formats = data.map(event => event.isOnline ? "ONLINE" : "OFFLINE")
+    return Array.from(new Set(formats))
+  }, [data])
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Events</h1>
-      </div>
+    <div className="space-y-4 w-full">
+      <PageTitle title="Events" />
 
-      {/* Search */}
-      <div className="flex items-center gap-4 justify-between">
-        {/* search */}
-        <Input
-          placeholder="Search by name..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="h-8 lg:w-fit"
-        />
-        {/* create button */}
-        <Button className="h-8 px-3 lg:px-4" asChild>
-          <Link href={"/admin/events/create"}>
-            <PlusCircle size={14} className="mr-1" />
-            Add Event
-          </Link>
-        </Button>
-      </div>
+      <EventFilters
+        table={table}
+        eventTypes={eventTypes}
+        eventStatuses={eventStatuses}
+        eventFormats={eventFormats}
+      />
 
-      {/* Table */}
-      <div className="border rounded-lg">
+      <div className="rounded-md border relative overflow-hidden">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead key={header.id} colSpan={header.colSpan}>
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -147,7 +160,10 @@ export function EventTable({ data }: EventTableProps) {
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
@@ -161,7 +177,7 @@ export function EventTable({ data }: EventTableProps) {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={columns?.length}
                   className="h-24 text-center"
                 >
                   No results.
@@ -172,66 +188,26 @@ export function EventTable({ data }: EventTableProps) {
         </Table>
       </div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-gray-500">
-          Showing{" "}
-          {table.getState().pagination.pageIndex *
-            table.getState().pagination.pageSize +
-            1}{" "}
-          to{" "}
-          {Math.min(
-            (table.getState().pagination.pageIndex + 1) *
-              table.getState().pagination.pageSize,
-            table.getFilteredRowModel().rows.length
-          )}{" "}
-          of {table.getFilteredRowModel().rows.length} events
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
+      <DataTablePagination table={table} />
 
-      {/* Delete Confirmation */}
-      <AlertDialog
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-      >
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the
-              event "{selectedEvent?.title}".
-              {selectedEvent?.attendees &&
-                selectedEvent.attendees.length > 0 && (
-                  <span className="block mt-2 text-amber-600">
-                    Warning: This event has {selectedEvent.attendees.length}{" "}
-                    registered attendees.
-                  </span>
-                )}
+              This action cannot be undone. This will permanently delete the event "{selectedEvent?.title}".
+              {selectedEvent?.attendees && selectedEvent.attendees.length > 0 && (
+                <span className="block mt-2 text-amber-600">
+                  Warning: This event has {selectedEvent.attendees.length} registered attendees.
+                </span>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>No</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              disabled={isDeleting}
+            <AlertDialogAction 
+              onClick={confirmDelete} 
+              disabled={isDeleting} 
               className="bg-red-600 hover:bg-red-700"
             >
               {isDeleting ? (
@@ -247,5 +223,5 @@ export function EventTable({ data }: EventTableProps) {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  );
+  )
 }

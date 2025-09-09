@@ -184,10 +184,40 @@ async function checkUserTrialHistory(userId: string) {
     return false;
   }
 }
+
+async function getDefaultSubscriptionDBCall() {
+  try {
+    const subscription = await db.subscriptionPlan.findFirst({
+      where: {
+        isDefault: true,
+      },
+      include: {
+        subscriptionDiscount: true,
+        _count: {
+          select: {
+            subscription: true,
+          },
+        },
+      },
+      orderBy: {
+        id: "asc",
+      },
+
+      take: 1,
+    });
+
+    return subscription;
+  } catch (error) {
+    console.error("Error fetching default subscription:", error);
+    return null;
+  }
+}
+
 export {
   getSubscriptionDBCall,
   getSubscriptionCoursesDBCall,
   getSubscriptionPlanByIdDBCall,
   checkUserTrialHistory, // previous version
   checkUserTrialHistoryDBCall,
+  getDefaultSubscriptionDBCall,
 };

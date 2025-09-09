@@ -8,43 +8,45 @@ import { useState, useRef, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { Course } from "@prisma/client";
-import { Pencil, Loader, Check } from "lucide-react"; // Import Check icon
+import { Pencil, Loader, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Input } from "@/components/ui/input"; // Import shadcn Input component
+import { Input } from "@/components/ui/input";
 import { revalidatePage } from "@/actions/revalidatePage";
+import { fetchCategories } from "@/services";
 
 interface CategoryFormProps {
   initialData: Course;
   courseId: string;
-  options: { label: string; value: string }[];
+}
+
+interface CategoryOption {
+  label: string;
+  value: string;
 }
 
 const formSchema = z.object({
   categoryId: z.string().min(1, { message: "Category is required" }),
 });
 
-export const CategoryForm = ({
-  initialData,
-  courseId,
-  options,
-}: CategoryFormProps) => {
+export const CategoryForm = ({ initialData, courseId }: CategoryFormProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const router = useRouter();
 
-  // Ensure we set mode to onChange for triggering validation on each change
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       categoryId: initialData?.categoryId || "",
     },
-    mode: "onChange", // Validate on value change
+    mode: "onChange",
   });
 
   const {
@@ -53,8 +55,33 @@ export const CategoryForm = ({
     formState: { errors, isValid },
   } = form;
 
+  // Fetch categories when component mounts or when editing starts
+  useEffect(() => {
+    const loadCategories = async () => {
+      if (categories.length > 0) return; // Don't refetch if already loaded
+
+      setCategoriesLoading(true);
+      try {
+        const fetchedCategories = await fetchCategories();
+
+        const categoryOptions = fetchedCategories.map((category) => ({
+          label: category?.name,
+          value: category?.id,
+        }));
+        setCategories(categoryOptions);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        toast.error("Failed to load categories");
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+
+    loadCategories();
+  }, [categories.length]);
+
   // Filter options based on the search term
-  const filteredOptions = options.filter((option) =>
+  const filteredOptions = categories.filter((option) =>
     option.label.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -71,7 +98,7 @@ export const CategoryForm = ({
         categoryId: values.categoryId,
       });
       toast.success("Course updated");
-      setIsEditing(false); // Exit edit mode
+      setIsEditing(false);
       await revalidatePage([
         { route: "/" },
         { route: "/home" },
@@ -136,8 +163,11 @@ export const CategoryForm = ({
             !initialData.categoryId && "text-slate-500 italic"
           )}
         >
-          {initialData.categoryId
-            ? options.find((opt) => opt.value === initialData.categoryId)?.label
+          {categoriesLoading
+            ? "Loading..."
+            : initialData.categoryId
+            ? categories.find((opt) => opt.value === initialData.categoryId)
+                ?.label || "Category not found"
             : "No category"}
         </p>
       )}
@@ -149,10 +179,13 @@ export const CategoryForm = ({
             <button
               type="button"
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center justify-between w-full p-2 border rounded-md bg-white text-sm text-left focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={categoriesLoading}
+              className="flex items-center justify-between w-full p-2 border rounded-md bg-white text-sm text-left focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
             >
-              {watch("categoryId")
-                ? options.find((opt) => opt.value === watch("categoryId"))
+              {categoriesLoading
+                ? "Loading categories..."
+                : watch("categoryId")
+                ? categories.find((opt) => opt.value === watch("categoryId"))
                     ?.label
                 : "Select a category"}
               <svg
@@ -170,7 +203,7 @@ export const CategoryForm = ({
             </button>
 
             {/* Dropdown Content */}
-            {isDropdownOpen && (
+            {isDropdownOpen && !categoriesLoading && (
               <div className="absolute z-10 mt-2 w-full bg-white border rounded-md shadow-lg">
                 {/* Search Bar */}
                 <div className="p-2 border-b">
@@ -194,7 +227,7 @@ export const CategoryForm = ({
                     >
                       <span>{option.label}</span>
                       {watch("categoryId") === option.value && (
-                        <Check className="h-4 w-4 text-green-500" /> // Green tick mark
+                        <Check className="h-4 w-4 text-green-500" />
                       )}
                     </button>
                   ))}
@@ -218,7 +251,10 @@ export const CategoryForm = ({
           )}
 
           <div className="flex items-center gap-x-2">
-            <Button disabled={!isValid || loading} type="submit">
+            <Button
+              disabled={!isValid || loading || categoriesLoading}
+              type="submit"
+            >
               {loading ? <Loader className="animate-spin h-4 w-4" /> : "Save"}
             </Button>
           </div>

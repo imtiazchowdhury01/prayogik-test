@@ -25,32 +25,31 @@ const TeacherApplicationButton = ({
   };
 
   // Disabled state classes
-  const disabledClasses = "opacity-50 cursor-not-allowed";
+  // const disabledClasses = "opacity-50 cursor-not-allowed";
   // Hover effect classes
   const hoverClasses = !isTeacher ? "hover:opacity-90" : "";
   // Combine classes
-  const finalClasses = `${baseClasses} ${
-    variantClasses[variant]
-  } ${hoverClasses} ${className} ${isTeacher ? disabledClasses : ""}`.trim();
+  const finalClasses =
+    `${baseClasses} ${variantClasses[variant]} ${hoverClasses} ${className}`.trim();
 
   // const handleClick = (e) => {
   //   if (status !== "authenticated") {
   //     e.preventDefault();
-  //     router.push(`/signin?redirect=/apply-for-teaching`);
+  //     router.push(`/signin?redirect=/submit-course-proposal`);
   //   }
   // };
 
-  if (isTeacher) {
-    return (
-      <button disabled className={finalClasses}>
-        {children}
-      </button>
-    );
-  }
+  // if (isTeacher) {
+  //   return (
+  //     <button disabled className={finalClasses}>
+  //       {children}
+  //     </button>
+  //   );
+  // }
 
   return (
     <Link
-      href="/apply-for-teaching"
+      href="/submit-course-proposal"
       className={finalClasses}
       // onClick={handleClick}
     >

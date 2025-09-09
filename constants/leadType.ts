@@ -1,0 +1,1 @@
+export const LEAD_TYPES = ["EVENT", "COURSE", "CERTIFICATION"] as const;

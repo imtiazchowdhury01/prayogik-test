@@ -1,33 +1,13 @@
-"use client";
-import React, { useState } from "react";
-import CoursesSidebar from "../../_components/CoursesSidebar";
-import SidebarSheetComponent from "../../_components/SidebarSheetComponent";
+// CategorySidebar.tsx - Server Component
+import React from "react";
+import { getCategoriesDBCall } from "@/lib/data-access-layer/categories";
+import CategorySidebarClient from "./CategorySidebarClient";
 
-const CategorySidebar = ({ categories }: any) => {
-  const [showSidebar, setShowSidebar] = useState<boolean>(false);
-  const toggleSidebarHandler = () => setShowSidebar((prev) => !prev);
 
-  return (
-    <>
-      {/* Desktop Sidebar */}
-      <div className="hidden lg:block lg:w-1/4">
-        <CoursesSidebar
-          toggleSidebar={toggleSidebarHandler}
-          categories={categories}
-          isMobile={false}
-        />
-      </div>
-      <div className="flex items-center lg:hidden">
-        {/* Mobile/Tablet Sheet Sidebar Trigger - Only one instance */}
-        <SidebarSheetComponent
-          categories={categories}
-          setShowSidebar={setShowSidebar}
-          showSidebar={showSidebar}
-          toggleSidebarHandler={toggleSidebarHandler}
-        />
-      </div>
-    </>
-  );
+const CategorySidebar = async () => {
+  const categories = await getCategoriesDBCall();
+  
+  return <CategorySidebarClient categories={categories} />;
 };
 
 export default CategorySidebar;

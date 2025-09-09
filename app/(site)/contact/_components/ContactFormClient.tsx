@@ -40,11 +40,10 @@ import RequiredFieldStar from "@/components/common/requiredFieldStar";
 import MultiSelect from "@/components/ui/multi-select";
 import { clientApi } from "@/lib/utils/openai/client";
 import { Separator } from "@/components/ui/separator";
+import { useSession } from "next-auth/react";
 
 const bangladeshPhoneRegex = /^(?:\+?88)?01[3-9]\d{8}$/;
-// Course proposal schema
 const courseProposalSchema = z.object({
-  // category: z.array(z.string()).min(1, "ক্যাটেগরি নির্বাচন করুন"), // Specify it's an array of strings
   category: z.string().min(1, "ক্যাটেগরি নির্বাচন করুন"),
   courseTitle: z.string().min(1, "কোর্স টাইটেল লিখুন"),
   courseDetails: z.string().min(1, "কোর্স বিস্তারিত লিখুন"),
@@ -135,8 +134,10 @@ interface ContactFormClientProps {
 
 export default function ContactFormClient({
   formType,
-}: // categories,
-ContactFormClientProps) {
+}: ContactFormClientProps) {
+  const session = useSession();
+  const userId = session?.data?.user?.id;
+
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -146,6 +147,16 @@ ContactFormClientProps) {
         const res = await clientApi.getCategories();
         const data = res.body;
         setCategories(data);
+
+        // Fetch user profile if userId exists
+        if (userId) {
+          const userProfileRes = await clientApi.getUserProfile({
+            params: {
+              userId,
+            },
+          });
+          setUserProfile(userProfileRes.body);
+        }
       } catch (err) {
         console.error("Failed to fetch categories:", err);
       } finally {
@@ -154,11 +165,12 @@ ContactFormClientProps) {
     };
 
     fetchCategories();
-  }, []);
+  }, [userId]);
 
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const recaptchaRef = React.useRef<HTMLDivElement>(null);
   const [recaptchaLoaded, setRecaptchaLoaded] = React.useState<boolean>(false);
+  const [userProfile, setUserProfile] = useState(null);
 
   // Use the conditional schema
   const extendedContactFormSchema = React.useMemo(
@@ -184,11 +196,6 @@ ContactFormClientProps) {
           ? [{ category: "", courseTitle: "", courseDetails: "" }] // Changed from [] to ""
           : [],
     },
-    //   courseProposals:
-    //     formType === "teaching"
-    //       ? [{ category: [], courseTitle: "", courseDetails: "" }] // Fix: category as array
-    //       : [],
-    // },
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -206,7 +213,13 @@ ContactFormClientProps) {
       form.setValue("recaptchaToken", "");
     }
   };
-
+  useEffect(() => {
+    if (userProfile) {
+      form.setValue("name", userProfile.name || "");
+      form.setValue("email", userProfile.email || "");
+      form.setValue("phone", userProfile.phoneNumber || "");
+    }
+  }, [userProfile, form]);
   // Set up the global handler function that will call our React handler
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -234,11 +247,6 @@ ContactFormClientProps) {
     setRecaptchaLoaded(true);
   };
 
-  // Add new course proposal for multiple
-  // const addCourseProposal = () => {
-  //   append({ category: [], courseTitle: "", courseDetails: "" });
-  // };
-
   const addCourseProposal = () => {
     append({ category: "", courseTitle: "", courseDetails: "" }); // Changed from [] to ""
   };
@@ -249,7 +257,7 @@ ContactFormClientProps) {
     }
   };
 
-  console.log("form result:", form.formState.errors);
+  // console.log("form result:", form.formState.errors);
   async function onSubmit(values: z.infer<typeof extendedContactFormSchema>) {
     try {
       setIsLoading(true);
@@ -294,17 +302,10 @@ ContactFormClientProps) {
             { category: "", courseTitle: "", courseDetails: "" }, // Changed from [] to ""
           ]);
         }
-        //  for multiple
-        // if (formType === "teaching") {
-        //   form.setValue("courseProposals", [
-        //     { category: [], courseTitle: "", courseDetails: "" },
-        //   ]);
-        // }
       } else {
         toast.error(data.message);
       }
     } catch (err) {
-      // console.log(err);
       toast.error("একটি সমস্যা হয়েছে, পরে আবার চেষ্টা করুন");
     } finally {
       setIsLoading(false);
@@ -319,11 +320,13 @@ ContactFormClientProps) {
         onLoad={handleRecaptchaLoad}
       />
       <div
-        className={` ${
-          formType === "teaching" && "flex flex-col w-full items-center"
-        } `}
+        className={`${
+          formType === "teaching"
+            ? "flex flex-col w-full items-center"
+            : "md:w-1/2 lg:w-5/12 w-full "
+        }  `}
       >
-        {formType === "teaching" && (
+        {formType === "teaching" ? (
           <div className="text-center mb-4">
             <div className="inline-flex items-center justify-center w-12 h-12 bg-brand text-white rounded-full mb-4">
               <GraduationCap className="w-7 h-7" />
@@ -336,28 +339,24 @@ ContactFormClientProps) {
               করব।
             </p>
           </div>
-        )}
+        ) : null}
         <Card
           className={`w-full p-8 bg-white ${
-            formType === "teaching" ? "md:w-7/12" : "md:w-full"
+            formType === "teaching"
+              ? "md:w-7/12"
+              : "md:w-full shadow border-gray-100"
           } `}
         >
-          {formType === "contact" && (
-            <CardHeader className="p-0">
-              <CardTitle className="mb-2 text-3xl font-bold text-fontcolor-title">
-                যোগাযোগ
-              </CardTitle>
-
-              <CardDescription
-                className={`text-base text-fontcolor-description`}
-              >
-                যোগাযোগ করতে ফরমটি ব্যবহার করুন। আমরা সর্বোচ্চ চেষ্টা করি দ্রুত
-                উত্তর দিতে—সাধারণত ৪৮ ঘণ্টার মধ্যে।
-              </CardDescription>
-            </CardHeader>
-          )}
-
-          <CardContent className="p-0 mt-4">
+          <CardHeader className="mb-6 lg:mb-6 p-0">
+            <CardTitle className="md:text-2xl lg:text-4xl text-2xl font-bold text-gray-800">
+              যোগাযোগ
+            </CardTitle>
+            <CardDescription className="text-gray-600 lg:text-base text-sm leading-relaxed">
+              যোগাযোগ করতে ফরমটি ব্যবহার করুন। আমরা সর্বোচ্চ চেষ্টা করি দ্রুত
+              উত্তর দিতে-সাধারণত ৪৮ ঘণ্টার মধ্যে।
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
@@ -382,7 +381,7 @@ ContactFormClientProps) {
                           <Input
                             placeholder="এখানে লিখুন"
                             {...field}
-                            className="border-[1px] border-greyscale-300 h-10 outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                            className="border-[1px] border-greyscale-300 h-10 outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-brand focus:border-brand"
                           />
                         </FormControl>
                         <FormMessage className="font-secondary" />
@@ -408,7 +407,7 @@ ContactFormClientProps) {
                             <Input
                               placeholder="এখানে লিখুন"
                               {...field}
-                              className="border-[1px] border-greyscale-300 h-10  outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                              className="border-[1px] border-greyscale-300 h-10  outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-brand focus:border-brand"
                             />
                           </FormControl>
                           <FormMessage className="font-secondary" />
@@ -429,7 +428,7 @@ ContactFormClientProps) {
                               <Input
                                 placeholder="এখানে লিখুন"
                                 {...field}
-                                className="border-[1px] border-greyscale-300 h-10  outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                                className="border-[1px] border-greyscale-300 h-10  outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-brand focus:border-brand"
                               />
                             </FormControl>
                             <FormMessage className="font-secondary" />
@@ -468,7 +467,7 @@ ContactFormClientProps) {
                               <Input
                                 placeholder="https://linkedin.com/yourprofile"
                                 {...field}
-                                className="border-[1px] border-greyscale-300 h-10  outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                                className="border-[1px] border-greyscale-300 h-10  outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-brand focus:border-brand  placeholder:text-gray-400/85"
                               />
                             </FormControl>
                             <FormMessage className="font-secondary" />
@@ -490,7 +489,7 @@ ContactFormClientProps) {
                               <Input
                                 placeholder="https://facebook.com/yourprofile"
                                 {...field}
-                                className="border-[1px] border-greyscale-300 h-10  outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                                className="border-[1px] border-greyscale-300 h-10  outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-brand focus:border-brand placeholder:text-gray-400/85"
                               />
                             </FormControl>
                             <FormMessage className="font-secondary" />
@@ -513,7 +512,7 @@ ContactFormClientProps) {
                               <Input
                                 placeholder="https://youtube.com/yourchannel"
                                 {...field}
-                                className="border-[1px] border-greyscale-300 h-10  outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                                className="border-[1px] border-greyscale-300 h-10  outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-brand focus:border-brand placeholder:text-gray-400/85"
                               />
                             </FormControl>
                             <FormMessage className="font-secondary" />
@@ -535,7 +534,7 @@ ContactFormClientProps) {
                               <Input
                                 placeholder="https://yourwebsite.com"
                                 {...field}
-                                className="border-[1px] border-greyscale-300 h-10  outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                                className="border-[1px] border-greyscale-300 h-10  outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-brand focus:border-brand placeholder:text-gray-400/85"
                               />
                             </FormControl>
                             <FormMessage className="font-secondary" />
@@ -566,7 +565,7 @@ ContactFormClientProps) {
                             <Input
                               placeholder="এখানে লিখুন"
                               {...field}
-                              className="border-[1px] border-greyscale-300 h-10  outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                              className="border-[1px] border-greyscale-300 h-10  outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-brand focus:border-brand"
                             />
                           </FormControl>
                           <FormMessage className="font-secondary" />
@@ -585,7 +584,7 @@ ContactFormClientProps) {
                             <Textarea
                               placeholder="এখানে লিখুন"
                               {...field}
-                              className="border-[1px] border-greyscale-300 h-10  outline-none focus-visible:ring-0 focus-visible:ring-offset-0 mt-0 resize-none"
+                              className="border-[1px] border-greyscale-300 h-10  outline-none focus-visible:ring-0 focus-visible:ring-offset-0 mt-0 focus:ring-brand focus:border-brand"
                             />
                           </FormControl>
                           <FormMessage className="font-secondary" />
@@ -648,7 +647,7 @@ ContactFormClientProps) {
                                 <Input
                                   placeholder="কোর্সের নাম লিখুন"
                                   {...field}
-                                  className="border-[1px] border-greyscale-300 h-10 outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                                  className="border-[1px] border-greyscale-300 h-10 outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-brand focus:border-brand"
                                 />
                               </FormControl>
                               <FormMessage className="font-secondary" />
@@ -741,7 +740,7 @@ ContactFormClientProps) {
                                 <Textarea
                                   placeholder="কোর্সের বিস্তারিত বর্ণনা লিখুন"
                                   {...field}
-                                  className="border-[1px] border-greyscale-300 h-20 outline-none focus-visible:ring-0 focus-visible:ring-offset-0 "
+                                  className="border-[1px] border-greyscale-300 h-20 outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-brand focus:border-brand"
                                 />
                               </FormControl>
                               <FormMessage className="font-secondary" />
@@ -751,43 +750,6 @@ ContactFormClientProps) {
                       </div>
                     ))}
                   </div>
-                )}
-                {/* privacy & policies  */}
-
-                {formType === "contact" && (
-                  <Card className="border-gray-200 bg-gray-50">
-                    <CardContent className="pt-6">
-                      <div className="flex items-start gap-3">
-                        <Shield className="w-5 h-5 text-brand mt-0.5 flex-shrink-0 " />
-                        <div className="space-y-2">
-                          <p className="text-sm font-medium">
-                            গোপনীয়তা এবং নিরাপত্তা
-                          </p>
-                          <p className="text-sm text-muted-foreground leading-relaxed">
-                            আপনার তথ্য সম্পূর্ণ নিরাপদ এবং গোপনীয় থাকবে। আমরা
-                            আপনার ব্যক্তিগত তথ্য তৃতীয় পক্ষের সাথে শেয়ার করি
-                            না। আমাদের
-                            <Link
-                              href="https://policies.google.com/privacy"
-                              target="_blank"
-                              className="ml-1 text-blue-500 hover:underline"
-                            >
-                              গোপনীয়তা নীতি
-                            </Link>{" "}
-                            এবং
-                            <Link
-                              href="https://policies.google.com/terms"
-                              target="_blank"
-                              className="ml-1 text-blue-500 hover:underline"
-                            >
-                              সেবার শর্তাবলী
-                            </Link>{" "}
-                            দেখুন।
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
                 )}
 
                 {/* reCAPTCHA v2 container */}
@@ -825,7 +787,11 @@ ContactFormClientProps) {
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full h-12 mt-3 text-base font-medium text-white transition-all duration-300 hover:bg-primary-700 bg-primary-brand"
+                  className={` ${
+                    formType === "contact"
+                      ? "hover:bg-secondary-button hover:opacity-85 bg-secondary-button"
+                      : "hover:bg-primary-700 bg-primary-brand"
+                  } w-full h-12 mt-3 text-base font-medium text-white transition-all duration-300 `}
                 >
                   {isLoading ? (
                     <LoadingSpinner
@@ -835,7 +801,7 @@ ContactFormClientProps) {
                       height="100%"
                     />
                   ) : (
-                    "সাবমিট করুন"
+                    <>{formType === "contact" ? "জমা দিন" : "সাবমিট করুন"}</>
                   )}
                 </Button>
               </form>

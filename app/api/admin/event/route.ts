@@ -69,41 +69,26 @@ export async function GET(request: NextRequest) {
 // POST /api/admin/events - Create a new event
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const { title, slug } = await request.json();
 
-    // Validate request body
-    const validationResult = CreateEventSchema.safeParse(body);
-    if (!validationResult.success) {
-      const errorMessages = validationResult.error.errors
-        .map((err) => `${err.path.join(".")}: ${err.message}`)
-        .join(", ");
-
-      return createEventErrorResponse("Validation error", 400, errorMessages);
+  
+    if (!slug || !title) {
+      return createEventErrorResponse("Title and Slug are required", 400);
     }
 
-    const validatedData = validationResult.data;
-
-    // Check slug uniqueness
-    const isSlugUnique = await checkSlugUniqueness(validatedData.slug);
+    // check if any event with same slug exists
+    const isSlugUnique = await checkSlugUniqueness(slug);
     if (!isSlugUnique) {
-      return createEventErrorResponse(
-        "Event slug already exists",
-        409,
-        "Please choose a different slug"
-      );
+      return createEventErrorResponse("Event slug already exists", 409);
     }
 
-    // Process the validated data
-    const processedData = processEventData(validatedData);
-
-    // Create the event
+    //  create event
     const event = await db.event.create({
-      data: processedData,
-      include: {
-        attendees: true,
+      data: {
+        title,
+        slug,
       },
     });
-
     return createEventSuccessResponse(event, 201);
   } catch (error) {
     console.error("Error creating event:", error);

@@ -24,31 +24,12 @@ import { labels } from "../data/data";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import DeleteAlertModal from "@/components/modals/delete-alert-modal";
+import Link from "next/link";
 
 export function DataTableRowActions({ row }) {
   const [dialogVisible, setDialogVisible] = useState(false);
   const [loading, setLoading] = useState(false); // New loading state
   const router = useRouter();
-
-  const handleEdit = (application) => {
-    router.push(`/admin/courses/${application?.id}`);
-  };
-
-  // const handleDelete = async (teacherId) => {
-  //   setLoading(true); // Set loading to true
-  //   const response = await fetch(`/api/teacher/${teacherId}`, {
-  //     method: "DELETE",
-  //   });
-  //   setLoading(false); // Reset loading after response
-
-  //   if (response.ok) {
-  //     toast.success("Teacher deleted successfully");
-  //     router.refresh();
-  //     setDialogVisible(false);
-  //   } else {
-  //     // Manage error
-  //   }
-  // };
 
   return (
     <DropdownMenu modal={false}>
@@ -62,16 +43,12 @@ export function DataTableRowActions({ row }) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[160px]">
-        <DropdownMenuItem
+        <Link
           className="cursor-pointer"
-          onClick={() => handleEdit(row.original)}
+          href={`/admin/courses/${row.original.id}`}
         >
-          Edit
-        </DropdownMenuItem>
-        {/* <DropdownMenuSeparator /> */}
-        {/* <DropdownMenuItem onClick={() => setDialogVisible(true)}>
-          Delete
-        </DropdownMenuItem> */}
+          <DropdownMenuItem>Edit</DropdownMenuItem>
+        </Link>
       </DropdownMenuContent>
 
       <DeleteAlertModal

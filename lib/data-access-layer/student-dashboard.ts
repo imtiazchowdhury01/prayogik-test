@@ -40,12 +40,9 @@ export async function getDashboardMetricsWithTrendsDBCall(userId: string) {
       eventsThisWeekCount,
     ] = await Promise.all([
       // Current purchased courses - Fixed: Only count course purchases
-      db.purchase.count({
+      db.enrolledStudents.count({
         where: {
           studentProfileId: studentProfile.id,
-          purchaseType: { in: ["SINGLE_COURSE", "TRIAL", "OFFER"] },
-          courseId: { not: null }, // This is correct - only course purchases
-          OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
         },
       }),
 
@@ -113,6 +110,8 @@ export async function getDashboardMetricsWithTrendsDBCall(userId: string) {
         isPublished: true,
       },
     });
+
+    console.log("purchasedCoursesCount result:", purchasedCoursesCount);
     return {
       purchasedCourses: purchasedCoursesCount,
       subscriptionCourses: subscriptionCoursesCount,

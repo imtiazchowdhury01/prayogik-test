@@ -1,14 +1,20 @@
-// lib/validations/event-schemas.ts
+
 import { z } from "zod";
 
-// Enum schemas matching your Prisma schema
-export const EventTypeSchema = z.enum(["PAID", "FREE"]);
-export const EventStatusSchema = z.enum([
-  "DRAFT",
-  "UPCOMING",
-  "WAITING",
-  "CLOSED",
-]);
+// Event type schema with message
+export const EventTypeSchema = z.enum(["PAID", "FREE"], {
+  errorMap: () => ({ message: "Event type must be either 'PAID' or 'FREE'." }),
+});
+
+// Event status schema with message
+export const EventStatusSchema = z.enum(
+  ["DRAFT", "UPCOMING", "WAITING", "CLOSED"],
+  {
+    errorMap: () => ({
+      message: "Event status must be one of: DRAFT, UPCOMING, WAITING, CLOSED.",
+    }),
+  }
+);
 
 // Embedded type schemas
 export const SpeakerSchema = z.object({
@@ -47,13 +53,16 @@ const BaseEventSchema = z.object({
     }
     return val;
   }, z.number().positive().optional()),
-  date: z.string({ required_error: "Date is required" }),
+  date: z.string({ required_error: "Date is required" }).min(1, "Date is required"),
   type: EventTypeSchema,
   status: EventStatusSchema,
   isOnline: z.boolean().default(false),
   location: z.string().max(500, "Location too long").optional(),
   zoomLink: z.string().url("Invalid Zoom link").optional().or(z.literal("")),
-  imageUrl: z.string().url("Invalid image URL").optional(),
+  imageUrl: z.preprocess((val) => {
+    if (val === "" || val === null) return undefined;
+    return val;
+  }, z.string().url("Invalid image URL").optional()),
   mapLocation: z.string().max(500, "Map location too long").optional(),
   isPublished: z.boolean().default(false),
   speakers: z
@@ -79,6 +88,19 @@ export const CreateEventSchema = BaseEventSchema.refine(
 )
   .refine(
     (data) => {
+      // Zoom link is required for online events
+      if (data.isOnline && (!data.zoomLink || data.zoomLink.trim() === "")) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Zoom link is required for online events",
+      path: ["zoomLink"],
+    }
+  )
+  .refine(
+    (data) => {
       // Price is required for paid events
       if (
         data.type === "PAID" &&
@@ -95,23 +117,23 @@ export const CreateEventSchema = BaseEventSchema.refine(
   )
   .refine(
     (data) => {
-      // Validate zoom link for online events
+      // Validate zoom link format for online events (only if provided)
       if (data.isOnline && data.zoomLink && data.zoomLink !== "") {
         return z.string().url().safeParse(data.zoomLink).success;
       }
       return true;
     },
     {
-      message: "Valid Zoom link is required for online events",
+      message: "Please provide a valid Zoom link URL for online events",
       path: ["zoomLink"],
     }
   );
 
-// Update Event Schema - all fields are optional
+// Update Event Schema - all fields are optional but conditional validation still applies
 export const UpdateEventSchema = BaseEventSchema.partial()
   .refine(
     (data) => {
-      // Only validate location if isOnline is being set to false
+      // If isOnline is explicitly set to false, location is required
       if (
         data.isOnline === false &&
         (!data.location || data.location.trim() === "")
@@ -123,6 +145,22 @@ export const UpdateEventSchema = BaseEventSchema.partial()
     {
       message: "Location is required when setting event to offline",
       path: ["location"],
+    }
+  )
+  .refine(
+    (data) => {
+      // If isOnline is explicitly set to true, zoom link is required
+      if (
+        data.isOnline === true &&
+        (!data.zoomLink || data.zoomLink.trim() === "")
+      ) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Zoom link is required when setting event to online",
+      path: ["zoomLink"],
     }
   )
   .refine(
@@ -144,17 +182,95 @@ export const UpdateEventSchema = BaseEventSchema.partial()
   )
   .refine(
     (data) => {
-      // Validate zoom link if provided
-      if (data.isOnline && data.zoomLink && data.zoomLink !== "") {
+      // Validate zoom link format if provided for online events
+      if (data.isOnline === true && data.zoomLink && data.zoomLink !== "") {
         return z.string().url().safeParse(data.zoomLink).success;
       }
       return true;
     },
     {
-      message: "Valid Zoom link is required for online events",
+      message: "Please provide a valid Zoom link URL for online events",
       path: ["zoomLink"],
     }
   );
+
+// Enhanced validation for complex update scenarios where you need to check existing data
+export const createUpdateEventSchemaWithContext = (existingEvent?: {
+  isOnline: boolean;
+  location?: string | null;
+  zoomLink?: string | null;
+  type: "PAID" | "FREE";
+  price?: number | null;
+}) => {
+  return BaseEventSchema.partial()
+    .refine(
+      (data) => {
+        const finalIsOnline = data.isOnline ?? existingEvent?.isOnline ?? false;
+        const finalLocation = data.location ?? existingEvent?.location ?? "";
+
+        // If final state is offline, location is required
+        if (!finalIsOnline && (!finalLocation || finalLocation.trim() === "")) {
+          return false;
+        }
+        return true;
+      },
+      {
+        message: "Location is required for offline events",
+        path: ["location"],
+      }
+    )
+    .refine(
+      (data) => {
+        const finalIsOnline = data.isOnline ?? existingEvent?.isOnline ?? false;
+        const finalZoomLink = data.zoomLink ?? existingEvent?.zoomLink ?? "";
+
+        // If final state is online, zoom link is required
+        if (finalIsOnline && (!finalZoomLink || finalZoomLink.trim() === "")) {
+          return false;
+        }
+        return true;
+      },
+      {
+        message: "Zoom link is required for online events",
+        path: ["zoomLink"],
+      }
+    )
+    .refine(
+      (data) => {
+        const finalType = data.type ?? existingEvent?.type ?? "FREE";
+        const finalPrice = data.price ?? existingEvent?.price ?? 0;
+
+        // If final state is PAID, price is required
+        if (
+          finalType === "PAID" &&
+          (finalPrice === null || finalPrice === undefined || finalPrice <= 0)
+        ) {
+          return false;
+        }
+        return true;
+      },
+      {
+        message: "Price is required and must be greater than 0 for paid events",
+        path: ["price"],
+      }
+    )
+    .refine(
+      (data) => {
+        const finalIsOnline = data.isOnline ?? existingEvent?.isOnline ?? false;
+        const finalZoomLink = data.zoomLink ?? existingEvent?.zoomLink ?? "";
+
+        // Validate zoom link format if provided for online events
+        if (finalIsOnline && finalZoomLink && finalZoomLink !== "") {
+          return z.string().url().safeParse(finalZoomLink).success;
+        }
+        return true;
+      },
+      {
+        message: "Please provide a valid Zoom link URL for online events",
+        path: ["zoomLink"],
+      }
+    );
+};
 
 // Type exports
 export type CreateEventInput = z.infer<typeof CreateEventSchema>;
@@ -190,6 +306,10 @@ export const requiresLocation = (isOnline: boolean): boolean => {
   return !isOnline;
 };
 
+export const requiresZoomLink = (isOnline: boolean): boolean => {
+  return isOnline;
+};
+
 export const isEventUpcoming = (date: Date): boolean => {
   return new Date(date) > new Date();
 };
@@ -204,4 +324,26 @@ export const canRegisterForEvent = (event: {
     event.status === "UPCOMING" &&
     isEventUpcoming(event.date)
   );
+};
+
+// Validation utility for frontend forms
+export const validateEventData = (
+  data: Partial<CreateEventInput | UpdateEventInput>,
+  isUpdate = false,
+  existingEvent?: {
+    isOnline: boolean;
+    location?: string | null;
+    zoomLink?: string | null;
+    type: "PAID" | "FREE";
+    price?: number | null;
+  }
+) => {
+  if (isUpdate && existingEvent) {
+    const schema = createUpdateEventSchemaWithContext(existingEvent);
+    return schema.safeParse(data);
+  } else if (isUpdate) {
+    return UpdateEventSchema.safeParse(data);
+  } else {
+    return CreateEventSchema.safeParse(data);
+  }
 };

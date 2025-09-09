@@ -112,6 +112,11 @@ enum DayOfWeek {
   FRIDAY
 }
 
+enum LeadStatus {
+  INTERSTED
+  WAITING
+}
+
 // Represents a user in the system, including students, teachers, and admins.
 model User {
   id                     String            @id @default(auto()) @map("_id") @db.ObjectId
@@ -738,20 +743,20 @@ enum EventStatus {
 }
 
 model Event {
-  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
   title       String
-  slug        String    @unique
+  slug        String      @unique
   description String?
   price       Float?
-  date        DateTime
+  date        DateTime?
   // eventStatus EventStatus @default(DRAFT)
-  isOnline    Boolean   @default(false)
+  isOnline    Boolean     @default(false)
   location    String? // For offline events
   zoomLink    String? // For online events
   imageUrl    String? // Event banner/cover image
-  isPublished Boolean   @default(false)
+  isPublished Boolean     @default(false)
   mapLocation String?
-  type        EventType @default(FREE)
+  type        EventType   @default(FREE)
   status      EventStatus @default(DRAFT)
   // FAQs as embedded array of objects
   faqs        Faq[]
@@ -762,6 +767,18 @@ model Event {
   attendees            EventRegistration[]
   bkashPurchaseHistory BkashPurchaseHistory[]
   purchase             Purchase[]
+}
+
+
+type Speaker {
+  name        String
+  designation String?
+  avatarUrl   String
+}
+
+type Faq {
+  question String
+  answer   String
 }
 
 model EventRegistration {
@@ -775,14 +792,18 @@ model EventRegistration {
 
   @@unique([userId, eventId])
 }
-
-type Speaker {
-  name        String
-  designation String?
-  avatarUrl   String
-}
-
-type Faq {
-  question String
-  answer   String
+model Lead {
+  id              String     @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  email           String     @unique
+  phone           String?
+  facebookProfile String?
+  linkedin        String?
+  whatsapp        String?
+  courseId        String?    @db.ObjectId
+  eventId         String?    @db.ObjectId
+  certificationId String?    @db.ObjectId
+  status          LeadStatus @default(WAITING)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 }

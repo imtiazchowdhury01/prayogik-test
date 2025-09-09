@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader } from "lucide-react"; // Import Loader
 import { updateCourse } from "@/lib/course/updateCourse";
+import { clientApi } from "@/lib/utils/openai/client";
 
 interface TitleFormProps {
   initialData: {

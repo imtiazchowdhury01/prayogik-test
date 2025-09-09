@@ -1,23 +1,15 @@
-import { convertNumberToBangla } from "@/lib/convertNumberToBangla";
 import Link from "next/link";
+import BecomeAProMemberDiscount from "./BecomeAProMemberDiscount";
+import { Suspense } from "react";
 
-const BecomeAProMember = async ({
-  plan: premiumSubscription,
-}: {
-  plan?: any;
-}) => {
+const BecomeAProMember = () => {
   return (
     <div className="relative bg-[#096961] p-8 mt-0 md:mt-10 rounded-lg overflow-hidden">
-      <p className="text-white text-xl font-light">
-        প্রাইম মেম্বার হয়ে
-      </p>
+      <p className="text-white text-xl font-light">প্রাইম মেম্বার হয়ে</p>
       <p className="mt-1 text-3xl">
-        <span className="text-[#D1FFA3] font-bold">
-          {convertNumberToBangla(
-            premiumSubscription?.subscriptionDiscount?.discountPercentage
-          )}
-          % কম খরচে{" "}
-        </span>{" "}
+        <Suspense fallback={<BecomeAProMemberDiscount.Skeleton />}>
+          <BecomeAProMemberDiscount />
+        </Suspense>{" "}
         <br />
         <span className="text-xl text-white">সব কোর্সের এক্সেস নিন</span>
       </p>

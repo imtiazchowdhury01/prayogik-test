@@ -56,7 +56,7 @@ const CourseDetailsPage = async ({ params }: { params: { slug: string } }) => {
   if (!course) {
     redirect("/");
   }
-  
+
   const freeLesson = course?.lessons?.find(
     (lesson: any) => lesson.isFree && lesson.videoUrl
   );
@@ -271,7 +271,7 @@ const CourseDetailsPage = async ({ params }: { params: { slug: string } }) => {
             />
           </div>
           {/* course details subscriptions */}
-          <BecomeAProMember plan={plan} />
+          <BecomeAProMember />
         </div>
       </div>
     </section>

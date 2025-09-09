@@ -11,12 +11,13 @@ import { Loader, CheckCircle } from "lucide-react";
 import { getEventRegisterUserByIdDBCall } from "@/lib/data-access-layer/event-registration";
 import { getUserDetails } from "@/actions/get-user-details";
 import { clearServerCart, setServerCart } from "@/lib/actions/cart-cookie";
-import { EventType } from "@prisma/client";
+import { EventStatus, EventType } from "@prisma/client";
 import {
   CheckoutStorage,
   UserStorage,
 } from "@/lib/utils/storage/checkoutEmailStorage";
 import { useRouter } from "next/navigation";
+import { LeadForm } from "@/components/common/LeadForm";
 
 interface RegistrationFormData {
   name: string;
@@ -37,10 +38,14 @@ const EventRegisterForm = ({
   eventId,
   eventType,
   eventPrice,
+  isPreviewMode = false,
+  eventStatus,
 }: {
   eventId: string;
   eventType: string;
   eventPrice?: number;
+  isPreviewMode?: boolean;
+  eventStatus?: string;
 }) => {
   const { data }: any = useSession();
   const router = useRouter();
@@ -170,6 +175,15 @@ const EventRegisterForm = ({
     }
   };
 
+  if (isUserRegistered) {
+    return (
+      <div className="bg-green-100 border border-green-300 p-4 rounded-[10px] mt-4">
+        <p className="text-green-800 font-semibold text-center">
+          আপনি ইতিমধ্যেই এই ইভেন্টে রেজিস্ট্রেশন করেছেন।
+        </p>
+      </div>
+    );
+  }
   return (
     <div>
       <div className="bg-white rounded-lg w-full">
@@ -197,176 +211,188 @@ const EventRegisterForm = ({
             </div>
           )}
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* Only show name field if user is not logged in */}
-            {!userInfo?.name && (
-              <div>
-                <Label
-                  htmlFor="name"
-                  className="text-sm font-medium text-gray-700 mb-1 block"
-                >
-                  আপনার নাম
-                </Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="আপনার নাম লিখুন"
-                  {...register("name", { required: "নাম প্রয়োজন" })}
-                  className="w-full"
-                  disabled={isSubmitting}
-                />
-                {errors.name && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.name.message}
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Show logged in user's name (read-only) */}
-            {userInfo?.name && (
-              <div>
-                <Label className="text-sm font-medium text-gray-700 mb-1 block">
-                  আপনার নাম
-                </Label>
-                <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700">
-                  {userInfo.name}
-                </div>
-              </div>
-            )}
-
-            {/* Only show email field if user is not logged in */}
-            {!userInfo?.email && (
-              <div>
-                <Label
-                  htmlFor="email"
-                  className="text-sm font-medium text-gray-700 mb-1 block"
-                >
-                  ইমেইল
-                </Label>
-                <div className="relative">
+          {eventStatus === EventStatus.WAITING ? (
+            <LeadForm
+              type={"EVENT"}
+              courseId={""}
+              eventId={eventId}
+              certificationId={""}
+              status={"WAITING"}
+              isPreviewMode={isPreviewMode}
+            />
+          ) : (
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              {/* Only show name field if user is not logged in */}
+              {!userInfo?.name && (
+                <div>
+                  <Label
+                    htmlFor="name"
+                    className="text-sm font-medium text-gray-700 mb-1 block"
+                  >
+                    আপনার নাম
+                  </Label>
                   <Input
-                    id="email"
-                    type="email"
-                    placeholder="ইমেইল লিখুন"
-                    {...register("email", {
-                      required: "ইমেইল প্রয়োজন",
-                      pattern: {
-                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                        message: "সঠিক ইমেইল ঠিকানা লিখুন",
-                      },
-                    })}
+                    id="name"
+                    type="text"
+                    placeholder="আপনার নাম লিখুন"
+                    {...register("name", { required: "নাম প্রয়োজন" })}
                     className="w-full"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isPreviewMode}
                   />
-                  {emailCheckLoading && (
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                      <Loader
-                        size={16}
-                        className="animate-spin text-gray-400"
-                      />
-                    </div>
+                  {errors.name && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.name.message}
+                    </p>
                   )}
                 </div>
-                {errors.email && (
+              )}
+
+              {/* Show logged in user's name (read-only) */}
+              {userInfo?.name && (
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-1 block">
+                    আপনার নাম
+                  </Label>
+                  <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700">
+                    {userInfo.name}
+                  </div>
+                </div>
+              )}
+
+              {/* Only show email field if user is not logged in */}
+              {!userInfo?.email && (
+                <div>
+                  <Label
+                    htmlFor="email"
+                    className="text-sm font-medium text-gray-700 mb-1 block"
+                  >
+                    ইমেইল
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="ইমেইল লিখুন"
+                      {...register("email", {
+                        required: "ইমেইল প্রয়োজন",
+                        pattern: {
+                          value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                          message: "সঠিক ইমেইল ঠিকানা লিখুন",
+                        },
+                      })}
+                      className="w-full"
+                      disabled={isSubmitting || isPreviewMode}
+                    />
+                    {emailCheckLoading && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <Loader
+                          size={16}
+                          className="animate-spin text-gray-400"
+                        />
+                      </div>
+                    )}
+                  </div>
+                  {errors.email && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.email.message}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Show logged in user's email (read-only) */}
+              {userInfo?.email && (
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-1 block">
+                    ইমেইল
+                  </Label>
+                  <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700">
+                    {userInfo.email}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <Label
+                  htmlFor="mobile"
+                  className="text-sm font-medium text-gray-700 mb-1 block"
+                >
+                  মোবাইল নাম্বার
+                </Label>
+                <Input
+                  id="mobile"
+                  type="tel"
+                  placeholder="নাম্বার লিখুন"
+                  {...register("mobile", {
+                    required: "মোবাইল নাম্বার প্রয়োজন",
+                    pattern: {
+                      value: /^[0-9]{11}$/,
+                      message: "১১ সংখ্যার মোবাইল নাম্বার লিখুন",
+                    },
+                  })}
+                  className="w-full"
+                  disabled={isSubmitting || isPreviewMode}
+                />
+                {errors.mobile && (
                   <p className="text-red-500 text-sm mt-1">
-                    {errors.email.message}
+                    {errors.mobile.message}
                   </p>
                 )}
               </div>
-            )}
 
-            {/* Show logged in user's email (read-only) */}
-            {userInfo?.email && (
               <div>
-                <Label className="text-sm font-medium text-gray-700 mb-1 block">
-                  ইমেইল
+                <Label
+                  htmlFor="profession"
+                  className="text-sm font-medium text-gray-700 mb-1 block"
+                >
+                  আপনার পেশা
                 </Label>
-                <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700">
-                  {userInfo.email}
-                </div>
+                <Input
+                  id="profession"
+                  type="text"
+                  placeholder="পেশা লিখুন"
+                  {...register("profession", { required: "পেশা প্রয়োজন" })}
+                  className="w-full"
+                  disabled={isSubmitting || isPreviewMode}
+                />
+                {errors.profession && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.profession.message}
+                  </p>
+                )}
               </div>
-            )}
 
-            <div>
-              <Label
-                htmlFor="mobile"
-                className="text-sm font-medium text-gray-700 mb-1 block"
+              <Button
+                type="submit"
+                disabled={
+                  isPreviewMode ||
+                  isSubmitting ||
+                  eventRegisterStatusLoading ||
+                  isUserRegistered ||
+                  emailCheckLoading ||
+                  userInfoLoading
+                }
+                className={`w-full font-medium py-3 rounded-md transition-colors disabled:opacity-50 ${
+                  isUserRegistered
+                    ? buttonVariants({
+                        variant: "disabled",
+                      })
+                    : "bg-orange-500 hover:bg-orange-600 text-white"
+                }`}
               >
-                মোবাইল নাম্বার
-              </Label>
-              <Input
-                id="mobile"
-                type="tel"
-                placeholder="নাম্বার লিখুন"
-                {...register("mobile", {
-                  required: "মোবাইল নাম্বার প্রয়োজন",
-                  pattern: {
-                    value: /^[0-9]{11}$/,
-                    message: "১১ সংখ্যার মোবাইল নাম্বার লিখুন",
-                  },
-                })}
-                className="w-full"
-                disabled={isSubmitting}
-              />
-              {errors.mobile && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.mobile.message}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <Label
-                htmlFor="profession"
-                className="text-sm font-medium text-gray-700 mb-1 block"
-              >
-                আপনার পেশা
-              </Label>
-              <Input
-                id="profession"
-                type="text"
-                placeholder="পেশা লিখুন"
-                {...register("profession", { required: "পেশা প্রয়োজন" })}
-                className="w-full"
-                disabled={isSubmitting}
-              />
-              {errors.profession && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.profession.message}
-                </p>
-              )}
-            </div>
-
-            <Button
-              type="submit"
-              disabled={
-                isSubmitting ||
-                eventRegisterStatusLoading ||
-                isUserRegistered ||
+                {eventRegisterStatusLoading ||
                 emailCheckLoading ||
-                userInfoLoading
-              }
-              className={`w-full font-medium py-3 rounded-md transition-colors disabled:opacity-50 ${
-                isUserRegistered
-                  ? buttonVariants({
-                      variant: "disabled",
-                    })
-                  : "bg-orange-500 hover:bg-orange-600 text-white"
-              }`}
-            >
-              {eventRegisterStatusLoading ||
-              emailCheckLoading ||
-              isSubmitting ||
-              userInfoLoading ? (
-                <Loader size={16} className="animate-spin" />
-              ) : isUserRegistered ? (
-                "রেজিস্ট্রার্ড"
-              ) : (
-                "রেজিস্ট্রেশন করুন"
-              )}
-            </Button>
-          </form>
+                isSubmitting ||
+                userInfoLoading ? (
+                  <Loader size={16} className="animate-spin" />
+                ) : isUserRegistered ? (
+                  "রেজিস্ট্রার্ড"
+                ) : (
+                  "রেজিস্ট্রেশন করুন"
+                )}
+              </Button>
+            </form>
+          )}
         </div>
       </div>
     </div>

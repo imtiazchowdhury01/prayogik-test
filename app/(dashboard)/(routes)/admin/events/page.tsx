@@ -4,7 +4,7 @@ import { getEventsDBCall } from "@/lib/data-access-layer/events";
 
 const EventsPage = async () => {
   const events = await getEventsDBCall();
-  // console.log(events, "events");
+
   return (
     <div>
       <EventTable data={events || []} />

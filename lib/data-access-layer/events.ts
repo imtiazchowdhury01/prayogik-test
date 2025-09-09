@@ -1,7 +1,7 @@
 import { db } from "../db";
 
 const getEventsDBCall = async () => {
-  const events = db.event.findMany({
+  const events = await db.event.findMany({
     include: {
       attendees: true,
     },
@@ -9,15 +9,48 @@ const getEventsDBCall = async () => {
       date: "desc",
     },
   });
-  return events;
+
+  // Get waiting counts for all events
+  const waitingCounts = await db.lead.groupBy({
+    by: ['eventId'],
+    where: {
+      status: 'WAITING',
+      eventId: {
+        not: null
+      }
+    },
+    _count: {
+      id: true
+    }
+  });
+
+  // Create a map for quick lookup and add waitingCount to events using reduce
+  const waitingCountMap = waitingCounts.reduce((acc, item) => {
+    if (item.eventId) { // Type guard to ensure eventId is not null
+      acc[item.eventId] = item._count.id;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Add waitingCount to each event using reduce with proper typing
+  const eventsWithWaitingCount = events.reduce((acc, event) => {
+    acc.push({
+      ...event,
+      waitingCount: waitingCountMap[event.id] || 0
+    });
+    return acc;
+  }, [] as Array<typeof events[0] & { waitingCount: number }>);
+
+  return eventsWithWaitingCount;
 };
 
 const getFilteredEventsDBCall = async () => {
-  const events = db.event.findMany({
-     where: {
+  const events = await db.event.findMany({
+    where: {
       status: {
-        in: ["UPCOMING", "WAITING"], 
+        in: ["UPCOMING", "WAITING"],
       },
+      isPublished: true,
     },
     include: {
       attendees: true,
@@ -29,10 +62,8 @@ const getFilteredEventsDBCall = async () => {
   return events;
 };
 
-
-
 const getEventByIdDBCall = async (id: string) => {
-  const event = db.event.findUnique({
+  const event = await db.event.findUnique({
     where: { id },
     include: {
       attendees: true,
@@ -42,7 +73,7 @@ const getEventByIdDBCall = async (id: string) => {
 };
 
 const getEventBySlugDBCall = async (slug: string) => {
-  const event = db.event.findUnique({
+  const event = await db.event.findUnique({
     where: { slug },
     include: {
       attendees: true,
@@ -50,4 +81,9 @@ const getEventBySlugDBCall = async (slug: string) => {
   });
   return event;
 };
-export { getEventsDBCall,getFilteredEventsDBCall, getEventByIdDBCall, getEventBySlugDBCall };
+export {
+  getEventsDBCall,
+  getFilteredEventsDBCall,
+  getEventByIdDBCall,
+  getEventBySlugDBCall,
+};

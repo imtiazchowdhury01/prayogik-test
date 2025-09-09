@@ -13,7 +13,7 @@ import { formatDuration } from "@/lib/formatDuration";
 import { textLangChecker } from "@/lib/utils/textLangChecker";
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
+import React, { Suspense } from "react";
 import SectionNavigation from "../../../../(course)/courses/[slug]/_components/SectionNavigation";
 import CourseOverview from "../../../../(course)/courses/[slug]/_components/CourseOverview";
 import Syllabas from "../../../../(course)/courses/[slug]/_components/Syllabas";
@@ -32,6 +32,7 @@ import { db } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { notFound } from "next/navigation";
 import { getSubscriptionDBCall } from "@/lib/data-access-layer/subscriptions";
+import { CourseAccessSkeleton } from "@/app/(course)/courses/[slug]/_components/single-course-price-tab";
 
 // Generate metadata for this page
 export async function generateMetadata({
@@ -58,14 +59,7 @@ export async function generateMetadata({
 }
 
 const CoursePreview = async ({ params }: { params: { courseId: string } }) => {
-  const { isAdmin, userId } = await getServerUserSession();
   const course = await getCourseByCourseIdForPreview(params?.courseId);
-  const salesData = await fetchSubscriptionDisounts();
-  const subscriptionsData = await fetchUserSubscription();
-
-  const allSubscription = await getSubscriptionDBCall();
-
-  const plan = allSubscription.find((p) => p.isDefault);
 
   return (
     <section className="min-h-[70vh] w-full">
@@ -247,16 +241,17 @@ const CoursePreview = async ({ params }: { params: { courseId: string } }) => {
 
           <div className="block w-full lg:hidden">
             {/* mobile view */}
-            <Sidebar
-              course={course}
-              access={false}
-              userId={null}
-              lesson={course.lessons}
-              salesData={salesData}
-              subscriptionsData={subscriptionsData}
-              preview={true}
-            />
-            <BecomeAProMember plan={plan} />
+            <Suspense fallback={<Sidebar.Skeleton />}>
+              <Sidebar
+                course={course}
+                access={false}
+                userId={null}
+                lesson={course.lessons}
+                preview={true}
+              />
+            </Suspense>
+
+            <BecomeAProMember />
           </div>
           <TeacherIntro course={course} />
         </div>
@@ -264,16 +259,17 @@ const CoursePreview = async ({ params }: { params: { courseId: string } }) => {
         <div className="hidden w-full mt-8 mb-16 lg:block lg:top-20 lg:sticky lg:w-4/12">
           <Badge>Preview Mode</Badge>
           {/* desktop view */}
-          <Sidebar
-            course={course}
-            access={false}
-            userId={null}
-            lesson={course.lessons}
-            salesData={salesData}
-            subscriptionsData={subscriptionsData}
-            preview={true}
-          />
-          <BecomeAProMember plan={plan} />
+          <Suspense fallback={<Sidebar.Skeleton />}>
+            <Sidebar
+              course={course}
+              access={false}
+              userId={null}
+              lesson={course.lessons}
+              preview={true}
+            />
+          </Suspense>
+
+          <BecomeAProMember />
         </div>
       </div>
     </section>
