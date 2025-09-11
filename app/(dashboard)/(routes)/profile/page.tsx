@@ -5,28 +5,14 @@ import { fetchCategories } from "@/services";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import ProfileFormWrapper from "./_components/profile-form-wrapper";
+import { Suspense } from "react";
+import ProfileSkeleton from "./_components/profile-skeleton";
+import Profile from "./_components/profile";
 
 export default async function ProfilePage() {
-  // Get session on server side
-  const session = await getServerSession(authOptions);
-
-  if (!session?.user?.id) {
-    redirect("/login"); // Redirect if not authenticated
-  }
-
-  const userId = session.user.id;
-  // Fetch data on server side
-  const [profileData, categoriesData] = await Promise.all([
-    fetchUserProfile(userId),
-    fetchCategories(),
-  ]);
-
-  // Pass data to client component
   return (
-    <ProfileFormWrapper
-      initialProfileData={profileData}
-      initialCategories={categoriesData}
-      userId={userId}
-    />
+    <Suspense fallback={<ProfileSkeleton />}>
+      <Profile />
+    </Suspense>
   );
 }

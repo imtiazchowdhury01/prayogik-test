@@ -71,7 +71,7 @@ const formSchema = z.object({
     .min(1, "Subject specializations cannot be empty"),
   expertiseLevel: z.enum(Object.keys(TeacherExpertiseLevel), {
     message: "You need to select skill level.",
-  }),
+  }).optional(),
   facebook: z
     .string()
     .url({ message: "Invalid URL format" })
@@ -348,8 +348,7 @@ export default function RegistrationForm({ planId }: { planId: string }) {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
-                            বিশেষায়িত ক্ষেত্র{" "}
-                            <span className="text-red-500">*</span>
+                            এক্সপার্টাইজ <span className="text-red-500">*</span>
                           </FormLabel>
                           <FormControl>
                             <MultiSelect
@@ -574,7 +573,7 @@ export default function RegistrationForm({ planId }: { planId: string }) {
                   render={({ field }) => (
                     <FormItem>
                       <RequiredFieldStar
-                        labelText={"জীবনী"}
+                        labelText={"বায়ো"}
                         className={"text-sm"}
                       />
                       <FormControl>
@@ -697,7 +696,7 @@ export default function RegistrationForm({ planId }: { planId: string }) {
                     )}
                   />
 
-                  <FormField
+                  {/* <FormField
                     name="nationality"
                     control={form.control}
                     render={({ field }) => (
@@ -712,7 +711,7 @@ export default function RegistrationForm({ planId }: { planId: string }) {
                         <FormMessage />
                       </FormItem>
                     )}
-                  />
+                  /> */}
                 </div>
 
                 <br />

@@ -6,10 +6,11 @@ import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Urls } from "@/constants/urls";
 import { PersonalInfoForm } from "./personal-info-form";
-import { ContactInfoForm } from "./contact-info-form";
+import { ProfileInfoForm } from "./profile-info-form";
 import { TeacherInfoForm } from "./teacher-info-form";
 import { ResetProfileUserPass } from "./reset-profile-user-pass";
 import { parseEducationData } from "@/lib/utils/parseEducationData";
+import ProfileHeader from "./profile-header";
 
 interface ProfileClientProps {
   initialProfileData: any;
@@ -79,7 +80,7 @@ export default function ProfileFormWrapper({
     setIsSubmitting({ form: formType, submitted: true });
     try {
       await updateUserProfile(userId, data);
-      toast.success("Profile updated successfully!");
+      toast.success("প্রোফাইল সফলভাবে আপডেট হয়েছে!");
       await refreshProfileData();
     } catch (error) {
       handleApiError(error);
@@ -120,36 +121,21 @@ export default function ProfileFormWrapper({
         {/* Tab Content */}
         {activeTab === "account" && (
           <>
-            <RequiredFieldText className="mb-1 text-gray-500 font-normal" />
-            {/* Personal information form */}
-            <PersonalInfoForm
-              onSubmit={(data) => handleSubmit(data, "personal")}
-              defaultValues={formData}
-              isLoading={false}
-              isSubmitting={isSubmitting}
-              parsedEducation={parsedEducation}
-            />
-
-            {/* Contact information form */}
-            <ContactInfoForm
-              onSubmit={(data) => handleSubmit(data, "contact")}
-              defaultValues={formData}
-              isLoading={false}
-              isSubmitting={isSubmitting}
-            />
-
-            {/* Teacher form - only show if verified */}
-            {formData?.teacherProfile &&
-              formData?.teacherProfile?.teacherStatus.toLowerCase() ===
-                "verified" && (
-                <TeacherInfoForm
-                  onSubmit={(data) => handleSubmit(data, "teacher")}
-                  defaultValues={teacherFormData}
-                  categories={categories}
-                  isLoading={false}
-                  isSubmitting={isSubmitting}
-                />
-              )}
+            {/* <RequiredFieldText className="mb-1 text-gray-500 font-normal" /> */}
+            <ProfileHeader userData={formData} />
+            <div>
+              <ProfileInfoForm
+                onSubmit={(data) => handleSubmit(data, "contact")}
+                defaultValues={formData}
+                isLoading={false}
+                isSubmitting={isSubmitting}
+                formData={formData}
+                parsedEducation={parsedEducation}
+                handleSubmit={handleSubmit}
+                teacherFormData={teacherFormData}
+                categories={categories}
+              />
+            </div>
           </>
         )}
 

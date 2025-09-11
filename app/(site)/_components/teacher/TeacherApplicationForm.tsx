@@ -82,7 +82,7 @@ export default function TeacherApplicationForm() {
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="specialization">বিশেষায়িত ক্ষেত্র *</Label>
+                  <Label htmlFor="specialization">এক্সপার্টাইজ *</Label>
                   <Select>
                     <SelectTrigger>
                       <SelectValue placeholder="বিষয় নির্বাচন করুন" />
@@ -341,10 +341,10 @@ export default function TeacherApplicationForm() {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
+                {/* <div className="space-y-2">
                   <Label htmlFor="nationality">জাতীয়তা *</Label>
                   <Input id="nationality" placeholder="বাংলাদেশী" />
-                </div>
+                </div> */}
               </div>
 
               <Separator />

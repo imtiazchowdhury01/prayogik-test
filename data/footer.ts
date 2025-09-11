@@ -7,7 +7,7 @@ export const footerSocialLinks = [
   {
     title: "youtube",
     icon: "/icon/youtube.svg",
-    path: "https://www.youtube.com/channel/UCfdSyzb916sGYn6gpoxI2Ig?view_as=subscriber",
+    path: "https://www.youtube.com/@prayogikofficial",
   },
 ];
 export const footerOthersLinks = [

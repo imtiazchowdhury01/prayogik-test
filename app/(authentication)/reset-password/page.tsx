@@ -144,102 +144,107 @@ export default function ResetPassword() {
 
   if (isTokenValid) {
     return (
-      <div className="bg-white my-8 rounded-lg max-w-[540px] w-full p-8">
-        <p className="text-2xl font-semibold leading-10 text-center sm:text-3xl">
-          নতুন পাসওয়ার্ড দিন
-        </p>
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-fontcolor-title">
-              নতুন পাসওয়ার্ড
-            </label>
-            <div className="flex items-center justify-between w-full h-10 mt-1 overflow-hidden bg-transparent border rounded-md border-greyscale-300">
-              <input
-                type={showNewPassword ? "text" : "password"}
-                value={password}
-                placeholder="******"
-                onChange={(e) => setPassword(e.target.value)}
-                className="flex-1 h-full bg-transparent border-none outline-none focus-visible:ring-0"
-              />
-              <div className="px-3">
-                {!showNewPassword ? (
-                  <CgEye
-                    onClick={toggleNewPassword}
-                    className="text-2xl cursor-pointer text-greyscale-500"
-                  />
-                ) : (
-                  <HiOutlineEyeOff
-                    onClick={toggleNewPassword}
-                    className="text-2xl cursor-pointer text-greyscale-500"
-                  />
-                )}
-              </div>
-            </div>
-            {errors.password && (
-              <p className="mt-1 text-sm text-red-500">{errors.password}</p>
-            )}
+      <div className="bg-[#F3F9F9] rounded-lg md:rounded-r-lg w-full md:w-1/2  p-20 flex justify-center items-center">
+        <div>
+          <div className="mb-8">
+            <h2 className="text-2xl font-semibold"> নতুন পাসওয়ার্ড দিন</h2>
+            <p className="text-sm text-muted-foreground">
+              আপনার নিরাপত্তা নিশ্চিত করতে একটি নতুন পাসওয়ার্ড নির্ধারণ করুন।
+            </p>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              কনফার্ম পাসওয়ার্ড
-            </label>
-            <div className="flex items-center justify-between w-full h-10 mt-1 overflow-hidden bg-transparent border rounded-md border-greyscale-300">
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                value={confirmPassword}
-                placeholder="******"
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="flex-1 h-full bg-transparent border-none outline-none focus-visible:ring-0"
-              />
-              <div className="px-3">
-                {!showConfirmPassword ? (
-                  <CgEye
-                    onClick={toggleConfirmPassword}
-                    className="text-2xl cursor-pointer text-greyscale-500"
-                  />
-                ) : (
-                  <HiOutlineEyeOff
-                    onClick={toggleConfirmPassword}
-                    className="text-2xl cursor-pointer text-greyscale-500"
-                  />
-                )}
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-fontcolor-title">
+                নতুন পাসওয়ার্ড
+              </label>
+              <div className="flex items-center justify-between w-full h-12 mt-1 overflow-hidden rounded-md shadow-sm border border-gray-200 bg-white">
+                <input
+                  type={showNewPassword ? "text" : "password"}
+                  value={password}
+                  placeholder="******"
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="flex-1 h-full bg-white shadow-customInput bg-transparent border-none outline-none focus-visible:ring-0"
+                />
+                <div className="px-3 bg-white">
+                  {!showNewPassword ? (
+                    <CgEye
+                      onClick={toggleNewPassword}
+                      className="text-xl cursor-pointer text-greyscale-500 bg-white"
+                    />
+                  ) : (
+                    <HiOutlineEyeOff
+                      onClick={toggleNewPassword}
+                      className="text-xl cursor-pointer text-greyscale-500 bg-white"
+                    />
+                  )}
+                </div>
               </div>
+              {errors.password && (
+                <p className="mt-1 text-sm text-red-500">{errors.password}</p>
+              )}
             </div>
-            {errors.confirmPassword && (
-              <p className="mt-1 text-sm text-red-500">
-                {errors.confirmPassword}
-              </p>
-            )}
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                কনফার্ম পাসওয়ার্ড
+              </label>
+              <div className="flex items-center justify-between w-full h-12 mt-1 overflow-hidden rounded-md shadow-sm border border-gray-200 bg-white">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  placeholder="******"
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="flex-1 h-full bg-transparent shadow-customInput border-none outline-none focus-visible:ring-0"
+                />
+                <div className="px-3">
+                  {!showConfirmPassword ? (
+                    <CgEye
+                      onClick={toggleConfirmPassword}
+                      className="text-xl cursor-pointer text-greyscale-500"
+                    />
+                  ) : (
+                    <HiOutlineEyeOff
+                      onClick={toggleConfirmPassword}
+                      className="text-xl cursor-pointer text-greyscale-500"
+                    />
+                  )}
+                </div>
+              </div>
+              {errors.confirmPassword && (
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.confirmPassword}
+                </p>
+              )}
+            </div>
 
-          <button
-            type="submit"
-            disabled={!isFormValid || isSubmitting}
-            className={`w-full h-12 hover:bg-primary-700 mt-6 duration-300 text-white p-2 rounded-md bg-primary-brand transition ${
-              !isFormValid || isSubmitting
-                ? "opacity-50 cursor-not-allowed"
-                : ""
-            }`}
-          >
-            {isSubmitting ? (
-              <LoadingSpinner
-                size={25}
-                color="#ffffff"
-                borderWidth="2px"
-                height="100%"
-              />
-            ) : (
-              "নিশ্চিত করুন"
-            )}
-          </button>
-        </form>
-        <div className="flex items-center justify-center mt-5 text-sm">
-          <Link
-            href="/signin"
-            className="block transition-all duration-300 text-fontcolor-description hover:opacity-70"
-          >
-            ফিরে যান
-          </Link>
+            <button
+              type="submit"
+              disabled={!isFormValid || isSubmitting}
+              className={`w-full h-12 hover:bg-primary-700 shadow-customButton mt-6 duration-300 text-white p-2 rounded-md bg-primary-brand transition ${
+                !isFormValid || isSubmitting
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+              }`}
+            >
+              {isSubmitting ? (
+                <LoadingSpinner
+                  size={25}
+                  color="#ffffff"
+                  borderWidth="2px"
+                  height="100%"
+                />
+              ) : (
+                "নিশ্চিত করুন"
+              )}
+            </button>
+          </form>
+          <div className="flex items-center justify-center mt-5 text-sm">
+            <Link
+              href="/signin"
+              className="block transition-all duration-300 text-fontcolor-description hover:opacity-70"
+            >
+              ফিরে যান
+            </Link>
+          </div>
         </div>
       </div>
     );

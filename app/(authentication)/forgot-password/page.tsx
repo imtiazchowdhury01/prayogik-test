@@ -130,69 +130,60 @@ export default function ForgotPassword() {
     }
   };
 
-  // if (status === "loading") {
-  //   return <Loading />;
-  // }
-
   if (status === "unauthenticated") {
     return (
-      <div className="bg-white my-8 rounded-lg max-w-[540px] w-full p-8">
-        <p className="text-2xl font-semibold leading-10 text-center sm:text-3xl">
-          আপনার পাসওয়ার্ড ভুলে গেছেন?
-        </p>
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-fontcolor-title">
-              ইমেইল
-            </label>
-            <input
-              type="email"
-              value={email}
-              placeholder="এখানে লিখুন"
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full h-10 border-[1px] outline-none focus-visible:ring-0 border-greyscale-300 bg-transparent rounded-md"
-            />
-            {hasSubmitted && errors.email && (
-              <p className="mt-1 text-sm text-red-500">{errors.email}</p>
-            )}
+      <div className="bg-[#F3F9F9] rounded-lg md:rounded-r-lg w-full md:w-1/2 p-20 flex justify-center items-center">
+        <div>
+          <div className="mb-8">
+            <h2 className="text-2xl font-semibold">পাসওয়ার্ড রিসেট করুন</h2>
+            <p className="text-sm text-muted-foreground">
+              আমরা আপনাকে একটি ইমেল পাঠাবো যাতে আপনি আপনার পাসওয়ার্ড রিসেট করতে
+              পারেন।
+            </p>
           </div>
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-fontcolor-title ">
+                ইমেইল
+              </label>
+              <input
+                type="email"
+                value={email}
+                placeholder="ইমেইল লিখুন"
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1 w-full h-12 outline-none focus-visible:ring-0 shadow-sm border border-gray-200  rounded-md bg-white"
+              />
+              {hasSubmitted && errors.email && (
+                <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+              )}
+            </div>
 
-          <button
-            type="submit"
-            disabled={!isFormValid || isSubmitting || loading || cooldown > 0}
-            className={`w-full h-12 hover:bg-primary-700 mt-6 duration-300 text-white p-2 rounded-md bg-primary-brand transition ${
-              !isFormValid || isSubmitting || loading || cooldown > 0
-                ? "opacity-50 cursor-not-allowed"
-                : ""
-            }`}
-          >
-            {isSubmitting
-              ? "পাঠানো হচ্ছে..."
-              : cooldown > 0
-              ? `আবার চেষ্টা করুন - ${convertNumberToBangla(
-                  cooldown
-                )} সেকেন্ড পর`
-              : "রিসেট লিঙ্ক পাঠান"}
-
-            {/* {isSubmitting ? (
-                <LoadingSpinner
-                  size={25}
-                  color="#ffffff"
-                  borderWidth="2px"
-                  height="100%"
-                />
-              ) : (
-                "এগিয়ে যাই"
-              )} */}
-          </button>
-        </form>
-        <div className="flex items-center justify-center mt-5 text-sm">
-          <Link
-            href="/signin"
-            className="block transition-all duration-300 text-fontcolor-description hover:opacity-70"
-          >
-            ফিরে যান
-          </Link>
+            <button
+              type="submit"
+              disabled={!isFormValid || isSubmitting || loading || cooldown > 0}
+              className={`w-full h-12 hover:bg-primary-700 mt-6 duration-300 text-white p-2 rounded-md bg-primary-brand transition ${
+                !isFormValid || isSubmitting || loading || cooldown > 0
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+              }`}
+            >
+              {isSubmitting
+                ? "পাঠানো হচ্ছে..."
+                : cooldown > 0
+                ? `আবার চেষ্টা করুন - ${convertNumberToBangla(
+                    cooldown
+                  )} সেকেন্ড পর`
+                : "রিসেট লিঙ্ক পাঠান"}
+            </button>
+          </form>
+          <div className="flex items-center justify-center mt-5 text-sm">
+            <Link
+              href="/signin"
+              className="block transition-all duration-300 text-fontcolor-description hover:opacity-70"
+            >
+              ফিরে যান
+            </Link>
+          </div>
         </div>
       </div>
     );

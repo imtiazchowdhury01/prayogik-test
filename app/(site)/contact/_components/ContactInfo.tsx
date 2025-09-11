@@ -21,7 +21,7 @@ const ContactInfo = () => {
     {
       title: "youtube",
       icon: "/icon/social/Youtube.png",
-      path: "https://www.youtube.com/channel/UCfdSyzb916sGYn6gpoxI2Ig?view_as=subscriber",
+      path: "https://www.youtube.com/@prayogikofficial",
     },
     {
       title: "linkedin",
@@ -42,8 +42,8 @@ const ContactInfo = () => {
     {
       icon: Mail,
       title: "ইমেইল",
-      content: "contact@prayogik.com",
-      href: "mailto:contact@prayogik.com",
+      content: "contact[@]prayogik.com",
+      href: "mailto:contact[@]prayogik.com",
       isLink: true,
     },
     {

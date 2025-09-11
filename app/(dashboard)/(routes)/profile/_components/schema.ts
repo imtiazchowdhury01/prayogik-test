@@ -18,14 +18,17 @@ export const generalSchema = z.object({
       })
     )
     .optional(),
-});
-export const contactSchema = z.object({
   phoneNumber: z
     .string()
-    .regex(
-      /^\+8801[3-9]\d{8}$/,
-      "Must be a valid Bangladesh phone number (+8801XXXXXXXXX)"
-    ),
+    .max(11, "Must be a valid 11 digit phone number (01XXXXXXXXX)"),
+});
+export const contactSchema = z.object({
+  // phoneNumber: z
+  //   .string()
+  //   .regex(
+  //     /^\+8801[3-9]\d{8}$/,
+  //     "Must be a valid Bangladesh phone number (+8801XXXXXXXXX)"
+  //   ),
   city: z.string().optional(),
   state: z.string().optional(),
   country: z.string().optional(),
@@ -62,9 +65,11 @@ export const teacherFormSchema = z.object({
   subjectSpecializations: z
     .array(z.string())
     .min(1, "Subject specializations cannot be empty"),
-  expertiseLevel: z.enum(Object.keys(TeacherExpertiseLevel), {
-    message: "You need to select skill level.",
-  }),
+  expertiseLevel: z
+    .enum(Object.keys(TeacherExpertiseLevel), {
+      message: "You need to select skill level.",
+    })
+    .optional(),
   certifications: z.array(z.string()).optional(),
   yearsOfExperience: z.string().optional(),
 });

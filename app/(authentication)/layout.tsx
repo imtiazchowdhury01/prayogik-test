@@ -1,5 +1,4 @@
-import Image from "next/image";
-import Link from "next/link";
+import PrayogikIntro from "./signin/_components/prayogik-intro";
 
 export default function RootLayout({
   children,
@@ -7,24 +6,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-background-gray min-h-screen">
-      <div className="flex items-center justify-center bg-white h-14 md:h-20">
-        <div className="h-8 md:h-10 w-36 md:w-40">
-          <Link href="/">
-            <Image
-              src={"/prayogik-nav-logo.svg"}
-              alt="logo"
-              width={0}
-              height={0}
-              sizes="100vw"
-              className="object-cover w-full h-full"
-              priority={true}
-            />
-          </Link>
+    <div className="bg-[#ebeef5] min-h-screen ">
+      <div className="flex items-center justify-center min-h-screen app-container">
+        <div className="flex md:flex-row flex-col">
+          <section className="md:w-1/2 w-full hidden md:block">
+            <PrayogikIntro />
+          </section>
+          {children}
         </div>
-      </div>
-      <div className="flex flex-col  max-h-[auto] items-center px-3">
-        {children}
       </div>
     </div>
   );

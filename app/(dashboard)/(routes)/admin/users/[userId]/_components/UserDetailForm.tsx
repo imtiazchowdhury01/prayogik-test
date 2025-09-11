@@ -427,7 +427,7 @@ const UserDetailForm = ({
                   />
 
                   {/* Education */}
-                  <FormField
+                  {/* <FormField
                     name="education"
                     control={form.control}
                     render={({ field }) => (
@@ -444,7 +444,7 @@ const UserDetailForm = ({
                         <FormMessage />
                       </FormItem>
                     )}
-                  />
+                  /> */}
 
                   {/* Bio */}
                   <FormField
@@ -452,7 +452,7 @@ const UserDetailForm = ({
                     control={form.control}
                     render={({ field }) => (
                       <FormItem className="md:col-span-2">
-                        <FormLabel>জীবনী</FormLabel>
+                        <FormLabel>বায়ো</FormLabel>
                         <FormControl>
                           <Textarea
                             placeholder="আপনার সম্পর্কে সংক্ষেপে কিছু বলুন"
@@ -550,7 +550,7 @@ const UserDetailForm = ({
                   />
 
                   {/* Nationality */}
-                  <FormField
+                  {/* <FormField
                     name="nationality"
                     control={form.control}
                     render={({ field }) => (
@@ -562,7 +562,7 @@ const UserDetailForm = ({
                         <FormMessage />
                       </FormItem>
                     )}
-                  />
+                  /> */}
                 </div>
               </Card>
 
@@ -690,8 +690,7 @@ const UserDetailForm = ({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
-                            বিশেষায়িত ক্ষেত্র{" "}
-                            <span className="text-red-500">*</span>
+                            এক্সপার্টাইজ <span className="text-red-500">*</span>
                           </FormLabel>
                           <FormControl>
                             <MultiSelect

@@ -21,6 +21,11 @@ const getAllRegisteredEventDBCall = async (userId: string) => {
     const allRegisterEvents = await db.eventRegistration.findMany({
       where: {
         userId,
+        event: {
+          status: {
+            in: ["UPCOMING", "CLOSED"],
+          },
+        },
       },
       include: {
         event: true,

@@ -131,7 +131,7 @@ const PRICING_LABELS = {
   REGULAR: "স্ট্যান্ডার্ড কোর্স",
   SUBSCRIPTION: "সাবস্ক্রিপশন প্ল্যান",
   REGULAR_DESC: "এককালীন পেমেন্টের মাধ্যমে কোর্সটি কিনুন",
-  SUBSCRIPTION_DESC: "৭০% সাশ্রয়ে কোর্স কিনুন ",
+  SUBSCRIPTION_DESC: "৫০% সাশ্রয়ে কোর্স কিনুন ",
   FREE_WITH_SUB: "সাবস্ক্রিপশনের সাথে ফ্রী",
   DISCOUNT_WITH_SUB: "সাবস্ক্রিপশনের সাথে ডিসকাউন্ট প্রাপ্ত",
 };

@@ -75,6 +75,7 @@ export default function UserProfileMenus({ session, pathName }) {
   const subscriptionName =
     subscription?.subscriptionPlan?.name || "সাবস্ক্রিপশন";
 
+  // console.log("subscription result:", session);
 
   // Prevent menu from closing when clicking on text elements
   const handleTextClick = (e) => {

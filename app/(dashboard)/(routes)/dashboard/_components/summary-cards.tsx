@@ -109,7 +109,7 @@ export function SummaryCards({
           return (
             <Card
               key={metric.title}
-              className="transition-all duration-200 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1 cursor-pointer border-border/50"
+              className="transition-all duration-200 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1 cursor-pointer border border-slate-200 shadow-none"
               onClick={() => handleCardClick(metric.tabValue)}
             >
               <CardHeader className="flex flex-row items-center gap-x-4 space-y-0 pb-3">
@@ -135,7 +135,8 @@ export function SummaryCards({
                         ? "text-secondary-button"
                         : "text-gray-500"
                     }`}
-                  ></div>
+                  >
+                  </div>
                 </div>
               </CardContent>
             </Card>

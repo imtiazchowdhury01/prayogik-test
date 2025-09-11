@@ -85,7 +85,7 @@ export function ResetProfileUserPass() {
   };
 
   return (
-    <div className="bg-white border p-6 rounded-lg mt-8 shadow-md">
+    <div className="bg-white border p-6 rounded-lg mt-8 shadow-md max-w-2xl">
       <div className="flex items-start gap-4 justify-between">
         <h1 className="text-2xl font-bold">পাসওয়ার্ড পরিবর্তন করুন</h1>
       </div>
@@ -180,7 +180,7 @@ export function ResetProfileUserPass() {
                 }
                 className={
                   !form.formState.isValid || !form.formState.isDirty
-                    ? "bg-gray-400"
+                    ? "bg-gray-400 disabled:hover:bg-gray-400"
                     : ""
                 }
               >

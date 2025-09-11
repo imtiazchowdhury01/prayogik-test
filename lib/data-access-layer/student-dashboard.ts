@@ -88,7 +88,9 @@ export async function getDashboardMetricsWithTrendsDBCall(userId: string) {
           userId,
           event: {
             date: { gt: now },
-            // Remove isPublished filter since your events are not published
+            status: {
+              in: ["UPCOMING", "CLOSED"],
+            },
           },
         },
       }),

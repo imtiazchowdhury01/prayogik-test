@@ -15,14 +15,14 @@ export async function ProgressAndCompletedSection() {
           icon={Contrast}
           label="In Progress"
           count="0 Courses"
-          className="bg-white opacity-50"
+          className="bg-white border border-slate-200"
         />
         <InfoCard
           icon={CircleCheck}
           label="Completed"
           count="0 Courses"
           variant="success"
-          className="bg-white opacity-50"
+          className="bg-white border border-slate-200"
         />
       </div>
     );

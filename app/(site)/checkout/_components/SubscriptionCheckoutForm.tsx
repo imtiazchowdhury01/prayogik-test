@@ -66,7 +66,7 @@ const SubscriptionCheckoutForm = ({
   const [isCheckingSubscription, setIsCheckingSubscription] = useState(false);
   const [currentSubscription, setCurrentSubscription] = useState(null);
   const [showSubscriptionMessage, setShowSubscriptionMessage] = useState(false);
-  
+
   const [hasCheckedSubscription, setHasCheckedSubscription] = useState(
     !!session?.user?.email
   );
@@ -505,7 +505,7 @@ const SubscriptionCheckoutForm = ({
                         </span>
                         <span className="text-gray-900 font-semibold">
                           {currentSubscription?.subscriptionPlan?.name}
-                        </span>
+                        </span>{" "}
                         (মেয়াদ শেষ হবে{" "}
                         {new Date(
                           currentSubscription.expiresAt

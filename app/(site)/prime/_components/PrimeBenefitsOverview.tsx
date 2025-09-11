@@ -41,7 +41,7 @@ const PrimeBenefitsOverview = () => {
       description:
         "আমাদের স্ট্যান্ডার্ড পেইড কোর্স, লাইভ ট্রেইনিং, ওয়ার্কশপ এবং সার্টিফিকেশন প্রোগ্রামে পাবেন এক্সক্লুসিভ ডিসকাউন্ট।",
       price: "",
-      discount: "30-40",
+      discount: "30-50",
       icon: <Course />,
       color: "#9477BD",
       cardBg: "#F0E9F8",

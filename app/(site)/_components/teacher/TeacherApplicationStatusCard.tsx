@@ -116,7 +116,7 @@ const TeacherApplicationStatusCard = ({ status, applicationDetails }: any) => {
   const StatusIcon = config.icon;
   const PrimaryButtonIcon = config.primaryButtonIcon;
   const router = useRouter();
-  
+
   const formatSubmissionDate = (dateString: any) => {
     if (!dateString) return "Not set";
 
@@ -294,7 +294,7 @@ const TeacherApplicationStatusCard = ({ status, applicationDetails }: any) => {
           <div className="flex flex-wrap gap-4 justify-center text-sm">
             <div className="flex items-center gap-2">
               <Mail className="w-4 h-4 text-gray-500" />
-              <span className="text-gray-700">contact@prayogik.com</span>
+              <span className="text-gray-700">contact[@]prayogik.com</span>
             </div>
             <div className="flex items-center gap-2">
               <Phone className="w-4 h-4 text-gray-500" />

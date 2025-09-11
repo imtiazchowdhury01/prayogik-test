@@ -48,9 +48,9 @@ const BUTTON_VARIANTS = {
 const LOADING_TEXT = "অপেক্ষা করুন...";
 
 // Main Component
-const PurchasePlanButton: React.FC<PurchasePlanButtonProps> = ({
+const TrialButton: React.FC<PurchasePlanButtonProps> = ({
   className = "",
-  variant = "primary",
+  variant = "secondary",
   plan,
   children,
 }) => {
@@ -115,8 +115,7 @@ const PurchasePlanButton: React.FC<PurchasePlanButtonProps> = ({
 
     // Unauthenticated or no subscription
     if (status === "unauthenticated" || !activeSubscription) {
-      // return plan?.isTrial ? "ফ্রি ট্রায়াল" : "এখনই কিনুন";
-      return "ফ্রি ট্রায়াল নিন";
+      return plan?.isTrial ? "ফ্রি ট্রায়াল" : "এখনই কিনুন";
     }
 
     // Active plan scenarios
@@ -214,4 +213,4 @@ const PurchasePlanButton: React.FC<PurchasePlanButtonProps> = ({
   );
 };
 
-export default PurchasePlanButton;
+export default TrialButton;

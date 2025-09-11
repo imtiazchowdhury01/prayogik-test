@@ -1,6 +1,7 @@
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { memo } from "react";
+import { Card } from "@/components/ui/card";
 
 interface InfoCardProps {
   variant?: "default" | "success";
@@ -14,11 +15,8 @@ interface InfoCardProps {
 export const InfoCard = memo(
   ({ variant, icon: Icon, label, className, count }: InfoCardProps) => {
     return (
-      <div
-        className={cn(
-          "rounded-md flex items-center gap-x-4 p-4 px-6",
-          className
-        )}
+      <Card
+        className={cn("rounded-md flex items-center gap-x-4 p-4 px-6 border border-slate-200 shadow-none", className)}
       >
         <div
           className={` ${
@@ -33,7 +31,7 @@ export const InfoCard = memo(
           <p className="font-semibold text-base">{label}</p>
           <p className="text-gray-500 text-xs pt-2">{count}</p>
         </div>
-      </div>
+      </Card>
     );
   }
 );

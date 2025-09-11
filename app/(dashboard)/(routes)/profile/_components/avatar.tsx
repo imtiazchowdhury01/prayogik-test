@@ -2,7 +2,7 @@
 "use client";
 import { uploadUserAvatarToS3 } from "@/actions/upload-aws";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader } from "lucide-react";
+import { Camera, Loader } from "lucide-react";
 import { useSession } from "next-auth/react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
@@ -61,7 +61,7 @@ const UserAvatar = () => {
   return (
     <div className="flex items-center gap-4">
       <div
-        className="relative w-36 h-36 max-sm:w-36 max-sm:h-36 group"
+        className="relative w-40 h-40 max-sm:w-40 max-sm:h-40 group"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
@@ -82,7 +82,7 @@ const UserAvatar = () => {
 
         {!isUploading && isHovered && (
           <div className="cursor-pointer absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center rounded-full">
-            <PiImagesLight className="cursor-pointer bg-white border-[.5px] border-primary rounded-full w-10 h-10 p-2 text-primary" />
+            <Camera className="cursor-pointer bg-brand text-white border-white border-[.5px] border-primary rounded-full w-10 h-10 p-2 text-primary" />
             <input
               type="file"
               accept="image/*"

@@ -181,10 +181,10 @@ export default function TeacherForm({
   const banglaLabels = {
     name: "নাম",
     email: "ইমেইল",
-    bio: "জীবনবৃত্তান্ত",
+    bio: "বায়ো",
     yearsOfExperience: "শিক্ষকতার অভিজ্ঞতা",
     education: "",
-    subjectSpecializations: "বিশেষায়িত ক্ষেত্র",
+    subjectSpecializations: "এক্সপার্টাইজ",
     expertiseLevel: "শিক্ষকতার দক্ষতার স্তর",
     dateOfBirth: "জন্ম তারিখ",
     gender: "লিঙ্গ",

@@ -122,14 +122,8 @@ export default function Footer() {
                     ০১৮১৪-৪৩২৮৭৫
                   </span>
                 </p>
-                <p
-                 
-                  className="text-base font-normal text-fontcolor-subtitle "
-                >
-                  ইমেল:{" "}
-                  <span>
-                    contact@prayogik.com
-                  </span>
+                <p className="text-base font-normal text-fontcolor-subtitle ">
+                  ইমেল: <span>contact[@]prayogik.com</span>
                 </p>
                 <address className="not-italic text-base font-normal text-fontcolor-subtitle">
                   ঠিকানা: নূর বিল্ডিং, ২য় তলা। ৭০০/বি, ডিটি রোড। দেওয়ানহাট,

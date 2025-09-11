@@ -12,6 +12,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { CgEye } from "react-icons/cg";
 import { HiOutlineEyeOff } from "react-icons/hi";
 import { Loader } from "lucide-react";
+import PrayogikIntro from "./_components/prayogik-intro";
 
 const signInSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
@@ -119,132 +120,147 @@ export default function SignIn() {
   };
 
   return (
-    <div className="bg-white my-8 rounded-lg max-w-[540px] w-full p-8">
-      <p className="text-2xl font-semibold leading-10 text-center sm:text-3xl">
-        আপনার শেখার যাত্রা চালিয়ে যেতে লগ ইন করুন
-      </p>
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-fontcolor-title">
-            ইমেইল দিন
-          </label>
-          <input
-            type="email"
-            value={email}
-            placeholder="এখানে লিখুন"
-            onChange={(e) => setEmail(e.target.value)}
-            className="mt-1 w-full h-10 border-[1px] focus-visible:ring-0 border-greyscale-300 bg-transparent rounded-md"
-            data-testid="email-input"
-          />
-          {hasSubmitted && errors.email && (
-            <p className="mt-1 text-sm text-red-500">{errors.email}</p>
-          )}
+    <section className="bg-[#F3F9F9] rounded-lg md:rounded-r-lg w-full md:w-1/2 lg:p-20 p-10 flex justify-center items-center">
+      <div className="w-full">
+        <div className="mb-8">
+          <h2 className="text-2xl font-semibold"> স্বাগতম! লগইন করুন</h2>
+          <p className="text-sm text-muted-foreground">
+            আপনার শেখার যাত্রা শুরু হোক এখন থেকেই।
+          </p>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-fontcolor-title">
-            পাসওয়ার্ড
-          </label>
-          <div className="flex items-center justify-between w-full h-10 mt-1 overflow-hidden bg-transparent border rounded-md border-greyscale-300">
-            <input
-              type={showPassword ? "text" : "password"}
-              value={password}
-              placeholder="******"
-              onChange={(e) => setPassword(e.target.value)}
-              className="flex-1 h-full bg-transparent border-none outline-none focus-visible:ring-0"
-              data-testid="password-input"
-            />
-            <div className="px-3">
-              {!showPassword ? (
-                <CgEye
-                  onClick={togglePassword}
-                  className="text-2xl cursor-pointer text-greyscale-500"
-                  data-testid="toggle-eye"
-                />
-              ) : (
-                <HiOutlineEyeOff
-                  onClick={togglePassword}
-                  className="text-2xl cursor-pointer text-greyscale-500"
-                  data-testid="toggle-eye"
-                />
-              )}
-            </div>
-          </div>
-          {hasSubmitted && errors.password && (
-            <p className="mt-1 text-sm text-red-500">{errors.password}</p>
-          )}
-          <Link
-            href="/forgot-password"
-            className="text-sm block text-primary-brand transition-all duration-300 hover:opacity-[.7] float-end mt-1 mb-6"
-          >
-            পাসওয়ার্ড ভুলে গেছি
-          </Link>
-        </div>
-        {/* {hasSubmitted && errors.form && (
-          <p className="text-sm text-red-500">{errors.form}</p>
-        )} */}
-        {hasSubmitted && errors.form && (
-          <div className="space-y-1">
-            <p className="text-sm text-red-500">
-              {errors.form.includes("prisma.user.findUnique") ||
-              errors.form.includes("Server selection timeout")
-                ? "We're having trouble connecting to our servers."
-                : errors.form}
-            </p>
-            {/* {process.env.NODE_ENV === "development" && (
-              <p className="text-xs text-gray-500">
-                {errors.form}
-              </p>
-            )} */}
-          </div>
-        )}
         <button
-          type="submit"
-          disabled={!isFormValid || isSubmitting}
-          className={`w-full h-12 hover:bg-primary-700 mt-6 duration-300 text-white p-2 rounded-md bg-primary-brand grid place-items-center transition ${
-            !isFormValid || isSubmitting ? "opacity-50 cursor-not-allowed" : ""
-          }`}
-          data-testid="login-btn"
+          onClick={() =>
+            signIn("google", {
+              callbackUrl: `${process.env.NEXT_PUBLIC_BASE_URL}${redirectUrl}`,
+            })
+          }
+          className="w-full h-12 hover:opacity-70 duration-300font-medium text-fontcolor-description rounded-md shadow-sm border border-brand bg-transparent transition my-3 flex items-center justify-center space-x-2"
+          type="button"
         >
-          {isSubmitting ? (
-            <Loader
-              className="animate-spin"
-              size={25}
-              color="#ffffff"
-              borderWidth="2px"
-              height="100%"
-              data-testid="loading"
-            />
-          ) : (
-            "লগইন করুন"
-          )}
+          <FcGoogle className="text-xl" /> <span>গুগল দিয়ে লগইন করুন</span>
         </button>
-      </form>
-      {/* <p className="mt-4 mb-6 text-center">
-        {`আপনার অ্যাকাউন্ট নেই?`}{" "}
-        <Link
-          href="/signup"
-          className="font-medium transition-all text-primary-brand hover:opacity-70 "
-          data-testid="create-new-btn"
-        >
-          অ্যাকাউন্ট তৈরি করুন
-        </Link>
-      </p> */}
-      <div className="flex items-center space-x-2 mt-4">
-        <span className="flex-1 border-[1px] border-greyscale-200"></span>
-        <span className="text-fontcolor-description">অথবা</span>
-        <span className="flex-1 border-[1px] border-greyscale-200"></span>
+        <div className="flex items-center space-x-2 mt-4">
+          <span className="flex-1 border-[1px] border-greyscale-200"></span>
+          <span className="text-fontcolor-description">অথবা</span>
+          <span className="flex-1 border-[1px] border-greyscale-200"></span>
+        </div>
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-fontcolor-title">
+              ইমেইল দিন
+            </label>
+            <input
+              type="email"
+              value={email}
+              placeholder="এখানে লিখুন"
+              onChange={(e) => setEmail(e.target.value)}
+              className="mt-1 w-full h-12 focus-visible:ring-0 shadow-sm border border-gray-200 bg-white rounded-md"
+              data-testid="email-input"
+            />
+            {hasSubmitted && errors.email && (
+              <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-fontcolor-title">
+              পাসওয়ার্ড
+            </label>
+            <div className="flex items-center justify-between w-full h-12 mt-1 overflow-hidden bg-transparent rounded-md shadow-sm border border-gray-200 bg-white">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                placeholder="******"
+                onChange={(e) => setPassword(e.target.value)}
+                className="flex-1 h-full bg-transparent border-none outline-none focus-visible:ring-0"
+                data-testid="password-input"
+              />
+              <div className="px-3">
+                {!showPassword ? (
+                  <CgEye
+                    onClick={togglePassword}
+                    className="text-xl cursor-pointer text-greyscale-500"
+                    data-testid="toggle-eye"
+                  />
+                ) : (
+                  <HiOutlineEyeOff
+                    onClick={togglePassword}
+                    className="text-xl cursor-pointer text-greyscale-500"
+                    data-testid="toggle-eye"
+                  />
+                )}
+              </div>
+            </div>
+            {hasSubmitted && errors.password && (
+              <p className="mt-1 text-sm text-red-500">{errors.password}</p>
+            )}
+            <Link
+              href="/forgot-password"
+              className="text-sm block transition-all duration-300  float-end mt-2 mb-6 hover:text-brand"
+            >
+              পাসওয়ার্ড ভুলে গেছি
+            </Link>
+          </div>
+          {hasSubmitted && errors.form && (
+            <div className="space-y-1">
+              <p className="text-sm text-red-500">
+                {errors.form.includes("prisma.user.findUnique") ||
+                errors.form.includes("Server selection timeout")
+                  ? "We're having trouble connecting to our servers."
+                  : errors.form}
+              </p>
+            </div>
+          )}
+          <button
+            type="submit"
+            disabled={!isFormValid || isSubmitting}
+            className={`w-full h-12 hover:bg-primary-700 mt-6 duration-300 text-white p-2 rounded-md bg-primary-brand shadow-customButton grid place-items-center transition ${
+              !isFormValid || isSubmitting
+                ? "opacity-50 cursor-not-allowed"
+                : ""
+            }`}
+            data-testid="login-btn"
+          >
+            {isSubmitting ? (
+              <Loader
+                className="animate-spin"
+                size={25}
+                color="#ffffff"
+                borderWidth="2px"
+                height="100%"
+                data-testid="loading"
+              />
+            ) : (
+              "লগইন করুন"
+            )}
+          </button>
+        </form>
+        <div className="mt-4 text-center text-sm">
+          <div className="flex gap-1 flex-row justify-center">
+            {/* <p className="text-muted-foreground">আপনার কোন অ্যাকাউন্ট নেই?</p> */}
+            {/* <Link
+              className="font-semibold hover:text-brand text-gray-700"
+              href="/prime"
+            >
+              ফ্রি ট্রায়াল নিন
+            </Link> */}
+          </div>
+          <p className="text-muted-foreground mt-4">
+            উপরে ক্লিক করে, আমি{" "}
+            <Link href="/terms-conditions">
+              <span className="font-semibold text-gray-700 underline hover:text-brand">
+                পরিষেবার শর্তাবলী
+              </span>{" "}
+            </Link>
+            এবং{" "}
+            <Link href="/privacy-policy">
+              <span className="font-semibold text-gray-700 underline hover:text-brand">
+                গোপনীয়তা নীতিতে
+              </span>{" "}
+            </Link>
+            সম্মত।
+          </p>
+        </div>
       </div>
-      <button
-        onClick={() =>
-          signIn("google", {
-            callbackUrl: `${process.env.NEXT_PUBLIC_BASE_URL}${redirectUrl}`,
-          })
-        }
-        className="w-full h-12 hover:opacity-70 duration-300font-medium text-fontcolor-description rounded-md border-[1px] border-greyscale-200 transition my-3 flex items-center justify-center space-x-2"
-        type="button"
-      >
-        <FcGoogle className="text-xl" /> <span>গুগল দিয়ে লগইন করুন</span>
-      </button>
-    </div>
+    </section>
   );
 }

@@ -38,7 +38,7 @@ export default function DashboardLayout({
   // Safely handle session and avoid accessing undefined session properties  todo: (bg-[#F2F5FA])
   if (status === "authenticated" && session) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 ">
         <div className="h-[80px] md:pl-56 fixed inset-y-0 w-full z-50">
           <Navbar session={session} status={status} />
         </div>

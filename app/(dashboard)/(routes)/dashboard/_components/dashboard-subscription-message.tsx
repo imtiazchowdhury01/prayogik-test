@@ -6,7 +6,6 @@ import Link from "next/link";
 import { clientApi } from "@/lib/utils/openai/client";
 import { cookies } from "next/headers";
 import { Suspense } from "react";
-import { SubscriptionMessageSkeleton } from "./dashboard-skeleton";
 import MessageClose from "./message-close";
 import { convertNumberToBangla } from "@/lib/convertNumberToBangla";
 
@@ -17,6 +16,7 @@ const SubscriptionMessageContent = async (): Promise<JSX.Element | null> => {
   });
 
   const subscription = SubscriptionResponse?.body as any;
+  // console.log("subscription result:", subscription);
 
   // Early return for inactive subscriptions or active non-trial
   if (
