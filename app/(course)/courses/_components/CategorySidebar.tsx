@@ -302,7 +302,7 @@ const CategorySidebar = async () => {
     const groupedCategories = groupCategories(categories);
     console.log(groupedCategories);
     return (
-      <aside className="w-full h-[60%] overflow-y-auto bg-white lg:border lg:border-gray-200 rounded-lg lg:shadow-custom p-4 lg:sticky lg:top-[10%] lg:max-w-sm">
+      <aside className="w-full h-[600px] overflow-y-auto bg-white lg:border lg:border-gray-200 rounded-lg lg:shadow-custom p-4 lg:sticky lg:top-[10%] lg:max-w-sm">
         {/* Header */}
         <div className="mb-1">
           <Link

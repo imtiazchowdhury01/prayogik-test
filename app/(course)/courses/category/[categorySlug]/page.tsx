@@ -105,6 +105,7 @@ const CategorySlugPage = async ({
   const slug = params.categorySlug;
   const isFilterType = FILTER_TYPES.includes(slug as FilterType);
   const categoryName = await getCategoryNameBySlugDBCall(slug);
+  const displayName = categoryName ? `${categoryName} কোর্সসমূহ` : "সকল কোর্স";
   return (
     <section className="min-h-[50vh]">
       {/* Breadcrumbs */}
@@ -120,12 +121,14 @@ const CategorySlugPage = async ({
 
         {/* Main Content */}
         <div className="w-full lg:w-3/4">
-          {/* Header with mobile sidebar and filters */}
-          <CategoryHeader
-            categorySlug={slug}
-            pageType={isFilterType ? "filter" : "category"}
-            categoryName="categoryName"
-          />
+          <div>
+            {/* Header with mobile sidebar and filters */}
+            <CategoryHeader
+              categorySlug={slug}
+              pageType={isFilterType ? "filter" : "category"}
+              categoryName={categoryName}
+            />
+          </div>
 
           {/* Server Component for Initial Courses (SEO) */}
           <Suspense fallback={<CoursesGridSkeleton />}>
