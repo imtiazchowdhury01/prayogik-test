@@ -6,6 +6,7 @@ import CategoryHeader from "./_components/CategoryHeader";
 import {
   getCategoriesDBCall,
   getCategoryCoursesCountDBCall,
+  getCategoryNameBySlugDBCall,
 } from "@/lib/data-access-layer/categories";
 import CoursesBreadcrumb from "../../_components/CoursesBreadcrumb";
 import CoursesGridSkeleton from "../../_components/CoursesGridSkeleton";
@@ -103,7 +104,7 @@ const CategorySlugPage = async ({
 }) => {
   const slug = params.categorySlug;
   const isFilterType = FILTER_TYPES.includes(slug as FilterType);
-
+  const categoryName = await getCategoryNameBySlugDBCall(slug);
   return (
     <section className="min-h-[50vh]">
       {/* Breadcrumbs */}
@@ -123,6 +124,7 @@ const CategorySlugPage = async ({
           <CategoryHeader
             categorySlug={slug}
             pageType={isFilterType ? "filter" : "category"}
+            categoryName="categoryName"
           />
 
           {/* Server Component for Initial Courses (SEO) */}

@@ -1,4 +1,4 @@
-"use server"
+"use server";
 import { cache } from "react";
 import { db } from "../db";
 
@@ -131,8 +131,19 @@ const getCategoryCoursesCountDBCall = cache(
   }
 );
 
+const getCategoryNameBySlugDBCall = async (slug: string) => {
+  const category = await db.category.findUnique({
+    where: {
+      slug,
+    },
+  });
+
+  return category?.name || "";
+};
+
 export {
   getCategoriesDBCall,
   getCategoryCoursesDBCall,
   getCategoryCoursesCountDBCall,
+  getCategoryNameBySlugDBCall
 };

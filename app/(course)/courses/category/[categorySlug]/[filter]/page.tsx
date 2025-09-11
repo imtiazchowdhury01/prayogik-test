@@ -21,6 +21,18 @@ import CategorySidebar from "../../../_components/CategorySidebar";
 const FILTER_TYPES = ["recent", "older", "prime", "live"] as const;
 type FilterType = (typeof FILTER_TYPES)[number];
 
+// Get category name in Bangla
+const getCategoryName = (slug: string): string => {
+  const filterNameMap = {
+    recent: "সাম্প্রতিক",
+    older: "পুরাতন",
+    prime: "প্রায়োগিক প্রাইম",
+    live: "লাইভ কোর্স",
+  };
+
+  return filterNameMap[slug as keyof typeof filterNameMap] || slug;
+};
+
 // Generate static params only for category-filter combinations that have courses
 export async function generateStaticParams() {
   const categories = await getCategoriesDBCall();
@@ -157,6 +169,7 @@ const CategoryFilterPage = async ({
           <CategoryHeader
             categorySlug={categorySlug}
             pageType="category-filter"
+            categoryName={getCategoryName(filter)}
           />
 
           {/* Server Component for Initial Courses (SEO) */}

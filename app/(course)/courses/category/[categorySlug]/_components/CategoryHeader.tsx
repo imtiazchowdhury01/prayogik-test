@@ -13,28 +13,19 @@ interface CategoryHeaderProps {
   categorySlug: string;
   pageType: "category" | "filter" | "category-filter";
   isCoursespage?: boolean;
+  categoryName?: string;
 }
 
-// Get category name in Bangla
-const getCategoryName = (slug: string): string => {
-  const filterNameMap = {
-    recent: "সাম্প্রতিক",
-    older: "পুরাতন",
-    prime: "প্রায়োগিক প্রাইম",
-    live: "লাইভ কোর্স",
-  };
 
-  return filterNameMap[slug as keyof typeof filterNameMap] || slug;
-};
 
 const CategoryHeader = ({
   categorySlug,
   pageType,
   isCoursespage = false,
+  categoryName = "",
 }: CategoryHeaderProps) => {
   const [showSidebar, setShowSidebar] = useState<boolean>(false);
   const [categories, setCategories] = useState<any[]>([]);
-  const [categoryName, setCategoryName] = useState<string>("");
 
   const toggleSidebarHandler = () => setShowSidebar((prev) => !prev);
 
@@ -43,14 +34,6 @@ const CategoryHeader = ({
     const loadData = async () => {
       const categoriesData = await getCategoriesDBCall();
       setCategories(categoriesData);
-      if (pageType === "filter") {
-        setCategoryName(getCategoryName(categorySlug));
-      } else {
-        const category = categoriesData.find(
-          (cat: any) => cat.slug === categorySlug
-        );
-        setCategoryName(category?.name || "");
-      }
     };
 
     loadData();
