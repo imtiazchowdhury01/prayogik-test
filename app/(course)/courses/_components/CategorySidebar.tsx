@@ -1,12 +1,11 @@
 // CategorySidebar.tsx (Server Component)
 import React from "react";
-
 import Link from "next/link";
 import { Category } from "@prisma/client";
 import { textLangChecker } from "@/lib/utils/textLangChecker";
 import { convertNumberToBangla } from "@/lib/convertNumberToBangla";
 import { getCategoriesDBCall } from "@/lib/data-access-layer/categories";
-import DropdownToggle from "./DropdownToggle";
+import { RiArrowRightSLine } from "react-icons/ri";
 
 interface ICategory {
   id: string;
@@ -57,82 +56,178 @@ const CategorySidebar = async () => {
   try {
     const categories = await getCategoriesDBCall();
     const groupedCategories = groupCategories(categories);
-    console.log(groupedCategories);
+
     return (
-      <aside className="w-full bg-white lg:border lg:border-gray-200 rounded-lg lg:shadow-custom p-4 lg:sticky lg:top-[10%] lg:max-w-sm">
-        {/* Header */}
-        <div className="mb-1">
-          <Link
-            href="/courses"
-            prefetch={false}
-            className="block w-full text-left text-lg font-bold py-2 px-2 rounded transition-colors text-gray-700 hover:bg-sidebar-highlight"
-          >
-            সকল কোর্স
-          </Link>
-        </div>
+      <>
+        <style jsx>{`
+          .dropdown-toggle {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+          }
+          
+          .dropdown-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+          }
+          
+          .dropdown-toggle:checked ~ .dropdown-content {
+            max-height: 500px; /* Adjust based on your needs */
+          }
+          
+          .arrow {
+            transition: transform 0.2s ease-in-out;
+          }
+          
+          .dropdown-toggle:checked ~ .dropdown-label .arrow {
+            transform: rotate(90deg);
+          }
+          
+          .dropdown-label {
+            cursor: pointer;
+          }
+          
+          /* For active state detection, you'd need to pass current path as props */
+          .active-category {
+            background-color: var(--sidebar-highlight, #f3f4f6);
+            color: black;
+            font-weight: 500;
+            border-radius: 0.375rem;
+          }
+          
+          .active-child {
+            color: #0d9488;
+            font-weight: 500;
+          }
+        `}</style>
+        
+        <aside className="w-full bg-white lg:border lg:border-gray-200 rounded-lg lg:shadow-custom p-4 lg:sticky lg:top-[10%] lg:max-w-sm">
+          {/* Header */}
+          <div className="mb-1">
+            <Link
+              href="/courses"
+              prefetch={false}
+              className="block w-full text-left text-lg font-bold py-2 px-2 rounded transition-colors text-gray-700 hover:bg-sidebar-highlight"
+            >
+              সকল কোর্স
+            </Link>
+          </div>
 
-        {groupedCategories.parentCategories.length > 0 && (
-          <div className="space-y-1">
-            {groupedCategories.parentCategories.map(
-              (parentCategory: ICategory) => {
-                const hasChildren =
-                  groupedCategories.childCategories[parentCategory.id]?.length >
-                  0;
-                const categoryCourseCount =
-                  Number(parentCategory?._count?.courses) || 0;
-                const subCategoryCourseCount = hasChildren
-                  ? (
-                      groupedCategories.childCategories[parentCategory.id] || []
-                    ).reduce(
-                      (sum, category) =>
-                        sum + (Number(category?._count?.courses) || 0),
-                      0
-                    )
-                  : 0;
-                const totalCourses =
-                  categoryCourseCount + subCategoryCourseCount;
+          {groupedCategories.parentCategories.length > 0 && (
+            <div className="space-y-1">
+              {groupedCategories.parentCategories.map(
+                (parentCategory: ICategory) => {
+                  const hasChildren =
+                    groupedCategories.childCategories[parentCategory.id]?.length > 0;
+                  const categoryCourseCount =
+                    Number(parentCategory?._count?.courses) || 0;
+                  const subCategoryCourseCount = hasChildren
+                    ? (
+                        groupedCategories.childCategories[parentCategory.id] || []
+                      ).reduce(
+                        (sum, category) =>
+                          sum + (Number(category?._count?.courses) || 0),
+                        0
+                      )
+                    : 0;
+                  const totalCourses =
+                    categoryCourseCount + subCategoryCourseCount;
 
-                if (hasChildren) {
-                  // Parent with children - use DropdownToggle client component
-                  return (
-                    <DropdownToggle
-                      key={parentCategory.id}
-                      parentCategory={parentCategory}
-                      childCategories={
-                        groupedCategories.childCategories[parentCategory.id]
-                      }
-                      totalCourses={totalCourses}
-                      isMobile={false}
-                    />
-                  );
-                } else {
-                  // Parent without children - simple Link
-                  return (
-                    <div key={parentCategory.id}>
-                      <Link
-                        href={`/courses/category/${parentCategory.slug}`}
-                        prefetch={false}
-                        className="flex items-center justify-between py-3 px-2 cursor-pointer hover:bg-sidebar-highlight transition-colors rounded text-gray-700"
-                      >
-                        <div className="flex-1 flex items-center">
-                          <span className="text-sm">
-                            {textLangChecker(parentCategory.name)}
-                          </span>
-                          {totalCourses !== 0 && (
-                            <span className="ml-2 text-base">
-                              ({convertNumberToBangla(totalCourses)})
+                  if (hasChildren) {
+                    // Parent with children - CSS-only dropdown
+                    return (
+                      <div key={parentCategory.id} className="relative">
+                        <input
+                          type="checkbox"
+                          id={`dropdown-${parentCategory.id}`}
+                          className="dropdown-toggle"
+                        />
+                        
+                        <label
+                          htmlFor={`dropdown-${parentCategory.id}`}
+                          className="dropdown-label flex items-center justify-between py-3 px-2 hover:bg-sidebar-highlight transition-colors rounded text-gray-700"
+                        >
+                          <div className="flex-1 flex items-center">
+                            <span className="text-sm">
+                              {textLangChecker(parentCategory.name)}
                             </span>
+                            {totalCourses !== 0 && (
+                              <span className="ml-2 text-base">
+                                ({convertNumberToBangla(totalCourses)})
+                              </span>
+                            )}
+                          </div>
+                          <div className="ml-2 p-1 rounded transition-colors">
+                            <RiArrowRightSLine className="w-4 h-4 text-gray-600 arrow" />
+                          </div>
+                        </label>
+
+                        <div className="dropdown-content border-l ml-4 mt-2">
+                          {/* Parent category link in dropdown */}
+                          <Link
+                            href={`/courses/category/${parentCategory.slug}`}
+                            prefetch={false}
+                            className="block py-2 px-4 cursor-pointer text-sm transition-colors text-gray-600 hover:bg-sidebar-highlight"
+                          >
+                            {textLangChecker(parentCategory.name)}
+                            {parentCategory._count.courses !== 0 && (
+                              <span className="ml-2 text-base">
+                                ({convertNumberToBangla(parentCategory._count.courses)})
+                              </span>
+                            )}
+                          </Link>
+
+                          {/* Child category links */}
+                          {groupedCategories.childCategories[parentCategory.id].map(
+                            (childCategory: ICategory) => (
+                              <Link
+                                key={childCategory.id}
+                                href={`/courses/category/${childCategory.slug}`}
+                                prefetch={false}
+                                className="block py-2 px-4 cursor-pointer text-sm transition-colors text-gray-600 hover:bg-sidebar-highlight"
+                              >
+                                {textLangChecker(childCategory.name)}
+                                {childCategory._count.courses !== 0 && (
+                                  <span className="ml-2 text-base">
+                                    ({convertNumberToBangla(childCategory._count.courses)})
+                                  </span>
+                                )}
+                              </Link>
+                            )
                           )}
                         </div>
-                      </Link>
-                    </div>
-                  );
+                      </div>
+                    );
+                  } else {
+                    // Parent without children - simple Link
+                    return (
+                      <div key={parentCategory.id}>
+                        <Link
+                          href={`/courses/category/${parentCategory.slug}`}
+                          prefetch={false}
+                          className="flex items-center justify-between py-3 px-2 cursor-pointer hover:bg-sidebar-highlight transition-colors rounded text-gray-700"
+                        >
+                          <div className="flex-1 flex items-center">
+                            <span className="text-sm">
+                              {textLangChecker(parentCategory.name)}
+                            </span>
+                            {totalCourses !== 0 && (
+                              <span className="ml-2 text-base">
+                                ({convertNumberToBangla(totalCourses)})
+                              </span>
+                            )}
+                          </div>
+                        </Link>
+                      </div>
+                    );
+                  }
                 }
-              }
-            )}
-          </div>
-        )}
-      </aside>
+              )}
+            </div>
+          )}
+        </aside>
+      </>
     );
   } catch (error) {
     console.error("Error loading categories:", error);
