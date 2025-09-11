@@ -7,14 +7,7 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  AlertCircle,
-  Loader,
-  Mail,
-  User,
-  Phone,
-  Briefcase,
-} from "lucide-react";
+import { AlertCircle, Mail, User, Phone } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { handleCheckout } from "@/lib/actions/checkout";
@@ -50,7 +43,7 @@ const formSchema = z.object({
     .string()
     .min(11, "১১ সংখ্যার মোবাইল নাম্বার প্রয়োজন")
     .regex(/^[0-9]{11}$/, "১১ সংখ্যার মোবাইল নাম্বার লিখুন"),
-  profession: z.string().min(1, "পেশা প্রয়োজন"),
+  profession: z.string().optional(),
 });
 
 const EventCheckoutForm = ({ event, isSignedIn, isPaymentSuccessful }: any) => {
@@ -64,13 +57,12 @@ const EventCheckoutForm = ({ event, isSignedIn, isPaymentSuccessful }: any) => {
     name: "",
     email: "",
     mobile: "",
-    profession: "",
   });
+  console.log({ storedUserInfo, userInfoContinued });
   const [isEditing, setIsEditing] = useState<any>({
     name: false,
     email: false,
     mobile: false,
-    profession: false,
   });
 
   const currentUserInfo: any = useMemo(() => {
@@ -78,7 +70,6 @@ const EventCheckoutForm = ({ event, isSignedIn, isPaymentSuccessful }: any) => {
       name: session?.user?.name || storedUserInfo.name,
       email: session?.user?.email || storedUserInfo.email,
       mobile: storedUserInfo.mobile,
-      profession: storedUserInfo.profession,
     };
   }, [session?.user, storedUserInfo]);
 
@@ -101,7 +92,6 @@ const EventCheckoutForm = ({ event, isSignedIn, isPaymentSuccessful }: any) => {
           name: session.user.name || "",
           email: session.user.email || "",
           mobile: UserStorage.getPhone() || "",
-          profession: UserStorage.getProfession() || "",
         });
         return;
       }
@@ -111,12 +101,11 @@ const EventCheckoutForm = ({ event, isSignedIn, isPaymentSuccessful }: any) => {
       const savedPhone = UserStorage.getPhone();
       const savedProfession = UserStorage.getProfession();
 
-      if (savedEmail && savedName && savedPhone && savedProfession) {
+      if (savedEmail && savedName && savedPhone) {
         const userInfo = {
           name: savedName,
           email: savedEmail,
           mobile: savedPhone,
-          profession: savedProfession,
         };
         setStoredUserInfo(userInfo);
         setUserInfoContinued(true);
@@ -130,7 +119,6 @@ const EventCheckoutForm = ({ event, isSignedIn, isPaymentSuccessful }: any) => {
     form.setValue("name", currentUserInfo.name);
     form.setValue("email", currentUserInfo.email);
     form.setValue("mobile", currentUserInfo.mobile);
-    form.setValue("profession", currentUserInfo.profession);
   }, [currentUserInfo, form]);
 
   const handleFieldEdit = (field: any) => {
@@ -324,10 +312,7 @@ const EventCheckoutForm = ({ event, isSignedIn, isPaymentSuccessful }: any) => {
 
   const isUserInfoEmpty =
     !session?.user &&
-    (!storedUserInfo.name ||
-      !storedUserInfo.email ||
-      !storedUserInfo.mobile ||
-      !storedUserInfo.profession);
+    (!storedUserInfo.name || !storedUserInfo.email || !storedUserInfo.mobile);
 
   return (
     <Card>
@@ -353,12 +338,6 @@ const EventCheckoutForm = ({ event, isSignedIn, isPaymentSuccessful }: any) => {
                   Phone,
                   "মোবাইল নাম্বার",
                   "নাম্বার লিখুন"
-                )}
-                {renderUserInfoField(
-                  "profession",
-                  Briefcase,
-                  "পেশা",
-                  "আপনার পেশা লিখুন"
                 )}
               </div>
             )}
@@ -401,11 +380,7 @@ const EventCheckoutForm = ({ event, isSignedIn, isPaymentSuccessful }: any) => {
                       />
                     </g>
                   </svg>
-                  {isProcessing ? (
-                    <>প্রক্রিয়াধীন…</>
-                  ) : (
-                    "বিকাশে পেমেন্ট করুন"
-                  )}
+                  {isProcessing ? <>প্রক্রিয়াধীন…</> : "বিকাশে পেমেন্ট করুন"}
                 </Button>
                 <p className="text-sm text-gray-600 sm:text-center text-left">
                   নিরাপদ পেমেন্ট প্রসেসিং বিকাশ এর মাধ্যমে। আপনার লেনদেন

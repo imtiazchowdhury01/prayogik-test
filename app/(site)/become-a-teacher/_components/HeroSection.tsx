@@ -1,8 +1,7 @@
 import React from "react";
 import Image from "next/image";
-import becometeacherhero from "@/public/course-proposals/course-proposal-hero.webp";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+// import becometeacherhero from "@/public/course-proposals/course-proposal-hero.webp";
+import becometeacherhero from "@/public/course-proposals/becometeacher.webp";
 
 const HeroSection = () => {
   return (
@@ -36,18 +35,18 @@ const HeroSection = () => {
             </p>
 
             <div className="flex flex-row justify-start md:justify-start gap-4 mt-10">
-              {/* <a
+              <a
                 href="tel:+8801814432875"
                 className="block w-full px-4 py-3 text-sm md:text-base font-semibold text-center transition-all duration-300 rounded-lg sm:w-auto sm:inline-block  sm:px-6 sm:py-3 bg-white hover:opacity-95 text-brand"
               >
                 বিস্তারিত জানতে কল বুক করুন 
-              </a> */}
-              <Link
+              </a>
+              {/* <Link
                 href={"/submit-course-proposal"}
                 className="block w-full px-4 py-3 text-sm md:text-base font-semibold text-center transition-all duration-300 rounded-lg sm:w-auto sm:inline-block  sm:px-6 sm:py-3 bg-white hover:opacity-95 text-primary-brand"
               >
                 প্রস্তাব জমা দিন
-              </Link>
+              </Link> */}
             </div>
             {/* star shape */}
             <div className="absolute z-0 hidden lg:block lg:bottom-[-5%] lg:left-[70%] xl:bottom-[-5%] xl:left-[60%] w-[80px] h-[80px] xl:w-[110px] xl:h-[110px]">

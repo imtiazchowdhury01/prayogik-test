@@ -14,10 +14,12 @@ import {
   ArrowUp,
   ArrowDown,
   ChevronsUpDown,
+  Eye,
 } from "lucide-react";
 import Link from "next/link";
 import { formatDateForDisplay } from "@/lib/utils/formatDateForDisplay";
 import { EventType, EventStatus } from "@prisma/client";
+import { cn } from "@/lib/utils";
 
 export type Event = any;
 
@@ -107,19 +109,14 @@ export const createColumns = ({
       accessorKey: "type",
       id: "type", // Explicitly set the ID
       header: ({ column }) => (
-        <SortableHeader column={column}>Type</SortableHeader>
+        <SortableHeader column={column}>Price</SortableHeader>
       ),
       cell: ({ row }) => {
         const type = row.original.type;
         const price = row.original.price;
         return (
           <div className="space-y-1">
-            <Badge
-              variant={type === EventType.FREE ? "outline" : "default"}
-              className="text-xs"
-            >
-              {type}
-            </Badge>
+            {type === EventType.FREE ? <>Free</> : <>{price}</>}
           </div>
         );
       },
@@ -133,17 +130,14 @@ export const createColumns = ({
     },
     {
       accessorFn: (row) => (row.isOnline ? "ONLINE" : "OFFLINE"), // Use accessorFn for computed values
-      id: "format", // Explicitly set the ID to match what's used in the filter
+      id: "platform", // Explicitly set the ID to match what's used in the filter
       header: ({ column }) => (
         <SortableHeader column={column}>Platform</SortableHeader>
       ),
       cell: ({ row }) => {
         const isOnline = row.original.isOnline;
         return (
-          <Badge
-            variant={isOnline ? "default" : "secondary"}
-            className="text-xs"
-          >
+          <Badge className={cn("bg-slate-500", isOnline && "bg-sky-700")}>
             {isOnline ? "Online" : "Offline"}
           </Badge>
         );
@@ -166,9 +160,7 @@ export const createColumns = ({
         const attendeeCount = row.original.attendees?.length || 0;
         return (
           <div className="text-sm font-medium text-start">
-            <span>
-              {attendeeCount}
-            </span>
+            <span>{attendeeCount}</span>
           </div>
         );
       },
@@ -176,26 +168,24 @@ export const createColumns = ({
       sortingFn: "alphanumeric",
       sortDescFirst: true, // Show highest attendance first by default
     },
-    {
-      accessorKey: "waitingCount",
-      header: ({ column }) => (
-        <SortableHeader column={column}>Waiting</SortableHeader>
-      ),
-      accessorFn: (row) => row.original.waitingCount || 0,
-      cell: ({ row }) => {
-        const waitingCount = row.original.waitingCount || 0;
-        return (
-          <div className="text-sm font-medium text-start">
-            <span >
-              {waitingCount}
-            </span>
-          </div>
-        );
-      },
-      enableSorting: true,
-      sortingFn: "alphanumeric",
-      sortDescFirst: true, // Show highest attendance first by default
-    },
+    // {
+    //   accessorKey: "waitingCount",
+    //   header: ({ column }) => (
+    //     <SortableHeader column={column}>Waiting</SortableHeader>
+    //   ),
+    //   accessorFn: (row) => row.original?.waitingCount || 0,
+    //   cell: ({ row }) => {
+    //     const waitingCount = row.original?.waitingCount || 0;
+    //     return (
+    //       <div className="text-sm font-medium text-start">
+    //         <span>{waitingCount}</span>
+    //       </div>
+    //     );
+    //   },
+    //   enableSorting: true,
+    //   sortingFn: "alphanumeric",
+    //   sortDescFirst: true, // Show highest attendance first by default
+    // },
     {
       accessorKey: "status",
       id: "status", // Explicitly set the ID
@@ -207,22 +197,18 @@ export const createColumns = ({
         const getStatusColor = (status: EventStatus) => {
           switch (status) {
             case "DRAFT":
-              return "secondary";
+              return "bg-slate-500";
             case "UPCOMING":
-              return "default";
+              return "bg-brand text-white";
             case "WAITING":
-              return "outline";
+              return "bg-secondary-button text-white";
             case "CLOSED":
-              return "destructive";
+              return "bg-red-500 text-white";
             default:
               return "secondary";
           }
         };
-        return (
-          <Badge variant={getStatusColor(status)} className="text-xs">
-            {status}
-          </Badge>
-        );
+        return <Badge className={getStatusColor(status)}>{status}</Badge>;
       },
       // Fixed filterFn for faceted filter (expects array of selected values)
       filterFn: (row, id, value) => {
@@ -286,35 +272,44 @@ export const createColumns = ({
     // },
     {
       id: "actions",
-      header: "Actions",
+      header: "",
       cell: ({ row }) => {
         const event = row.original;
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem asChild>
-                <Link
-                  href={`/admin/events/${row.original.id}`}
-                  className="flex items-center"
-                >
-                  Edit
-                </Link>
-              </DropdownMenuItem>
+          <div className="flex items-center space-x-2 justify-end">
+            <Link
+              href={`/preview/events/${event?.slug}`}
+              target="_blank"
+              className="hover:text-brand"
+            >
+              <Eye className="h-4 w-4 text-sm text-gray-500" />
+            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <MoreHorizontal />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem asChild>
+                  <Link
+                    href={`/admin/events/${row.original.id}`}
+                    className="flex items-center"
+                  >
+                    Edit
+                  </Link>
+                </DropdownMenuItem>
 
-              {/* <DropdownMenuItem
+                {/* <DropdownMenuItem
                 className="text-red-600 focus:text-red-600"
                 onClick={() => onDelete(event)}
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete Event
               </DropdownMenuItem> */}
-            </DropdownMenuContent>
-          </DropdownMenu>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         );
       },
       enableSorting: false, // Actions column doesn't need sorting

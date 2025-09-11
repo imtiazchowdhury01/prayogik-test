@@ -35,17 +35,17 @@ export default function DashboardLayout({
     return <Loading />;
   }
 
-  // Safely handle session and avoid accessing undefined session properties
+  // Safely handle session and avoid accessing undefined session properties  todo: (bg-[#F2F5FA])
   if (status === "authenticated" && session) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="h-[80px] md:pl-56 fixed inset-y-0 w-full z-50">
           <Navbar session={session} status={status} />
         </div>
-        <div className="hidden md:flex h-full w-56 flex-col fixed inset-y-0 z-50">
+        <div className="hidden md:flex h-full w-64 flex-col fixed inset-y-0 z-50">
           <Sidebar />
         </div>
-        <main className="md:pl-56 pt-[80px] h-full">
+        <main className="md:pl-64 pt-[80px] h-full">
           <div className="w-full h-full  p-4 md:px-8">
             {/* {session?.user?.info?.teacherProfile?.teacherStatus ===
               "PENDING" && (

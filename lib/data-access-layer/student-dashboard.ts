@@ -111,7 +111,7 @@ export async function getDashboardMetricsWithTrendsDBCall(userId: string) {
       },
     });
 
-    console.log("purchasedCoursesCount result:", purchasedCoursesCount);
+    // console.log("purchasedCoursesCount result:", purchasedCoursesCount);
     return {
       purchasedCourses: purchasedCoursesCount,
       subscriptionCourses: subscriptionCoursesCount,

@@ -4,7 +4,7 @@
 
 import { Dialog, DialogPanel } from "@headlessui/react";
 import Link from "next/link";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -12,13 +12,9 @@ import { signOut, useSession } from "next-auth/react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { CiSearch } from "react-icons/ci";
 import { useRouter } from "next/navigation";
-import { useDebounce } from "@/hooks/use-debounce";
-import { generateSlug, slugToReadable } from "@/lib/generateSlug";
+import { slugToReadable } from "@/lib/generateSlug";
 import { SubscriptionCheck } from "./home/SubscriptionCheck";
-import OfferHeader from "./OfferHeader";
-import { clientApi } from "@/lib/utils/openai/client";
 import UserProfileMenus from "@/components/userProfileMenus";
-import { Badge } from "@/components/ui/badge";
 
 const navigation = [
   { name: "কোর্স সমূহ", href: "/courses" },
@@ -32,22 +28,10 @@ const navigation = [
 ];
 
 export default function Header() {
+  const { data: session, status } = useSession();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState<boolean>(false);
   const searchParams = useSearchParams();
   const searchParamValue = searchParams.get("search") || "";
-
-  const [subscription, setSubscription] = useState(null);
-
-  useEffect(() => {
-    (async () => {
-      const response = await clientApi.getSession();
-      if (response.status === 200) {
-        const sub =
-          response.body?.user?.info?.studentProfile?.subscription || null;
-        setSubscription(sub);
-      }
-    })();
-  }, []);
 
   const [searchTerm, setSearchTerm] = useState<string>(
     slugToReadable(searchParamValue)
@@ -55,8 +39,6 @@ export default function Header() {
 
   const path = usePathname();
   const router = useRouter();
-
-  const { data: session, status } = useSession();
 
   const searchHandler = (e) => {
     e.preventDefault();
@@ -163,11 +145,7 @@ export default function Header() {
 
             {status === "authenticated" && session?.user?.id ? (
               <>
-                <UserProfileMenus
-                  session={session}
-                  subscription={subscription}
-                  pathName={path}
-                />
+                <UserProfileMenus session={session} pathName={path} />
               </>
             ) : (
               <>

@@ -110,6 +110,7 @@ export const updateEvent = async ({
       { route: "/home" },
       { route: "/events" },
       { route: "/admin/events" },
+      { route: "/preview/events/" + values.slug },
     ]);
 
     if (toggleEdit) {

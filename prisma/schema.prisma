@@ -144,6 +144,7 @@ model User {
   country                String?
   zipCode                String?
   accountStatus          UserAccountStatus @default(ACTIVE)
+  eventRegistrations EventRegistration[]
 
   facebook String?
   linkedin String?
@@ -157,7 +158,6 @@ model User {
 
   createdAt          DateTime?           @default(now())
   updatedAt          DateTime?           @updatedAt
-  eventRegistrations EventRegistration[]
 }
 
 // Represents a teacher's profile with additional details.
@@ -195,6 +195,7 @@ model TeacherProfile {
 
   createdAt DateTime? @default(now())
   updatedAt DateTime? @updatedAt
+
 }
 
 // Represents a rank for teachers based on number of sales.
@@ -268,6 +269,13 @@ model Course {
 
   createdAt DateTime? @default(now())
   updatedAt DateTime? @updatedAt
+
+  @@index([isPublished])
+  @@index([isUnderSubscription, isPublished])
+  // For teacher course queries
+  @@index([teacherProfileId, isPublished])
+  // For category-based queries
+  @@index([categoryId, isPublished])
 }
 
 model LiveSchedule {
@@ -301,6 +309,9 @@ model Category {
 
   createdAt DateTime? @default(now())
   updatedAt DateTime? @updatedAt
+
+  @@index([parentCategoryId])
+  @@index([isChild])
 }
 
 // Represents a lesson of a course.
@@ -324,6 +335,12 @@ model Lesson {
 
   createdAt DateTime? @default(now())
   updatedAt DateTime? @updatedAt
+
+  // CRITICAL: For finding published lessons by course and ordering
+  @@index([courseId, isPublished])
+  @@index([courseId, isPublished, position])
+  // For next lesson slug calculation
+  @@index([courseId, isPublished, position, id])
 }
 
 model VdocipherUploads {
@@ -350,6 +367,10 @@ model Rating {
   studentProfile   StudentProfile @relation("UserRatings", fields: [studentProfileId], references: [id])
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
+
+  @@index([courseId])
+  @@index([studentProfileId])
+  @@index([courseId, value]) // For rating aggregations
 }
 
 // Represents a review written by a student for a course.
@@ -362,6 +383,10 @@ model Review {
   studentProfile   StudentProfile @relation("UserReviews", fields: [studentProfileId], references: [id])
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
+
+  @@index([courseId])
+  @@index([studentProfileId])
+  @@index([courseId, createdAt]) // For recent reviews
 }
 
 // Represents a comment made by a student on a course.
@@ -471,6 +496,19 @@ model Purchase {
 
   createdAt DateTime? @default(now())
   updatedAt DateTime? @updatedAt
+
+  // CRITICAL: For student purchase history
+  @@index([studentProfileId])
+  @@index([studentProfileId, purchaseType])
+  // For teacher revenue queries
+  @@index([teacherProfileId])
+  @@index([teacherProfileId, createdAt])
+  // For course purchase tracking
+  @@index([courseId])
+  // For subscription purchase tracking
+  @@index([subscriptionPlanId])
+  // For date-based queries
+  @@index([createdAt])
 }
 
 // TeacherRevenue - This table records earnings for teachers per transaction basis.
@@ -485,7 +523,13 @@ model TeacherRevenue {
   amount           Float          @default(0.0)
   month            Int
   year             Int
+
   createdAt        DateTime       @default(now())
+
+  @@index([teacherProfileId])
+  @@index([teacherProfileId, month, year]) // For monthly revenue queries
+  @@index([purchaseId])
+  @@index([month, year]) // For platform revenue analytics
 }
 
 // TeacherMonthlyEarnings - Aggregated Earnings Per Month
@@ -561,6 +605,11 @@ model Progress {
   updatedAt        DateTime       @updatedAt
 
   @@unique([studentProfileId, lessonId], name: "studentProfileId_lessonId")
+  // CRITICAL: For progress calculations and lesson completion queries
+  @@index([studentProfileId])
+  @@index([lessonId])
+  // For finding completed lessons by student and course
+  @@index([studentProfileId, isCompleted])
 }
 
 // Represents a course purchase history by student
@@ -635,6 +684,12 @@ model Subscription {
 
   createdAt DateTime? @default(now())
   updatedAt DateTime? @updatedAt
+
+  // CRITICAL: For active subscription checks
+  @@index([studentProfileId, status])
+  @@index([status, expiresAt])
+  // For subscription plan queries
+  @@index([subscriptionPlanId, status])
 }
 
 model EnrolledStudents {
@@ -643,6 +698,12 @@ model EnrolledStudents {
   studentProfileId String         @db.ObjectId
   studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id])
   course           Course         @relation(fields: [courseId], references: [id])
+
+  // CRITICAL: For finding student's enrolled courses
+  @@index([studentProfileId])
+  @@index([courseId])
+  // Compound index for enrollment checks
+  @@index([studentProfileId, courseId])
 }
 
 // Represents a payment method for teachers.

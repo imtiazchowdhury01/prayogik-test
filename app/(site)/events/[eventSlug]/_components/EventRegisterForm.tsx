@@ -1,13 +1,9 @@
 "use client";
-import { useForm } from "react-hook-form";
 import { addEventAttendee } from "@/lib/event/event-registration";
 import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button, buttonVariants } from "@/components/ui/button";
 import { useEffect, useState } from "react";
-import { Loader, CheckCircle } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 import { getEventRegisterUserByIdDBCall } from "@/lib/data-access-layer/event-registration";
 import { getUserDetails } from "@/actions/get-user-details";
 import { clearServerCart, setServerCart } from "@/lib/actions/cart-cookie";
@@ -18,6 +14,7 @@ import {
 } from "@/lib/utils/storage/checkoutEmailStorage";
 import { useRouter } from "next/navigation";
 import { LeadForm } from "@/components/common/LeadForm";
+import { getEventLeadByEmailDBCall } from "@/lib/data-access-layer/leads";
 
 interface RegistrationFormData {
   name: string;
@@ -30,14 +27,15 @@ interface UserInfo {
   id: string;
   name: string;
   email: string;
-  phoneNumber?: string;
+  facebook?: string;
+  linkedin?: string;
   profession?: string;
+  phoneNumber?: string;
 }
 
 const EventRegisterForm = ({
   eventId,
   eventType,
-  eventPrice,
   isPreviewMode = false,
   eventStatus,
 }: {
@@ -54,24 +52,8 @@ const EventRegisterForm = ({
   const [isUserRegistered, setIsUserRegistered] = useState<boolean>(false);
   const [registrationSuccess, setRegistrationSuccess] =
     useState<boolean>(false);
-  const [emailCheckLoading, setEmailCheckLoading] = useState<boolean>(false);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [userInfoLoading, setUserInfoLoading] = useState<boolean>(false);
-
-  const {
-    register,
-    handleSubmit,
-    reset,
-    setValue,
-    formState: { errors, isSubmitting },
-  } = useForm<RegistrationFormData>({
-    defaultValues: {
-      name: "",
-      email: "",
-      mobile: "",
-      profession: "",
-    },
-  });
 
   // Function to fetch user details
   const fetchUserDetails = async (userId: string) => {
@@ -80,12 +62,6 @@ const EventRegisterForm = ({
       const result = await getUserDetails(userId);
       if (result.info && !result.error) {
         setUserInfo(result.info);
-
-        // Set form values with user info
-        setValue("name", result.info.name || "");
-        setValue("email", result.info.email || "");
-        setValue("mobile", result.info.phoneNumber || "");
-        setValue("profession", result.info.profession || "");
       } else {
         console.error("Error fetching user details:", result.error);
       }
@@ -105,30 +81,49 @@ const EventRegisterForm = ({
 
   // Check registration status for logged-in users
   useEffect(() => {
-    console.log("from use effect");
     const checkRegistrationStatus = async () => {
-      if (data?.user?.id && eventId) {
-        try {
+      // Early return if required data is missing
+      if (!data?.user?.id || !eventId || !data?.user?.email) {
+        setEventRegisterStatusLoading(false);
+        return;
+      }
+
+      try {
+        let isRegistered = false;
+
+        if (eventStatus === EventStatus.WAITING) {
+          // For waiting events, check by email
+
+          const waitingLead = await getEventLeadByEmailDBCall(
+            data?.user?.email,
+            eventId
+          );
+          isRegistered = !!waitingLead;
+          console.log("From If");
+        } else {
+          // For other events, check by user ID
           const registrationStatus = await getEventRegisterUserByIdDBCall(
             data.user.id,
             eventId
           );
-          console.log(registrationStatus, "status");
-          setIsUserRegistered(!!registrationStatus);
-        } catch (error) {
-          console.error("Error checking registration status:", error);
-        } finally {
-          setEventRegisterStatusLoading(false);
+          isRegistered = !!registrationStatus;
+          console.log("from else", isRegistered);
         }
-      } else {
+
+        setIsUserRegistered(isRegistered);
+      } catch (error) {
+        console.error("Error checking registration status:", error);
+        setIsUserRegistered(false); // Set a default state on error
+      } finally {
         setEventRegisterStatusLoading(false);
       }
     };
 
     checkRegistrationStatus();
-  }, [data?.user?.id, eventId]);
+  }, [data?.user?.id, eventId, userInfo?.email, eventStatus]);
 
-  const onSubmit = async (formData: RegistrationFormData) => {
+  const onSubmit = async (formData: any) => {
+    
     if (eventType === EventType.PAID) {
       await clearServerCart();
       await setServerCart({
@@ -143,8 +138,7 @@ const EventRegisterForm = ({
       // ✅ Store user details for checkout
       CheckoutStorage.saveEmail(userInfo?.email || formData.email);
       UserStorage.saveName(userInfo?.name || formData.name);
-      UserStorage.savePhone(formData.mobile);
-      UserStorage.saveProfession(formData.profession);
+      UserStorage.savePhone(formData.phone);
 
       router.push("/checkout");
     } else {
@@ -153,9 +147,10 @@ const EventRegisterForm = ({
         const registrationData = {
           name: userInfo?.name || formData.name,
           email: userInfo?.email || formData.email,
-          mobile: formData.mobile,
-          profession: formData.profession,
+          mobile: formData.phone,
           eventId,
+          facebook: formData.facebookProfile,
+          linkedin: formData.linkedin
         };
 
         const result = await addEventAttendee(registrationData);
@@ -164,7 +159,6 @@ const EventRegisterForm = ({
           toast.success(result.message);
           setRegistrationSuccess(true);
           setIsUserRegistered(true);
-          reset();
         } else {
           toast.error(result.message);
         }
@@ -179,18 +173,22 @@ const EventRegisterForm = ({
     return (
       <div className="bg-green-100 border border-green-300 p-4 rounded-[10px] mt-4">
         <p className="text-green-800 font-semibold text-center">
-          আপনি ইতিমধ্যেই এই ইভেন্টে রেজিস্ট্রেশন করেছেন।
+          আপনি ইতিমধ্যেই এই ইভেন্টে রেজিস্ট্রেশন করেছেন। <br /> অনুগ্রহ করে
+          ইভেন্টের বিস্তারিত জানার জন্য আপনার ইমেইল চেক করুন।
         </p>
       </div>
     );
   }
+
   return (
     <div>
       <div className="bg-white rounded-lg w-full">
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900">
-              ইভেন্ট রেজিস্ট্রেশন
+              {eventStatus === EventStatus.WAITING
+                ? "ওয়েটিং লিস্টে রেজিস্ট্রেশন করুন"
+                : "ইভেন্ট রেজিস্ট্রেশন"}
             </h2>
           </div>
 
@@ -211,188 +209,18 @@ const EventRegisterForm = ({
             </div>
           )}
 
-          {eventStatus === EventStatus.WAITING ? (
-            <LeadForm
-              type={"EVENT"}
-              courseId={""}
-              eventId={eventId}
-              certificationId={""}
-              status={"WAITING"}
-              isPreviewMode={isPreviewMode}
-            />
-          ) : (
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              {/* Only show name field if user is not logged in */}
-              {!userInfo?.name && (
-                <div>
-                  <Label
-                    htmlFor="name"
-                    className="text-sm font-medium text-gray-700 mb-1 block"
-                  >
-                    আপনার নাম
-                  </Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    placeholder="আপনার নাম লিখুন"
-                    {...register("name", { required: "নাম প্রয়োজন" })}
-                    className="w-full"
-                    disabled={isSubmitting || isPreviewMode}
-                  />
-                  {errors.name && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.name.message}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {/* Show logged in user's name (read-only) */}
-              {userInfo?.name && (
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-1 block">
-                    আপনার নাম
-                  </Label>
-                  <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700">
-                    {userInfo.name}
-                  </div>
-                </div>
-              )}
-
-              {/* Only show email field if user is not logged in */}
-              {!userInfo?.email && (
-                <div>
-                  <Label
-                    htmlFor="email"
-                    className="text-sm font-medium text-gray-700 mb-1 block"
-                  >
-                    ইমেইল
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="ইমেইল লিখুন"
-                      {...register("email", {
-                        required: "ইমেইল প্রয়োজন",
-                        pattern: {
-                          value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                          message: "সঠিক ইমেইল ঠিকানা লিখুন",
-                        },
-                      })}
-                      className="w-full"
-                      disabled={isSubmitting || isPreviewMode}
-                    />
-                    {emailCheckLoading && (
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                        <Loader
-                          size={16}
-                          className="animate-spin text-gray-400"
-                        />
-                      </div>
-                    )}
-                  </div>
-                  {errors.email && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.email.message}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {/* Show logged in user's email (read-only) */}
-              {userInfo?.email && (
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-1 block">
-                    ইমেইল
-                  </Label>
-                  <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700">
-                    {userInfo.email}
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <Label
-                  htmlFor="mobile"
-                  className="text-sm font-medium text-gray-700 mb-1 block"
-                >
-                  মোবাইল নাম্বার
-                </Label>
-                <Input
-                  id="mobile"
-                  type="tel"
-                  placeholder="নাম্বার লিখুন"
-                  {...register("mobile", {
-                    required: "মোবাইল নাম্বার প্রয়োজন",
-                    pattern: {
-                      value: /^[0-9]{11}$/,
-                      message: "১১ সংখ্যার মোবাইল নাম্বার লিখুন",
-                    },
-                  })}
-                  className="w-full"
-                  disabled={isSubmitting || isPreviewMode}
-                />
-                {errors.mobile && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.mobile.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <Label
-                  htmlFor="profession"
-                  className="text-sm font-medium text-gray-700 mb-1 block"
-                >
-                  আপনার পেশা
-                </Label>
-                <Input
-                  id="profession"
-                  type="text"
-                  placeholder="পেশা লিখুন"
-                  {...register("profession", { required: "পেশা প্রয়োজন" })}
-                  className="w-full"
-                  disabled={isSubmitting || isPreviewMode}
-                />
-                {errors.profession && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.profession.message}
-                  </p>
-                )}
-              </div>
-
-              <Button
-                type="submit"
-                disabled={
-                  isPreviewMode ||
-                  isSubmitting ||
-                  eventRegisterStatusLoading ||
-                  isUserRegistered ||
-                  emailCheckLoading ||
-                  userInfoLoading
-                }
-                className={`w-full font-medium py-3 rounded-md transition-colors disabled:opacity-50 ${
-                  isUserRegistered
-                    ? buttonVariants({
-                        variant: "disabled",
-                      })
-                    : "bg-orange-500 hover:bg-orange-600 text-white"
-                }`}
-              >
-                {eventRegisterStatusLoading ||
-                emailCheckLoading ||
-                isSubmitting ||
-                userInfoLoading ? (
-                  <Loader size={16} className="animate-spin" />
-                ) : isUserRegistered ? (
-                  "রেজিস্ট্রার্ড"
-                ) : (
-                  "রেজিস্ট্রেশন করুন"
-                )}
-              </Button>
-            </form>
-          )}
+          <LeadForm
+            userInfo={userInfo || undefined}
+            type={"EVENT"}
+            courseId={""}
+            eventId={eventId}
+            certificationId={""}
+            status={"WAITING"}
+            isPreviewMode={isPreviewMode}
+            submitHandler={onSubmit}
+            isUserRegistered={isUserRegistered}
+            userInfoLoading={userInfoLoading}
+          />
         </div>
       </div>
     </div>

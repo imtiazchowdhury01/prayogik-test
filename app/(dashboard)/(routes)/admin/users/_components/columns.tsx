@@ -76,20 +76,20 @@ export const columns = [
     // enableSorting: false,
     // enableHiding: false,
   },
-  {
-    accessorKey: "role",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Role" />
-    ),
-    cell: ({ row }) => (
-      <div>
-        <span>{row.getValue("role")}</span>
-      </div>
-    ),
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
-    },
-  },
+  // {
+  //   accessorKey: "role",
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader column={column} title="Role" />
+  //   ),
+  //   cell: ({ row }) => (
+  //     <div>
+  //       <span>{row.getValue("role")}</span>
+  //     </div>
+  //   ),
+  //   filterFn: (row, id, value) => {
+  //     return value.includes(row.getValue(id));
+  //   },
+  // },
   {
     accessorKey: "isAdmin",
     header: ({ column }) => null,
@@ -186,7 +186,9 @@ export const columns = [
       // console.log(row.original);
       return (
         <div>
-        {subscriptionStatus === "ACTIVE" ?  row.getValue("subscription") ?? "N/A" : "N/A"}
+          {subscriptionStatus === "ACTIVE"
+            ? row.getValue("subscription") ?? "N/A"
+            : "N/A"}
         </div>
       );
     },

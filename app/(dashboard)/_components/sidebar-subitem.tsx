@@ -33,7 +33,7 @@ export const SidebarSubitem = ({
       className={cn(
         "w-full flex items-center gap-x-2 text-slate-500 text-sm font-[500] pl-6 transition-all hover:text-slate-600 hover:bg-slate-300/20",
         isActive &&
-          "text-primary-700 hover:text-primary-700 bg-primary-50 hover:bg-[#F1F5F9]"
+          "text-primary-700 rounded-md hover:text-primary-700 bg-brand/10 hover:bg-[#F1F5F9]"
       )}
     >
       <div className={`flex items-center gap-x-2 py-2`}>
@@ -43,12 +43,6 @@ export const SidebarSubitem = ({
         />
         <span className={`${isParent ? "text-base" : "text-sm"}`}>{label}</span>
       </div>
-      <div
-        className={cn(
-          "ml-auto opacity-0 border-2 border-primary-700 h-full transition-all",
-          isActive && "opacity-100"
-        )}
-      />
     </Link>
   );
 };

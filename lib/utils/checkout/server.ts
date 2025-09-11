@@ -730,7 +730,18 @@ async function handleEventPurchase(
         },
       },
     });
-
+    // create a entre in lead table
+    await db.lead.create({
+      data: {
+        email: payload.email,
+        name: payload.name,
+        eventId: payload.eventId,
+        linkedin: payload.linkedin,
+        facebookProfile: payload.facebook,
+        phone: payload.phoneNumber,
+        status: "INTERSTED",
+      },
+    });
     // Create trial purchase record
     const purchase = await db.purchase.create({
       data: {

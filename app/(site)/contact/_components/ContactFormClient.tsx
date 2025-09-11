@@ -584,7 +584,7 @@ export default function ContactFormClient({
                             <Textarea
                               placeholder="এখানে লিখুন"
                               {...field}
-                              className="border-[1px] border-greyscale-300 h-10  outline-none focus-visible:ring-0 focus-visible:ring-offset-0 mt-0 focus:ring-brand focus:border-brand"
+                              className="border-[1px] border-greyscale-300  outline-none focus-visible:ring-0 focus-visible:ring-offset-0 mt-0 focus:ring-brand focus:border-brand"
                             />
                           </FormControl>
                           <FormMessage className="font-secondary" />

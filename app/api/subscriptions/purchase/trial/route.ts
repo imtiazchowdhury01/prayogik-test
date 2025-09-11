@@ -15,6 +15,8 @@ interface TrialCallbackPayload {
   userInfo?: {
     name?: string;
     phoneNumber?: string;
+    linkedin?: string;
+    facebook?: string;
   };
 }
 
@@ -234,6 +236,8 @@ export async function POST(request: NextRequest) {
             email: payload.email,
             password: hashedPassword,
             phoneNumber: payload.userInfo?.phoneNumber,
+            facebook: payload.userInfo?.facebook,
+            linkedin: payload.userInfo?.linkedin,
             role: "STUDENT",
             emailVerified: true,
             accountStatus: "ACTIVE",
@@ -295,7 +299,7 @@ export async function POST(request: NextRequest) {
           from: `"প্রায়োগিক" <${process.env.SMTP_USERNAME}>`,
           to: payload?.email,
           subject:
-            "প্রয়োগিকে স্বাগতম! আপনার পেমেন্ট সফল হয়েছে এবং অ্যাকাউন্ট তৈরি হয়েছে।",
+            "প্রয়োগিকে স্বাগতম! আপনার অ্যাকাউন্ট তৈরি হয়েছে।",
           html: sendSubscriptionCredential(
             payload.email,
             username,

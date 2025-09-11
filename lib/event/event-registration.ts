@@ -7,8 +7,9 @@ interface EventRegistrationData {
   name: string;
   email: string;
   mobile?: string;
-  profession: string;
   eventId: string;
+  facebook?: string;
+  linkedin?: string;
 }
 
 interface RegistrationResult {
@@ -40,6 +41,8 @@ async function createUserWithTrialSubscription(
       userInfo: {
         name: registrationData.name,
         phoneNumber: registrationData.mobile,
+        facebook: registrationData.facebook,
+        linkedin: registrationData.linkedin,
       },
     };
 
@@ -82,10 +85,10 @@ const addEventAttendee = async (
   registrationData: EventRegistrationData
 ): Promise<RegistrationResult> => {
   try {
-    const { name, email, mobile, profession, eventId } = registrationData;
+    const { name, email, mobile, eventId } = registrationData;
 
     // Validate required fields
-    if (!name || !email || !eventId || !mobile || !profession) {
+    if (!name || !email || !eventId || !mobile) {
       return {
         success: false,
         message: "সব তথ্য পূরণ করা আবশ্যক",
@@ -181,18 +184,23 @@ const addEventAttendee = async (
       // Update existing user's missing information
       const userUpdates: {
         phoneNumber?: string;
-        profession?: string;
+        facebook?: string;
+        linkedin?: string;
         name?: string;
       } = {};
 
       if (!user.phoneNumber && mobile) {
         userUpdates.phoneNumber = mobile;
       }
-      if (!user.profession && profession) {
-        userUpdates.profession = profession;
-      }
+
       if (!user.name || user.name.trim() === "") {
         userUpdates.name = name;
+      }
+      if (!user.facebook || user.facebook.trim() === "") {
+        userUpdates.facebook = registrationData.facebook;
+      }
+      if (!user.linkedin || user.linkedin.trim() === "") {
+        userUpdates.linkedin = registrationData.linkedin;
       }
 
       // Update user if needed
@@ -234,6 +242,18 @@ const addEventAttendee = async (
       },
     });
 
+    // create a entre in lead table
+    await db.lead.create({
+      data: {
+        email,
+        name,
+        eventId,
+        linkedin: registrationData.linkedin,
+        facebookProfile: registrationData.facebook,
+        phone: registrationData.mobile,
+        status: "INTERSTED",
+      },
+    });
     // Send event registration confirmation email (separate from trial subscription email)
     try {
       const transporter = nodemailer.createTransport({

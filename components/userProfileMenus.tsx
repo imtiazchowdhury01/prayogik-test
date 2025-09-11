@@ -29,8 +29,24 @@ import { cn } from "@/lib/utils";
 import { formatDateToBangla } from "@/lib/utils/stringUtils";
 import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
+import { useEffect, useState } from "react";
+import { clientApi } from "@/lib/utils/openai/client";
 
-export default function UserProfileMenus({ session, subscription, pathName }) {
+export default function UserProfileMenus({ session, pathName }) {
+  const [subscription, setSubscription] = useState<any>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const SubscriptionResponse = await clientApi.getUserSubscriptions({});
+        setSubscription(SubscriptionResponse?.body ?? null);
+      } catch (error) {
+        console.error("Failed to fetch subscription:", error);
+        setSubscription(null);
+      }
+    })();
+  }, [session]);
+
   const router = useRouter();
 
   // Function to format display name based on word count
@@ -56,9 +72,9 @@ export default function UserProfileMenus({ session, subscription, pathName }) {
   const isSubscribed = subscription?.status === "ACTIVE";
   const isTrial = subscription?.isTrial;
   const isExpired = subscription?.status === "EXPIRED";
-
   const subscriptionName =
     subscription?.subscriptionPlan?.name || "সাবস্ক্রিপশন";
+
 
   // Prevent menu from closing when clicking on text elements
   const handleTextClick = (e) => {
@@ -161,15 +177,22 @@ export default function UserProfileMenus({ session, subscription, pathName }) {
                     ) : null}
 
                     {/* Show upgrade link for trial OR renew link for non-trial expired */}
-                    <Link href="/prime">
-                      <span className="bg-transparent text-brand underline text-xs ml-4 cursor-pointer mt-1">
-                        {isTrial
-                          ? "প্ল্যান আপগ্রেড করুন"
-                          : isExpired && !subscription.type === "TRIAL"
-                          ? "রিনিউ করুন"
-                          : "প্ল্যান আপগ্রেড করুন"}
-                      </span>
-                    </Link>
+                    {(() => {
+                      const label = isTrial
+                        ? "প্ল্যান আপগ্রেড করুন"
+                        : isExpired &&
+                          subscription?.subscriptionPlan?.type === "YEARLY"
+                        ? "রিনিউ করুন"
+                        : "";
+
+                      return label ? (
+                        <Link href="/prime">
+                          <span className="bg-transparent text-brand underline text-xs ml-4 cursor-pointer mt-1">
+                            {label}
+                          </span>
+                        </Link>
+                      ) : null;
+                    })()}
                   </>
                 )}
 
@@ -211,7 +234,16 @@ export default function UserProfileMenus({ session, subscription, pathName }) {
             onSelect={() => handleNavigation("/profile")}
           >
             <User size={16} className="text-[#408B85]" />
-            <span>প্রোফাইল</span>
+            <span>
+              প্রোফাইল{" "}
+              {`(${
+                session.user.role === "ADMIN"
+                  ? "অ্যাডমিন"
+                  : session.user.role === "TEACHER"
+                  ? "প্রশিক্ষক"
+                  : "শিক্ষার্থী"
+              })`}
+            </span>
           </MenubarItem>
 
           <MenubarSeparator />

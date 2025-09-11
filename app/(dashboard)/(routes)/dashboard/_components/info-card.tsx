@@ -1,35 +1,41 @@
 import { LucideIcon } from "lucide-react";
-import { IconBadge } from "@/components/icon-badge";
 import { cn } from "@/lib/utils";
-import { ReactNode } from "react";
+import { memo } from "react";
 
 interface InfoCardProps {
   variant?: "default" | "success";
   label: string;
-  icon: LucideIcon;
-  className: string;
-  countComponent: ReactNode; // Changed from numberOfItems to countComponent
+  icon: any;
+  className?: string;
+  count: string;
 }
 
-export const InfoCard = ({
-  variant,
-  icon: Icon,
-  label,
-  className,
-  countComponent,
-}: InfoCardProps) => {
-  return (
-    <div
-      className={cn(
-        "border rounded-md flex items-center gap-x-2 p-3",
-        className
-      )}
-    >
-      <IconBadge variant={variant} icon={Icon} />
-      <div>
-        <p className="font-medium">{label}</p>
-        {countComponent}
+// Memoize the component to prevent unnecessary re-renders
+export const InfoCard = memo(
+  ({ variant, icon: Icon, label, className, count }: InfoCardProps) => {
+    return (
+      <div
+        className={cn(
+          "rounded-md flex items-center gap-x-4 p-4 px-6",
+          className
+        )}
+      >
+        <div
+          className={` ${
+            variant === "success"
+              ? "bg-brand/10 text-brand"
+              : "bg-[#FFF5E6] text-orange-500"
+          } rounded-lg p-[0.85rem]`}
+        >
+          <Icon />
+        </div>
+        <div>
+          <p className="font-semibold text-base">{label}</p>
+          <p className="text-gray-500 text-xs pt-2">{count}</p>
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  }
+);
+
+InfoCard.displayName = "InfoCard";

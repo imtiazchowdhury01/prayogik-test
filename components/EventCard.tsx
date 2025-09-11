@@ -7,12 +7,27 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Calendar, Globe, MapPin } from "lucide-react";
-import eventImage1 from "@/public/images/event/event-1.webp";
 import { textLangChecker } from "@/lib/utils/textLangChecker";
 import { getPlainTextFromHtml } from "@/lib/convertNumberToBangla";
 import Link from "next/link";
 import { buttonVariants } from "./ui/button";
 import { formatEventTime } from "@/lib/utils/formatLiveCourseTime";
+import { EventStatus } from "@prisma/client";
+
+const badgeStyles = (status: string) => {
+  switch (status) {
+    case "DRAFT":
+      return { className: "bg-slate-500 text-white", text: "ড্রাফট" };
+    case "UPCOMING":
+      return { className: "bg-brand text-white", text: "রেজিস্ট্রেশন চলছে" };
+    case "WAITING":
+      return { className: "bg-secondary-button text-white", text: "শীঘ্রই আসছে" };
+    case "CLOSED":
+      return { className: "bg-red-500 text-white", text: "রেজিস্ট্রেশন বন্ধ" };
+    default:
+      return { className: "bg-gray-500", text: "" };
+  }
+};
 
 const EventCard = ({ event }: any) => {
   return (
@@ -23,18 +38,28 @@ const EventCard = ({ event }: any) => {
       <CardHeader className="p-0">
         <div
           className="relative w-full overflow-hidden rounded-t-lg"
-          style={{ aspectRatio: "16/9" }}
+          style={{ aspectRatio: "16 / 9" }}
         >
           <Image
-            src={event?.imageUrl ? event.imageUrl : eventImage1}
-            alt="event image"
+            src={event?.imageUrl || "/default-image.jpg"}
+            alt="course-card-image"
             fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-            loading="lazy"
-            placeholder="blur"
+            className="object-cover w-full h-full rounded-t-lg bg-[#F9FAFB]"
+            sizes="(max-width: 768px) 100vw, 400px"
+            priority
             quality={75}
           />
+
+          {/* Live course badge - positioned at top right */}
+          {event?.status && (
+            <div
+              className={`absolute top-2 left-2 rounded-md px-2 py-1 text-xs font-semibold ${
+                badgeStyles(event.status).className
+              }`}
+            >
+              {badgeStyles(event.status).text}
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent className="p-4 flex-1">
@@ -57,20 +82,32 @@ const EventCard = ({ event }: any) => {
             ) : (
               <Globe className="w-4 h-4 mr-1 text-gray-800" />
             )}
-            <span className="text-[14px]">{!event.isOnline ? event.location : "অনলাইন"}</span>
+            <span className="text-[14px]">
+              {!event.isOnline ? event.location : "অনলাইন"}
+            </span>
           </div>
         </div>
       </CardContent>
 
       <CardFooter className="p-4 pt-0 mt-auto">
-        <Link
-          href={`/events/${event.slug}`}
-          className={`w-full h-12 text-base mt-auto ${buttonVariants({
-            variant: "default",
-          })}`}
-        >
-          বিস্তারিত দেখুন
-        </Link>
+        {event?.status !== EventStatus.CLOSED ? (
+          <Link
+            href={`/events/${event.slug}`}
+            className={`w-full h-12 text-base mt-auto ${buttonVariants({
+              variant: "default",
+            })}`}
+          >
+            বিস্তারিত দেখুন
+          </Link>
+        ) : (
+          <div
+            className={`w-full h-12 text-base mt-auto ${buttonVariants({
+              variant: "disabled",
+            })}`}
+          >
+            বিস্তারিত দেখুন
+          </div>
+        )}
       </CardFooter>
     </Card>
   );

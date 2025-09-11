@@ -50,6 +50,7 @@ import { updateTeacherByAdmin } from "@/services/admin";
 import moment from "moment";
 import DBUserAvatar from "@/components/user-avatar";
 import { revalidatePage } from "@/actions/revalidatePage";
+import EducationForm from "@/components/EducationsInput";
 
 export default function TeacherForm({
   teacherId,
@@ -321,7 +322,7 @@ export default function TeacherForm({
                           // maxCount={3}
                         />
                       ) : field.name === "education" ? (
-                        <EducationsInput
+                        <EducationForm
                           initialEducations={field.value || []}
                           onUpdateEducations={(updatedEducations) => {
                             field.onChange(updatedEducations);

@@ -262,7 +262,9 @@ const TeacherIntro = ({ course }: TeacherIntroProps) => {
                     {/* Teacher profile image */}
                     <div className="flex-shrink-0">
                       <Image
-                        src={coTeacher?.user?.avatarUrl}
+                        src={
+                          coTeacher?.user?.avatarUrl || "/default-avatar.png"
+                        }
                         alt={`${coTeacher?.user?.name} profile`}
                         width={100}
                         height={100}
@@ -283,19 +285,19 @@ const TeacherIntro = ({ course }: TeacherIntroProps) => {
                       </div>
 
                       {/* Years of experience */}
-                      {coTeacher?.user?.teacherProfile?.yearsOfExperience && (
-                        <div className="mb-3">
-                          <p className="text-sm font-medium text-gray-600 flex items-center">
-                            <span className="inline-block w-2 h-2 bg-brand rounded-full mr-2"></span>
-                            {convertNumberToBangla(
-                              coTeacher?.user?.teacherProfile?.yearsOfExperience.split(
-                                " "
-                              )[0] || 1
-                            )}{" "}
-                            বছরের অভিজ্ঞতা সম্পন্ন
-                          </p>
-                        </div>
-                      )}
+                      <div className="mb-3">
+                        <p className="text-sm font-medium text-gray-600 flex items-center">
+                          <span className="inline-block w-2 h-2 bg-brand rounded-full mr-2"></span>
+                          {coTeacher?.user?.teacherProfile?.yearsOfExperience
+                            ? convertNumberToBangla(
+                                coTeacher?.user?.teacherProfile?.yearsOfExperience.split(
+                                  " "
+                                )[0] || 1
+                              )
+                            : convertNumberToBangla(0)}{" "}
+                          বছরের অভিজ্ঞতা সম্পন্ন
+                        </p>
+                      </div>
 
                       {/* Expertise badges */}
                       <div className="flex flex-wrap gap-2">

@@ -1,24 +1,25 @@
 export const dynamic = "force-dynamic";
-import { ServerInfoCards } from "./_components/server-components";
+import { ProgressAndCompletedSection } from "./_components/progress-and-completed-section";
 import DashboardSubscriptionMessage from "./_components/dashboard-subscription-message";
 import { Suspense } from "react";
 import {
   DashboardSummarySkeleton,
-  InfoCardSkeleton,
-} from "./_components/dashboard-loading";
-import { DashboardSummaryServer } from "./_components/DashboardSummaryServer";
+} from "./_components/dashboard-skeleton";
+import { SummaryAndCoursesWrapper } from "./_components/summary-and-courses-wrapper";
 
-export default async function Dashboard() {
+export default function Dashboard() {
   return (
     <div className="space-y-6">
+      {/* subscription message */}
+      <DashboardSubscriptionMessage />
+      <h2 className="text-3xl font-semibold">Dashboard</h2>
+      {/* complete and progress cards  */}
       <Suspense fallback={null}>
-        <DashboardSubscriptionMessage />
+        <ProgressAndCompletedSection />
       </Suspense>
-      <Suspense fallback={<InfoCardSkeleton />}>
-        <ServerInfoCards />
-      </Suspense>
+      {/* summary and course tab */}
       <Suspense fallback={<DashboardSummarySkeleton />}>
-        <DashboardSummaryServer />
+        <SummaryAndCoursesWrapper />
       </Suspense>
     </div>
   );

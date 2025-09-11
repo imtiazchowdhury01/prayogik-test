@@ -226,7 +226,6 @@ export const NavbarRoutes = ({ session, status }) => {
 
         <UserProfileMenus
           session={session}
-          subscription={session?.user?.info?.studentProfile?.subscription}
         />
       </div>
     </>

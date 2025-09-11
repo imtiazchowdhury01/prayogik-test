@@ -41,7 +41,19 @@ export const getCourseDBCall = cache(async (slug: string) => {
       },
       teacherProfile: {
         include: {
-          user: true,
+          user: {
+            omit: {
+              isAdmin: true,
+              isSuperAdmin: true,
+              emailVerificationToken: true,
+              emailVerified: true,
+              accountStatus: true,
+              resetToken: true,
+              role: true,
+              tokenUsed: true,
+              password: true,
+            },
+          },
         },
       },
       category: true,

@@ -107,7 +107,9 @@ const EventPreviewDetailsPage = async ({
 
           <EventOverview event={event} />
 
-          {!!event?.speakers?.length && <EventSpeakers speakers={event.speakers} />}
+          {!!event?.speakers?.length && (
+            <EventSpeakers speakers={event.speakers} />
+          )}
 
           {!!event?.faqs?.length && (
             <div className="my-20">
@@ -158,6 +160,7 @@ const EventPreviewDetailsPage = async ({
               eventType={event.type}
               eventPrice={100}
               isPreviewMode={true}
+              eventStatus={event.status || EventStatus.WAITING}
             />
           </div>
           {/* Location */}

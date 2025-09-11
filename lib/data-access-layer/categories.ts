@@ -1,7 +1,8 @@
+"use server"
 import { cache } from "react";
 import { db } from "../db";
 
-const getCategoriesDBCall = cache(async () => {
+const getCategoriesDBCall = async () => {
   try {
     const categories = await db.category.findMany({
       select: {
@@ -31,7 +32,7 @@ const getCategoriesDBCall = cache(async () => {
     console.error("Error categories db call:", error);
     return [];
   }
-});
+};
 
 const getCategoryCoursesDBCall = cache(
   async (slug: string, page: number = 1, pageSize: number = 24) => {

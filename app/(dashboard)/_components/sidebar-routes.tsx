@@ -25,6 +25,7 @@ import {
   Mailbox,
   Megaphone,
   BookOpenText,
+  LayoutGrid,
 } from "lucide-react";
 
 import {
@@ -39,14 +40,14 @@ import { SidebarSubitem } from "./sidebar-subitem";
 import { useEffect, useState } from "react";
 
 const studentRoutes = [
-  { icon: Layout, label: "Dashboard", href: "/dashboard", isParent: true },
+  { icon: LayoutGrid, label: "Dashboard", href: "/dashboard", isParent: true },
   // { icon: Compass, label: "Browse", href: "/search", isParent: true },
   { icon: User, label: "Profile", href: "/profile", isParent: true },
 ];
 
 const onboardRoute = [
   {
-    icon: Layout,
+    icon: LayoutGrid,
     label: "Dashboard",
     href: "/dashboard",
     isParent: true,

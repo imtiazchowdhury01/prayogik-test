@@ -63,7 +63,7 @@ const ContactInfo = () => {
   ];
 
   return (
-    <Card className="w-full md:w-1/2 md:p-6 lg:p-8 p-8 bg-white shadow border-gray-100">
+    <Card className="w-full md:w-1/2 md:p-6 lg:p-8 p-8 bg-white md:shadow-none md:border-0 border-gray-100 max-h-fit ">
       {/* Header */}
       <CardHeader className="mb-6 lg:mb-6 p-0">
         <CardTitle className="md:text-2xl lg:text-4xl text-2xl font-bold text-gray-800 lg:mb-2 mb-1">
@@ -112,7 +112,7 @@ const ContactInfo = () => {
         </div>
 
         {/* Follow section */}
-        <div className="border-t lg:pt-10 pt-6">
+        <div className="border-t lg:pt-10 pt-6 relative">
           <h3 className="font-semibold text-lg text-gray-800 mb-3">
             আমাদেরকে ফলো করুন
           </h3>

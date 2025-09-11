@@ -1,4 +1,3 @@
-
 import { db } from "../db";
 
 type purchaseDetails = {
@@ -17,6 +16,7 @@ type purchaseDetails = {
   isOnlineEvent: boolean;
   eventPrice: number | null;
   eventZoomLink: string | null;
+  eventstatus: string | null;
   trialStartDate: any;
   trialEndDate: any;
 };
@@ -29,7 +29,6 @@ const preparePurchaseDetails = async (
   subscriptionPlan: any = null,
   event: any = null
 ) => {
- 
   const purchaseDetails: purchaseDetails = {
     purchaseId: purchase?.id || null,
     purchaseType: payload.purchaseType,
@@ -46,6 +45,7 @@ const preparePurchaseDetails = async (
     isOnlineEvent: false,
     eventPrice: null,
     eventZoomLink: null,
+    eventstatus: null,
     trialStartDate: subscription?.startDate || subscription?.createdAt || null,
     trialEndDate: subscription?.expiresAt || null,
   };
@@ -84,6 +84,7 @@ const preparePurchaseDetails = async (
         isOnline: true,
         price: true,
         zoomLink: true,
+        status: true,
       },
     });
     if (eventData) {
@@ -94,6 +95,7 @@ const preparePurchaseDetails = async (
       purchaseDetails.isOnlineEvent = eventData.isOnline;
       purchaseDetails.eventPrice = eventData.price;
       purchaseDetails.eventZoomLink = eventData.zoomLink;
+      purchaseDetails.eventstatus = eventData.status;
     }
   } else if (event) {
     purchaseDetails.eventName = event.title;
@@ -103,6 +105,7 @@ const preparePurchaseDetails = async (
     purchaseDetails.isOnlineEvent = event.isOnline;
     purchaseDetails.eventPrice = event.price;
     purchaseDetails.eventZoomLink = event.zoomLink;
+    purchaseDetails.eventstatus = event.status;
   }
 
   return purchaseDetails;

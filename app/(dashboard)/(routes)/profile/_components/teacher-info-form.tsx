@@ -25,7 +25,7 @@ import { Loader } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { teacherFormSchema } from "./schema";
-import CertificationsInput from "@/app/(site)/prev-apply-for-teaching/_components/CertificationsInput";
+import CertificationsInput from "@/components/CertificationsInput";
 
 export const yearOfExperienceValues = [
   "০-১ বছর",

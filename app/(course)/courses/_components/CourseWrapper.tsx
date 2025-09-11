@@ -48,10 +48,18 @@ const CourseWrapper = ({ initalData, categories, pagination }: any) => {
       }
 
       const data = await response.json();
-
       if (data.courses) {
+        // Map through courses and set progress to null
+        const coursesWithNullProgress = data.courses.map((course: any) => ({
+          ...course,
+          progress: null,
+        }));
+
         // Append new courses to existing ones
-        setCourses((prevCourses: any[]) => [...prevCourses, ...data.courses]);
+        setCourses((prevCourses: any[]) => [
+          ...prevCourses,
+          ...coursesWithNullProgress,
+        ]);
         setPaginationData(data.pagination);
         setCurrentPage(nextPage);
       }
@@ -74,7 +82,6 @@ const CourseWrapper = ({ initalData, categories, pagination }: any) => {
       // Handle any default limit logic if needed
     }
   }, [sort, path, searchParams]);
-
 
   return (
     <section className="min-h-[50vh]">
@@ -115,9 +122,7 @@ const CourseWrapper = ({ initalData, categories, pagination }: any) => {
         <div className="w-full lg:w-3/4">
           {/* title for small screen */}
           <div className="block mb-3 xm:mb-0 lg:hidden">
-            <p className="text-black font-secondary font-semibold">
-               সকল কোর্স
-            </p>
+            <p className="text-black font-secondary font-semibold">সকল কোর্স</p>
           </div>
 
           <div className="flex items-center justify-between">
@@ -131,9 +136,7 @@ const CourseWrapper = ({ initalData, categories, pagination }: any) => {
               />
               {/* title for large screen */}
               <div className="hidden lg:block ">
-                <p className="text-black font-semibold text-2xl">
-                 সকল কোর্স
-                </p>
+                <p className="text-black font-semibold text-2xl">সকল কোর্স</p>
               </div>
             </div>
             <GeneralFilterSelect />

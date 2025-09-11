@@ -1,16 +1,14 @@
 // @ts-nocheck
-import { getCourses } from "@/actions/get-courses";
-import { CategoryPagination } from "@/app/(course)/courses/category/_components/CategoryPagination";
+
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { SearchInput } from "@/components/search-input";
-import { db } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { Categories } from "./_components/categories";
-import { getDashboardCourses } from "@/actions/get-dashboard-courses";
 import { fetchCategories } from "@/services";
 import { clientApi } from "@/lib/utils/openai/client";
 import { cookies } from "next/headers";
+import { CategoryPagination } from "./_components/category-pagination";
 
 interface SearchPageProps {
   searchParams: {

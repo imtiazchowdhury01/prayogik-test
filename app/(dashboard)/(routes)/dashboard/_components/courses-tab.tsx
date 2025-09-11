@@ -8,7 +8,7 @@ import CourseCard from "@/components/CourseCard";
 import EmptyContent from "./EmptyContent";
 import EventCard from "@/components/EventCard";
 import { clientApi } from "@/lib/utils/openai/client";
-import { TabContentSkeleton } from "./dashboard-loading";
+import { TabContentSkeleton } from "./dashboard-skeleton";
 
 type CourseWithProgressWithCategory = Course & {
   category: Category | null;
@@ -168,7 +168,7 @@ export function CoursesTab({
   const isTabLoaded = (tab: TabValue) => loadedTabs.has(tab);
 
   return (
-    <div className="w-full pt-5">
+    <div className="w-full pt-5 bg-white p-5 rounded-lg">
       <Tabs
         value={activeTab}
         onValueChange={handleTabChange}
@@ -176,12 +176,12 @@ export function CoursesTab({
       >
         {/* Fixed TabsList */}
         <div className="w-full mb-6 sticky top-0 z-10 pb-2">
-          <TabsList className="flex flex-wrap gap-2 bg-gray-50 rounded-lg max-w-full sm:max-w-2xl p-1">
+          <TabsList className="flex flex-wrap gap-2 bg-transparent max-w-full sm:max-w-2xl border-b rounded-none p-0">
             {tabItems.map((item, index) => (
               <TabsTrigger
                 key={index}
                 value={item.value}
-                className="flex-1 min-w-[120px] text-center border-b-2 transition-all duration-200 data-[state=active]:bg-primary-50 data-[state=active]:text-primary-700 data-[state=active]:shadow-sm data-[state=active]:border-b-brand py-2 px-3 text-sm text-gray-600 hover:text-gray-900 font-medium rounded-none"
+                className="flex-1 min-w-[120px] text-center  transition-all duration-200 data-[state=active]:text-primary-700 data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-b-brand py-2 px-3 text-md text-gray-600 hover:text-gray-900 font-medium rounded-none"
               >
                 {item.label}
               </TabsTrigger>
@@ -198,7 +198,7 @@ export function CoursesTab({
               {isTabLoaded("purchased") &&
                 tabData.purchasedCourses &&
                 tabData.purchasedCourses.length > 0 && (
-                  <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-800">
+                  <h2 className="text-lg sm:text-xl lg:text-xl font-semibold text-gray-600">
                     Your Purchased Courses ({tabData.purchasedCourses.length})
                   </h2>
                 )}
@@ -242,7 +242,7 @@ export function CoursesTab({
                     tabData.subscribedCourses &&
                     tabData.subscribedCourses.length > 0 && (
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                        <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-800">
+                        <h2 className="text-lg sm:text-xl lg:text-xl font-semibold text-gray-600">
                           Prime Courses ({tabData.subscribedCourses.length})
                         </h2>
                         <div className="flex items-center space-x-2 text-xs sm:text-sm text-teal-600 bg-teal-50 px-3 py-1.5 rounded-full">
@@ -299,7 +299,7 @@ export function CoursesTab({
               {isTabLoaded("certificate") &&
                 tabData.certificateCourses &&
                 tabData.certificateCourses.length > 0 && (
-                  <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-800">
+                  <h2 className="text-lg sm:text-xl lg:text-xl font-semibold text-gray-600">
                     Your Purchased Certificate Courses (
                     {tabData.certificateCourses.length})
                   </h2>
@@ -341,7 +341,7 @@ export function CoursesTab({
               {isTabLoaded("event") &&
                 tabData.registeredEvents &&
                 tabData.registeredEvents.length > 0 && (
-                  <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-800">
+                  <h2 className="text-lg sm:text-xl lg:text-xl font-semibold text-gray-600">
                     Your Registered Events ({tabData.registeredEvents.length})
                   </h2>
                 )}

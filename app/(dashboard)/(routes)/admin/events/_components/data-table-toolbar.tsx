@@ -1,25 +1,29 @@
 "use client";
 
 import { Table } from "@tanstack/react-table";
-import { X, Plus, Loader } from "lucide-react";
+import { X, Plus} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { createEvent } from "@/lib/event/event";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
 import toast from "react-hot-toast";
 import { isEnglish } from "@/lib/utils/stringUtils";
+import { CreateEventForm } from "./create-event-form";
+
 export type EventType = "PAID" | "FREE";
 export type EventStatus = "DRAFT" | "UPCOMING" | "WAITING" | "CLOSED";
 export type EventFormat = "ONLINE" | "OFFLINE";
@@ -31,6 +35,22 @@ interface EventFiltersProps<TData> {
   eventFormats?: string[];
 }
 
+// Form validation schema
+const formSchema = z.object({
+  title: z.string().min(1, "Event title is required").trim(),
+  slug: z
+    .string()
+    .min(1, "Event slug is required")
+    .refine((val) => isEnglish(val), {
+      message: "Slug can only contain English letters, numbers, and hyphens",
+    })
+    .refine((val) => !val.includes(" "), {
+      message: "Slug cannot contain spaces",
+    }),
+});
+
+type FormData = z.infer<typeof formSchema>;
+
 export function EventFilters<TData>({
   table,
   eventTypes = [],
@@ -40,40 +60,28 @@ export function EventFilters<TData>({
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [formData, setFormData] = useState({
-    title: "",
-    slug: "",
+
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: "",
+      slug: "",
+    },
   });
 
   const isFiltered = table.getState().columnFilters.length > 0;
 
-  const handleFormChange = (field: keyof typeof formData, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  const handleCreateEvent = async () => {
-    if (!formData.title.trim() || !formData.slug.trim()) {
-      return;
-    }
-    if (isEnglish(formData.slug) === false) {
-      toast.error(
-        "Slug can only contain English letters, numbers, and hyphens"
-      );
-      return;
-    }
+  const handleCreateEvent = async (data: FormData) => {
     setIsCreating(true);
 
     try {
       const newEvent = await createEvent({
-        title: formData.title.trim(),
-        slug: formData.slug.trim(),
+        title: data.title,
+        slug: data.slug,
       });
 
       if (newEvent.success && newEvent.data) {
-        setFormData({ title: "", slug: "" });
+        form.reset();
         setIsModalOpen(false);
         router.push(`/admin/events/${newEvent.data.id}`);
       } else {
@@ -91,18 +99,9 @@ export function EventFilters<TData>({
 
   const handleModalClose = () => {
     setIsModalOpen(false);
-    setFormData({ title: "", slug: "" });
+    form.reset();
   };
 
-  const handleTitleChange = (value: string) => {
-    handleFormChange("title", value);
-    const slugFromTitle = value
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
-
-    handleFormChange("slug", slugFromTitle);
-  };
 
   // Transform data for faceted filters
   const typeOptions = eventTypes.map((type) => ({
@@ -148,10 +147,10 @@ export function EventFilters<TData>({
           />
         )}
 
-        {table.getColumn("format") && (
+        {table.getColumn("platform") && (
           <DataTableFacetedFilter
-            column={table.getColumn("format")}
-            title="Format"
+            column={table.getColumn("platform")}
+            title="Platform"
             options={formatOptions}
           />
         )}
@@ -183,47 +182,11 @@ export function EventFilters<TData>({
                 Enter the event details to create a new event.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="title">Event Title</Label>
-                <Input
-                  id="title"
-                  placeholder="Enter event title..."
-                  value={formData.title}
-                  onChange={(e) => handleTitleChange(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="slug">Event Slug</Label>
-                <Input
-                  id="slug"
-                  placeholder="event-slug"
-                  value={formData.slug}
-                  onChange={(e) => handleFormChange("slug", e.target.value)}
-                />
-              </div>
-            </div>
-            <DialogFooter className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleModalClose}
-                disabled={isCreating}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                onClick={handleCreateEvent}
-                disabled={!formData.title.trim() || isCreating}
-              >
-                {isCreating ? (
-                  <Loader className="animate-spin" size={14} />
-                ) : (
-                  "Create Event"
-                )}
-              </Button>
-            </DialogFooter>
+            <CreateEventForm
+              onSubmit={handleCreateEvent}
+              onCancel={handleModalClose}
+              isLoading={isCreating}
+            />
           </DialogContent>
         </Dialog>
       </div>

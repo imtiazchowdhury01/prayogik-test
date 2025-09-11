@@ -1,36 +1,29 @@
 import { Banner } from "@/components/banner";
 import { IconBadge } from "@/components/icon-badge";
-import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 import {
   ArrowLeft,
   Calendar,
-  CircleDollarSign,
-  CircleUserRound,
-  File,
   FileCheck,
   HelpCircle,
   LayoutDashboard,
-  ListChecks,
-  MapPin,
+
   User,
 } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
-
-import { CourseMode } from "@prisma/client";
 import { getEventByIdDBCall } from "@/lib/data-access-layer/events";
 import Link from "next/link";
-import { EventTitleForm } from "../_components/title-form";
-import { EventSlugTitleForm } from "../_components/slug-title-form";
-import { EventDescriptionForm } from "../_components/description-form";
-import { EventImageForm } from "../_components/image-form";
-import { EventTypeForm } from "../_components/event-type-form";
-import { EventLocationForm } from "../_components/event-location-form";
-import { EventDateForm } from "../_components/event-date-form";
-import { EventStatusForm } from "../_components/event-status-form";
-import { EventSpeakersForm } from "../_components/event-speakers-form";
-import { EventFAQForm } from "../_components/event-faq-form";
-import { EventActions } from "../_components/actions";
+import { EventTitleForm } from "./_components/title-form";
+import { EventSlugTitleForm } from "./_components/slug-title-form";
+import { EventDescriptionForm } from "./_components/description-form";
+import { EventImageForm } from "./_components/image-form";
+import { EventTypeForm } from "./_components/event-type-form";
+import { EventLocationForm } from "./_components/event-location-form";
+import { EventDateForm } from "./_components/event-date-form";
+import { EventStatusForm } from "./_components/event-status-form";
+import { EventSpeakersForm } from "./_components/event-speakers-form";
+import { EventFAQForm } from "./_components/event-faq-form";
+import { EventActions } from "./_components/actions";
 
 const EventIdPage = async ({ params }: { params: { eventId: string } }) => {
   const { isAdmin, userId } = await getServerUserSession();
@@ -46,7 +39,7 @@ const EventIdPage = async ({ params }: { params: { eventId: string } }) => {
   if (!event) return notFound();
 
   // Define required fields for the event setup completion
-  const requiredFields = [event.title, event.slug, event.type, event.date];
+  const requiredFields = [event.title, event.slug, event?.description, event.type, event.date];
 
   // Calculate course setup progress
   const totalFields = requiredFields.length;
@@ -98,7 +91,7 @@ const EventIdPage = async ({ params }: { params: { eventId: string } }) => {
             <div>
               <div className="flex items-center gap-x-2">
                 <IconBadge icon={Calendar} />
-                <h2 className="text-xl">Event Schedule</h2>
+                <h2 className="text-xl">Schedule</h2>
               </div>
               <EventDateForm initialData={event} eventId={event.id} />
             </div>
@@ -106,7 +99,7 @@ const EventIdPage = async ({ params }: { params: { eventId: string } }) => {
             <div>
               <div className="flex items-center gap-x-2">
                 <IconBadge icon={FileCheck} />
-                <h2 className="text-xl">Event Status</h2>
+                <h2 className="text-xl">Status</h2>
               </div>
               <EventStatusForm initialData={event} eventId={event.id} />
             </div>
@@ -114,7 +107,7 @@ const EventIdPage = async ({ params }: { params: { eventId: string } }) => {
             <div>
               <div className="flex items-center gap-x-2">
                 <IconBadge icon={User} />
-                <h2 className="text-xl">Event Speakers</h2>
+                <h2 className="text-xl">Speakers</h2>
               </div>
               <EventSpeakersForm initialData={event} eventId={event.id} />
             </div>
@@ -122,7 +115,7 @@ const EventIdPage = async ({ params }: { params: { eventId: string } }) => {
             <div>
               <div className="flex items-center gap-x-2">
                 <IconBadge icon={HelpCircle} />
-                <h2 className="text-xl">Event FAQs</h2>
+                <h2 className="text-xl">FAQs</h2>
               </div>
               <EventFAQForm initialData={event} eventId={event.id} />
             </div>

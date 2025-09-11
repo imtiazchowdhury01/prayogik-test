@@ -8,8 +8,9 @@ export const sendUserNotification = (
 ) => {
   let contactUrl = process.env.NEXT_PUBLIC_APP_URL + "/contact";
   const isNewUser = username && password; // Check if credentials are provided
-  const isEventRegistration = eventDetails || purchaseDetailsForEmail?.eventName; // Check if event details are provided
-  
+  const isEventRegistration =
+    eventDetails || purchaseDetailsForEmail?.eventName; // Check if event details are provided
+
   // Use event details from either parameter or purchaseDetailsForEmail
   const eventInfo = eventDetails || {
     title: purchaseDetailsForEmail?.eventName,
@@ -26,16 +27,19 @@ export const sendUserNotification = (
   let sectionTitle = "";
 
   if (isNewUser && isEventRegistration) {
-    mainMessage = "আপনার প্রয়োগিক প্ল্যাটফর্মে অ্যাকাউন্ট সফলভাবে তৈরি করা হয়েছে এবং ইভেন্ট রেজিস্ট্রেশন সম্পন্ন হয়েছে। প্ল্যাটফর্মে স্বাগতম!";
+    mainMessage =
+      "প্রয়োগিক প্ল্যাটফর্মে আপনার অ্যাকাউন্ট সফলভাবে তৈরি করা হয়েছে এবং ইভেন্ট রেজিস্ট্রেশন সম্পন্ন হয়েছে। প্ল্যাটফর্মে স্বাগতম!";
     sectionTitle = "অ্যাকাউন্ট ও ইভেন্ট বিবরণ";
   } else if (isNewUser && !isEventRegistration) {
-    mainMessage = "আপনার প্রয়োগিক প্ল্যাটফর্মে অ্যাকাউন্ট সফলভাবে তৈরি করা হয়েছে। প্ল্যাটফর্মে স্বাগতম!";
+    mainMessage =
+      "প্রয়োগিক প্ল্যাটফর্মে আপনার অ্যাকাউন্ট সফলভাবে তৈরি করা হয়েছে। প্ল্যাটফর্মে স্বাগতম!";
     sectionTitle = "এনরোলমেন্ট বিবরণ";
   } else if (!isNewUser && isEventRegistration) {
     mainMessage = "আপনার ইভেন্ট রেজিস্ট্রেশন সফলভাবে সম্পন্ন হয়েছে!";
     sectionTitle = "ইভেন্ট বিবরণ";
   } else {
-    mainMessage = "আপনার পেমেন্ট সফলভাবে সম্পন্ন হয়েছে! আপনার সাবস্ক্রিপশন সক্রিয় করা হয়েছে।";
+    mainMessage =
+      "আপনার পেমেন্ট সফলভাবে সম্পন্ন হয়েছে! আপনার সাবস্ক্রিপশন সক্রিয় করা হয়েছে।";
     sectionTitle = "পেমেন্ট বিবরণ";
   }
 
@@ -74,14 +78,7 @@ export const sendUserNotification = (
                           ${mainMessage}
                         </p>
                         ${
-                          isNewUser
-                            ? `
-                        <p
-                        style="font-size:16px;line-height:26px;margin:16px 0;font-family:'Open Sans', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;font-weight:300;color:#404040">
-                        শুরু করতে নিচে আপনার লগইন তথ্য দেওয়া হলো:
-                        </p>
-                        `
-                            : !isEventRegistration
+                          !isEventRegistration
                             ? `
                         <p
                           style="font-size:16px;line-height:26px;margin:16px 0;font-family:'Open Sans', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;font-weight:300;color:#404040">
@@ -187,13 +184,19 @@ export const sendUserNotification = (
                                 তারিখ ও সময়:
                               </td>
                               <td style="padding:12px 0;font-size:15px;color:#2d3748;font-family:'Open Sans', Arial,sans-serif;font-weight:500;">
-                                ${eventInfo?.date ? new Date(eventInfo.date).toLocaleDateString("bn-BD", {
-                                  year: "numeric",
-                                  month: "long",
-                                  day: "numeric",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                }) : "N/A"}
+                                ${
+                                  eventInfo?.date
+                                    ? new Date(
+                                        eventInfo.date
+                                      ).toLocaleDateString("bn-BD", {
+                                        year: "numeric",
+                                        month: "long",
+                                        day: "numeric",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })
+                                    : "N/A"
+                                }
                               </td>
                             </tr>
                             ${
@@ -220,13 +223,25 @@ export const sendUserNotification = (
                             `
                             }
                             <tr>
+                                <td style="padding:12px 0;font-size:15px;color:#4a5568;font-family:'Open Sans', Arial,sans-serif;font-weight:500;width:35%;vertical-align:top;">
+                                  পেমেন্ট মাধ্যম:
+                                </td>
+                                <td style="padding:12px 0;font-size:15px;color:#2d3748;font-family:'Open Sans', Arial,sans-serif;font-weight:500;">
+                                  বিকাশ
+                                </td>
+                              </tr>
+                            <tr>
+                            <tr>
                               <td style="padding:12px 0;font-size:15px;color:#4a5568;font-family:'Open Sans', Arial,sans-serif;font-weight:500;width:35%;vertical-align:top;">
                                 স্থান:
                               </td>
                               <td style="padding:12px 0;font-size:15px;color:#2d3748;font-family:'Open Sans', Arial,sans-serif;font-weight:500;">
-                                ${eventInfo?.isOnline 
-                                  ? "অনলাইন" 
-                                  : eventInfo?.location || "তথ্য পরে জানানো হবে"}
+                                ${
+                                  eventInfo?.isOnline
+                                    ? "অনলাইন"
+                                    : eventInfo?.location ||
+                                      "তথ্য পরে জানানো হবে"
+                                }
                               </td>
                             </tr>
                             ${
@@ -246,7 +261,7 @@ export const sendUserNotification = (
                             `
                                 : ""
                             }
-                            <tr>
+                            
                               <td style="padding:12px 0;font-size:15px;color:#4a5568;font-family:'Open Sans', Arial,sans-serif;font-weight:500;width:35%;vertical-align:top;">
                                 রেজিস্ট্রেশন তারিখ:
                               </td>
@@ -260,6 +275,32 @@ export const sendUserNotification = (
                             </tr>
                           </table>
                         </div>
+                        
+                        ${
+                          purchaseDetailsForEmail?.isTrial &&
+                          isNewUser &&
+                          isEventRegistration
+                            ? `
+                        <!-- Trial Subscription Benefits Section -->
+                        <div style="background-color:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:20px;margin:24px 0;">
+                          <h3 style="font-size:16px;font-weight:600;margin:0 0 12px 0;font-family:'Open Sans', Arial,sans-serif;color:#166534;">
+                            🎉 বোনাস: প্রায়োগিক প্রাইম - ফ্রি ট্রায়াল অ্যাক্সেস!
+                          </h3>
+                          <p style="margin:0;font-size:14px;color:#15803d;font-family:'Open Sans', Arial,sans-serif;line-height:1.6;">
+                            আপনি <strong>প্রায়োগিক প্রাইম</strong> এর ফ্রি ট্রায়াল অ্যাক্সেস পেয়েছেন। 
+                            সমস্ত প্রাইম কোর্স
+                            <strong>আগামী ${new Date(
+                              purchaseDetailsForEmail.expiresAt
+                            ).toLocaleDateString("bn-BD", {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            })}</strong> পর্যন্ত <strong>ফ্রি অ্যাক্সেস</strong> করতে পারবেন।
+                          </p>
+                        </div>
+                        `
+                            : ""
+                        }
                         
                         <!-- Important Instructions Section for Events -->
                         <div style="background-color:#fef7f0;border:1px solid #fed7aa;border-radius:12px;padding:20px;margin:24px 0;">
@@ -281,7 +322,10 @@ export const sendUserNotification = (
                         }
                         
                         ${
-                          purchaseDetailsForEmail && (purchaseDetailsForEmail.courseName || purchaseDetailsForEmail.subscriptionPlanName || (!isEventRegistration))
+                          purchaseDetailsForEmail &&
+                          !isEventRegistration &&
+                          (purchaseDetailsForEmail.courseName ||
+                            purchaseDetailsForEmail.subscriptionPlanName)
                             ? `
                         <!-- Purchase/Enrollment Details Section -->
                         <div style="background-color:#ffffff;border:1px solid #e1e5e9;border-radius:12px;padding:24px;margin:24px 0;box-shadow:0 2px 4px rgba(0,0,0,0.04);">
@@ -325,7 +369,8 @@ export const sendUserNotification = (
                                 : ""
                             }
                             ${
-                              purchaseDetailsForEmail?.isTrial && purchaseDetailsForEmail?.trialStartDate
+                              purchaseDetailsForEmail?.isTrial &&
+                              purchaseDetailsForEmail?.trialStartDate
                                 ? `
                               <tr>
                                 <td style="padding:12px 0;font-size:15px;color:#4a5568;font-family:'Open Sans', Arial,sans-serif;font-weight:500;width:35%;vertical-align:top;">
@@ -422,7 +467,11 @@ export const sendUserNotification = (
                             }
                             <tr>
                               <td style="padding:12px 0;font-size:15px;color:#4a5568;font-family:'Open Sans', Arial,sans-serif;font-weight:500;width:35%;vertical-align:top;">
-                                ${isEventRegistration ? "রেজিস্ট্রেশন" : "পেমেন্ট"} তারিখ:
+                                ${
+                                  isEventRegistration
+                                    ? "রেজিস্ট্রেশন"
+                                    : "পেমেন্ট"
+                                } তারিখ:
                               </td>
                               <td style="padding:12px 0;font-size:15px;color:#2d3748;font-family:'Open Sans', Arial,sans-serif;font-weight:500;">
                                 ${new Date().toLocaleDateString("bn-BD", {
@@ -434,28 +483,6 @@ export const sendUserNotification = (
                             </tr>
                           </table>
                         </div>
-                        
-                        ${
-                          purchaseDetailsForEmail?.isTrial && isNewUser && isEventRegistration
-                            ? `
-                        <!-- Trial Subscription Benefits Section -->
-                        <div style="background-color:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:20px;margin:24px 0;">
-                          <h3 style="font-size:16px;font-weight:600;margin:0 0 12px 0;font-family:'Open Sans', Arial,sans-serif;color:#166534;">
-                            🎉 বোনাস: ফ্রি ট্রায়াল অ্যাক্সেস!
-                          </h3>
-                          <p style="margin:0;font-size:14px;color:#15803d;font-family:'Open Sans', Arial,sans-serif;line-height:1.6;">
-                            ইভেন্ট রেজিস্ট্রেশনের সাথে আপনি <strong>${purchaseDetailsForEmail.subscriptionPlanName}</strong> এর একটি ফ্রি ট্রায়াল পেয়েছেন। 
-                            এখন আপনি সমস্ত কোর্স ও কন্টেন্ট অ্যাক্সেস করতে পারবেন 
-                            <strong>${new Date(purchaseDetailsForEmail.expiresAt).toLocaleDateString("bn-BD", {
-                              year: "numeric",
-                              month: "long", 
-                              day: "numeric"
-                            })}</strong> পর্যন্ত।
-                          </p>
-                        </div>
-                        `
-                            : ""
-                        }
                         `
                             : ""
                         }
@@ -510,7 +537,9 @@ export const sendUserNotification = (
                               <td style="text-align:center;">
                                 <p style="margin:0;font-family:'Open Sans', 'Helvetica Neue', Arial;font-size:12px;color:#666;">
                                   এই ইমেইলটি 
-                                  <a href="${process.env.NEXT_PUBLIC_APP_URL}" target="_blank" style="color:#4f46e5; text-decoration:none; font-weight:600;">
+                                  <a href="${
+                                    process.env.NEXT_PUBLIC_APP_URL
+                                  }" target="_blank" style="color:#4f46e5; text-decoration:none; font-weight:600;">
                                     প্রয়োগিক
                                   </a> 
                                   থেকে স্বয়ংক্রিয়ভাবে পাঠানো হয়েছে।

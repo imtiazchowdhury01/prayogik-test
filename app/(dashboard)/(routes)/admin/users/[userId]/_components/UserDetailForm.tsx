@@ -52,8 +52,8 @@ import {
 } from "@prisma/client";
 import RequiredFieldText from "@/components/common/requiredFieldText";
 import RequiredFieldStar from "@/components/common/requiredFieldStar";
-import EducationsInput from "@/app/(site)/prev-apply-for-teaching/_components/EducationsInput";
-import CertificationsInput from "@/app/(site)/prev-apply-for-teaching/_components/CertificationsInput";
+import EducationsInput from "@/components/EducationsInput";
+import CertificationsInput from "@/components/CertificationsInput";
 
 import DBUserAvatar from "@/components/user-avatar";
 import { revalidatePage } from "@/actions/revalidatePage";
@@ -259,8 +259,8 @@ const UserDetailForm = ({
       form.reset(data);
       toast.success("Changes saved successfully");
       await revalidatePage([
-        ...(teacherProfile?.id &&
-        teacherProfile?.teacherStatus === TeacherStatus.VERIFIED
+        ...(initialData?.teacherProfile?.id &&
+        initialData?.teacherProfile?.teacherStatus === TeacherStatus.VERIFIED
           ? [
               {
                 route: "/teachers",
