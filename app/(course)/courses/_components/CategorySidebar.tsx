@@ -60,8 +60,9 @@ const CategorySidebar = async () => {
     return (
       <div>
         {/* CSS for dropdown functionality */}
-        <style dangerouslySetInnerHTML={{
-          __html: `
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
             .dropdown-toggle {
               position: absolute;
               opacity: 0;
@@ -85,9 +86,10 @@ const CategorySidebar = async () => {
             .dropdown-toggle:checked + .dropdown-wrapper .dropdown-label .arrow-icon {
               transform: rotate(90deg);
             }
-          `
-        }} />
-        
+          `,
+          }}
+        />
+
         <aside className="w-full bg-white lg:border lg:border-gray-200 rounded-lg lg:shadow-custom p-4 lg:sticky lg:top-[10%] lg:max-w-sm">
           {/* Header */}
           <div className="mb-1">
@@ -105,12 +107,14 @@ const CategorySidebar = async () => {
               {groupedCategories.parentCategories.map(
                 (parentCategory: ICategory) => {
                   const hasChildren =
-                    groupedCategories.childCategories[parentCategory.id]?.length > 0;
+                    groupedCategories.childCategories[parentCategory.id]
+                      ?.length > 0;
                   const categoryCourseCount =
                     Number(parentCategory?._count?.courses) || 0;
                   const subCategoryCourseCount = hasChildren
                     ? (
-                        groupedCategories.childCategories[parentCategory.id] || []
+                        groupedCategories.childCategories[parentCategory.id] ||
+                        []
                       ).reduce(
                         (sum, category) =>
                           sum + (Number(category?._count?.courses) || 0),
@@ -129,7 +133,7 @@ const CategorySidebar = async () => {
                           id={`dropdown-${parentCategory.id}`}
                           className="dropdown-toggle"
                         />
-                        
+
                         <div className="dropdown-wrapper">
                           <label
                             htmlFor={`dropdown-${parentCategory.id}`}
@@ -160,29 +164,37 @@ const CategorySidebar = async () => {
                               {textLangChecker(parentCategory.name)}
                               {parentCategory._count.courses !== 0 && (
                                 <span className="ml-2 text-base">
-                                  ({convertNumberToBangla(parentCategory._count.courses)})
+                                  (
+                                  {convertNumberToBangla(
+                                    parentCategory._count.courses
+                                  )}
+                                  )
                                 </span>
                               )}
                             </Link>
 
                             {/* Child category links */}
-                            {groupedCategories.childCategories[parentCategory.id].map(
-                              (childCategory: ICategory) => (
-                                <Link
-                                  key={childCategory.id}
-                                  href={`/courses/category/${childCategory.slug}`}
-                                  prefetch={false}
-                                  className="block py-2 px-4 cursor-pointer text-sm transition-colors text-gray-600 hover:bg-sidebar-highlight"
-                                >
-                                  {textLangChecker(childCategory.name)}
-                                  {childCategory._count.courses !== 0 && (
-                                    <span className="ml-2 text-base">
-                                      ({convertNumberToBangla(childCategory._count.courses)})
-                                    </span>
-                                  )}
-                                </Link>
-                              )
-                            )}
+                            {groupedCategories.childCategories[
+                              parentCategory.id
+                            ].map((childCategory: ICategory) => (
+                              <Link
+                                key={childCategory.id}
+                                href={`/courses/category/${childCategory.slug}`}
+                                prefetch={false}
+                                className="block py-2 px-4 cursor-pointer text-sm transition-colors text-gray-600 hover:bg-sidebar-highlight"
+                              >
+                                {textLangChecker(childCategory.name)}
+                                {childCategory._count.courses !== 0 && (
+                                  <span className="ml-2 text-base">
+                                    (
+                                    {convertNumberToBangla(
+                                      childCategory._count.courses
+                                    )}
+                                    )
+                                  </span>
+                                )}
+                              </Link>
+                            ))}
                           </div>
                         </div>
                       </div>
@@ -238,7 +250,6 @@ export default CategorySidebar;
 // import { Category } from "@prisma/client";
 // import { textLangChecker } from "@/lib/utils/textLangChecker";
 // import { getCategoriesDBCall } from "@/lib/data-access-layer/categories";
-
 
 // interface ICategory {
 //   id: string;
