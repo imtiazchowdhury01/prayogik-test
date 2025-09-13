@@ -13,7 +13,8 @@ import { GradientBorderBadge } from "./ui/badge";
 import { CourseMode } from "@prisma/client";
 import LiveCourseIcon from "./LiveCourseIcon";
 import LiveCourseTime from "./liveCourseTime";
-
+import { Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 const CourseCard = ({
   variant = "dark",
   course,
@@ -29,13 +30,11 @@ const CourseCard = ({
   purchasedCourseIds?: string[];
   pathname?: string;
 }) => {
-  
   const { slug, imageUrl, progress, lessons, nextLessonSlug = null } = course;
   const freeLesson = lessons?.find(
     (lesson: any) => lesson.isFree && lesson.videoUrl
   );
   let formattedDuration = formatDuration(course?.totalDuration);
-
 
   return (
     <div
@@ -64,7 +63,6 @@ const CourseCard = ({
             sizes="(max-width: 768px) 100vw, 400px"
             priority
             quality={75}
-           
           />
         )}
         {/* Live course badge - positioned at top right */}
@@ -196,18 +194,28 @@ const CourseCard = ({
         )}
 
         {/* action button */}
-        <SingleCardButton
-          courseId={course.id}
-          progress={progress}
-          nextLessonSlug={nextLessonSlug}
-          slug={slug}
-          lessons={lessons}
-          variant={variant}
-          courseMode={course?.courseMode}
-        />
+        <Suspense fallback={<SingleCardButtonSkeleton />}>
+          <SingleCardButton
+            courseId={course.id}
+            progress={progress}
+            nextLessonSlug={nextLessonSlug}
+            slug={slug}
+            lessons={lessons}
+            variant={variant}
+            courseMode={course?.courseMode}
+          />
+        </Suspense>
       </div>
     </div>
   );
 };
 
 export default CourseCard;
+
+export const SingleCardButtonSkeleton = () => {
+  return (
+    <div className="w-full">
+      <Skeleton className="h-10 w-full rounded-md sm:h-12" />
+    </div>
+  );
+};
