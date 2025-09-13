@@ -1,14 +1,18 @@
-// @ts-nocheck
-"use client";
-
 import Link from "next/link";
 import { CourseProgress } from "./course-progress";
-import { useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { Loader } from "lucide-react";
 import { CourseMode } from "@prisma/client";
 
-export const SingleCardButton = ({
+type CourseCardButtonProps = {
+  courseId: string;
+  progress: any;
+  nextLessonSlug: any;
+  slug: string;
+  lessons: any;
+  variant: "dark" | "light" | undefined;
+  courseMode: string;
+};
+
+export const CourseCardButton = ({
   courseId,
   progress = null,
   nextLessonSlug,
@@ -16,9 +20,7 @@ export const SingleCardButton = ({
   lessons,
   variant,
   courseMode,
-}) => {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
+}: CourseCardButtonProps) => {
   return (
     <div className="">
       {courseMode === CourseMode.RECORDED && progress !== null ? (
@@ -34,31 +36,10 @@ export const SingleCardButton = ({
             </div>
           }
 
-          {nextLessonSlug ? (
+          {nextLessonSlug && (
             <Link href={`/courses/${slug}/${nextLessonSlug}`}>
-              <div
-                className="block w-full px-4 py-2 text-base font-semibold text-center text-white transition-all duration-300 rounded-md hover:bg-primary-700 sm:px-6 sm:py-3 bg-primary-brand"
-                disabled={loading}
-              >
-                {loading ? (
-                  <Loader className="w-4 h-4 animate-spin" />
-                ) : (
-                  "চালিয়ে যান"
-                )}
-              </div>
-            </Link>
-          ) : (
-            <Link
-              href={`/courses/${slug}/${nextLessonSlug}`}
-              className="mt-4"
-              // prefetch
-            >
               <div className="block w-full px-4 py-2 text-base font-semibold text-center text-white transition-all duration-300 rounded-md hover:bg-primary-700 sm:px-6 sm:py-3 bg-primary-brand">
-                {loading ? (
-                  <Loader className="w-4 h-4 animate-spin" />
-                ) : (
-                  "চালিয়ে যান"
-                )}
+                "চালিয়ে যান"
               </div>
             </Link>
           )}
@@ -70,19 +51,14 @@ export const SingleCardButton = ({
             className="block w-full px-4 py-2 text-base font-semibold text-center text-white transition-all duration-300 rounded-sm hover:bg-primary-700 sm:px-6 sm:py-3 bg-primary-brand"
             prefetch={true}
           >
-            {loading ? (
-              <Loader className="w-4 h-4 animate-spin" />
-            ) : (
-              <span className="ml-2">
-                {courseMode === CourseMode.RECORDED
-                  ? "কোর্সটি দেখুন"
-                  : "বিস্তারিত দেখুন"}
-              </span>
-            )}
+            <span className="ml-2">
+              {courseMode === CourseMode.RECORDED
+                ? "কোর্সটি দেখুন"
+                : "বিস্তারিত দেখুন"}
+            </span>
           </Link>
         </div>
       )}
     </div>
   );
 };
-

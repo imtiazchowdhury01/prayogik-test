@@ -1,7 +1,7 @@
 import { formatDuration } from "@/lib/formatDuration";
 import Image from "next/image";
 import { twMerge } from "tailwind-merge";
-import { SingleCardButton } from "./single-card-button";
+import { CourseCardButton } from "./single-card-button";
 import {
   convertNumberToBangla,
   getPlainTextFromHtml,
@@ -13,8 +13,7 @@ import { GradientBorderBadge } from "./ui/badge";
 import { CourseMode } from "@prisma/client";
 import LiveCourseIcon from "./LiveCourseIcon";
 import LiveCourseTime from "./liveCourseTime";
-import { Suspense } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
+
 const CourseCard = ({
   variant = "dark",
   course,
@@ -194,8 +193,7 @@ const CourseCard = ({
         )}
 
         {/* action button */}
-        <Suspense fallback={<SingleCardButtonSkeleton />}>
-          <SingleCardButton
+          <CourseCardButton
             courseId={course.id}
             progress={progress}
             nextLessonSlug={nextLessonSlug}
@@ -204,7 +202,6 @@ const CourseCard = ({
             variant={variant}
             courseMode={course?.courseMode}
           />
-        </Suspense>
       </div>
     </div>
   );
@@ -212,10 +209,3 @@ const CourseCard = ({
 
 export default CourseCard;
 
-export const SingleCardButtonSkeleton = () => {
-  return (
-    <div className="w-full">
-      <Skeleton className="h-10 w-full rounded-md sm:h-12" />
-    </div>
-  );
-};

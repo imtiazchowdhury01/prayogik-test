@@ -16,9 +16,9 @@ export default function CourseLayout({
 }) {
   return (
     <div>
-      {/* <Header /> */}
+      <Header />
       <div className="min-h-[80vh]">{children}</div>
-      {/* <Footer /> */}
+      <Footer />
     </div>
   );
 }
