@@ -4,10 +4,10 @@ import CategorySidebarSkeleton from "./_components/CategorySidebarSkeleton";
 import CoursesGridSkeleton from "./_components/CoursesGridSkeleton";
 import CategorySidebar from "./_components/CategorySidebar";
 import CategoryHeader from "./category/[categorySlug]/_components/CategoryHeader";
-import { getChildCategoriesDBCall } from "@/lib/data-access-layer/categories";
+import { getCategoriesDBCall } from "@/lib/data-access-layer/categories";
 
 const CoursesPage = async() => {
-  const categories = await getChildCategoriesDBCall()
+  const categories = await getCategoriesDBCall()
   return (
     <div className="flex py-6 sm:py-[60px] lg:space-x-5 app-container gap-x-[6px]">
       {/* Sidebar */}

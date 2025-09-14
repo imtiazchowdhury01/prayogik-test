@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Category } from "@prisma/client";
 import { textLangChecker } from "@/lib/utils/textLangChecker";
 import { convertNumberToBangla } from "@/lib/convertNumberToBangla";
-import { getCategoriesDBCall } from "@/lib/data-access-layer/categories";
 import { RiArrowRightSLine } from "react-icons/ri";
 
 interface ICategory {

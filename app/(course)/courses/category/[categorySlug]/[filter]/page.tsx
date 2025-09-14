@@ -6,7 +6,6 @@ import CategoryHeader from "../_components/CategoryHeader";
 import {
   getCategoriesDBCall,
   getCategoryCoursesCountDBCall,
-  getChildCategoriesDBCall,
 } from "@/lib/data-access-layer/categories";
 import {
   getPrimeCoursesByCategoryDBCall,
@@ -52,7 +51,7 @@ export async function generateStaticParams() {
 
         switch (filter) {
           case "recent":
-          // case "older":
+            // case "older":
             // These filters use the same courses, just sorted differently
             hasFilteredCourses = coursesCount > 0;
             break;
@@ -145,7 +144,7 @@ const CategoryFilterPage = async ({
     return <div>Invalid filter type</div>;
   }
 
-  const categories = await getChildCategoriesDBCall();
+  const categories = await getCategoriesDBCall();
   const category = categories.find((cat) => cat.slug === categorySlug);
 
   if (!category) {
@@ -161,7 +160,7 @@ const CategoryFilterPage = async ({
         {/* Sidebar */}
         <div className="hidden lg:block lg:w-1/4">
           <Suspense fallback={<CategorySidebarSkeleton />}>
-            <CategorySidebar categories={categories}/>
+            <CategorySidebar categories={categories} />
           </Suspense>
         </div>
 

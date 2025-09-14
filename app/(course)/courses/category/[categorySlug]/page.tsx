@@ -7,7 +7,6 @@ import {
   getCategoriesDBCall,
   getCategoryCoursesCountDBCall,
   getCategoryNameBySlugDBCall,
-  getChildCategoriesDBCall,
 } from "@/lib/data-access-layer/categories";
 import CoursesBreadcrumb from "../../_components/CoursesBreadcrumb";
 import CoursesGridSkeleton from "../../_components/CoursesGridSkeleton";
@@ -103,7 +102,7 @@ const CategorySlugPage = async ({
 }: {
   params: { categorySlug: string };
 }) => {
-    const categories = await getChildCategoriesDBCall()
+  const categories = await getCategoriesDBCall();
   const slug = params.categorySlug;
   const isFilterType = FILTER_TYPES.includes(slug as FilterType);
   const categoryName = await getCategoryNameBySlugDBCall(slug);
@@ -117,7 +116,7 @@ const CategorySlugPage = async ({
         {/* Sidebar */}
         <div className="hidden lg:block lg:w-1/4">
           <Suspense fallback={<CategorySidebarSkeleton />}>
-            <CategorySidebar  categories={categories}/>
+            <CategorySidebar categories={categories} />
           </Suspense>
         </div>
 
