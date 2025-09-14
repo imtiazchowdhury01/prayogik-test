@@ -6,6 +6,7 @@ import CategoryHeader from "../_components/CategoryHeader";
 import {
   getCategoriesDBCall,
   getCategoryCoursesCountDBCall,
+  getChildCategoriesDBCall,
 } from "@/lib/data-access-layer/categories";
 import {
   getPrimeCoursesByCategoryDBCall,
@@ -18,14 +19,15 @@ import CategorySidebarSkeleton from "../../../_components/CategorySidebarSkeleto
 import CategorySidebar from "../../../_components/CategorySidebar";
 
 // Define filter types
-const FILTER_TYPES = ["recent", "older", "prime", "live"] as const;
+const FILTER_TYPES = ["recent", "prime", "live"] as const;
+// const FILTER_TYPES = ["recent", "older", "prime", "live"] as const;
 type FilterType = (typeof FILTER_TYPES)[number];
 
 // Get category name in Bangla
 const getCategoryName = (slug: string): string => {
   const filterNameMap = {
     recent: "সাম্প্রতিক",
-    older: "পুরাতন",
+    // older: "পুরাতন",
     prime: "প্রায়োগিক প্রাইম",
     live: "লাইভ কোর্স",
   };
@@ -50,7 +52,7 @@ export async function generateStaticParams() {
 
         switch (filter) {
           case "recent":
-          case "older":
+          // case "older":
             // These filters use the same courses, just sorted differently
             hasFilteredCourses = coursesCount > 0;
             break;
@@ -143,7 +145,7 @@ const CategoryFilterPage = async ({
     return <div>Invalid filter type</div>;
   }
 
-  const categories = await getCategoriesDBCall();
+  const categories = await getChildCategoriesDBCall();
   const category = categories.find((cat) => cat.slug === categorySlug);
 
   if (!category) {
@@ -159,7 +161,7 @@ const CategoryFilterPage = async ({
         {/* Sidebar */}
         <div className="hidden lg:block lg:w-1/4">
           <Suspense fallback={<CategorySidebarSkeleton />}>
-            <CategorySidebar />
+            <CategorySidebar categories={categories}/>
           </Suspense>
         </div>
 

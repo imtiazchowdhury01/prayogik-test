@@ -4,14 +4,16 @@ import CategorySidebarSkeleton from "./_components/CategorySidebarSkeleton";
 import CoursesGridSkeleton from "./_components/CoursesGridSkeleton";
 import CategorySidebar from "./_components/CategorySidebar";
 import CategoryHeader from "./category/[categorySlug]/_components/CategoryHeader";
+import { getChildCategoriesDBCall } from "@/lib/data-access-layer/categories";
 
-const CoursesPage = () => {
+const CoursesPage = async() => {
+  const categories = await getChildCategoriesDBCall()
   return (
     <div className="flex py-6 sm:py-[60px] lg:space-x-5 app-container gap-x-[6px]">
       {/* Sidebar */}
       <div className="hidden lg:block lg:w-1/4">
         <Suspense fallback={<CategorySidebarSkeleton />}>
-          <CategorySidebar />
+          <CategorySidebar categories={categories} />
         </Suspense>
       </div>
 

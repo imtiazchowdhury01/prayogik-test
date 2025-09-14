@@ -53,11 +53,10 @@ const groupCategories = (categories: Category[]): GroupedCategories => {
   return grouped;
 };
 
-const CategorySidebar = async () => {
+const CategorySidebar = ({ categories }: { categories: Category[] }) => {
   try {
-    const categories = await getCategoriesDBCall();
     const groupedCategories = groupCategories(categories);
-console.log(groupedCategories, "GROUP categories");
+
     return (
       <div>
         {/* CSS for dropdown functionality */}

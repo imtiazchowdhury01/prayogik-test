@@ -45,17 +45,19 @@ const PrimeIntro = () => {
   const reviews = [
     {
       id: 1,
-      link: "facebook.com/ZidanShahria",
+      link: "https://facebook.com/ZidanShahria",
+      description: "facebook.com/ZidanShahria",
       name: "জিদান শাহরিয়া",
-      avatar: "",
+      avatar: "/reviews/facebook/zidan_shahria.webp",
       text: "আজকাল অনেকেই ডিজিটাল মার্কেটিং ও সম্পর্কিত স্কিল শিখতে চান, কিন্তু কোথায় থেকে শুরু করবেন তা নিয়ে দ্বিধায় থাকেন। আমি নিজেও ৩টা কোর্স করেছি। এখানে শুধু থিওরি শেখানো হয়নি, বরং মার্কেটের আসল চাহিদার সঙ্গে মিল রেখে কনটেন্ট তৈরি করা হয়েছে। আমার মনে হয়, যদি তারা নিয়মিত নতুন টুলস আর ট্রেন্ড যোগ করে, তাহলে এই প্ল্যাটফর্ম শুধু আমাদের দেশে নয়, আন্তর্জাতিকভাবে বড় একটা জায়গা করে নিতে পারবে। যারা ক্যারিয়ার গ্রোথ চান, নতুন স্কিল অর্জন করতে চান কিংবা ডিজিটাল মার্কেটিংয়ে পেশাদার হতে চান-তাদের জন্য এটি একটি অসাধারণ জায়গা। আমি অবশ্যই সবাইকে এই প্ল্যাটফর্ম রেকমেন্ড করব।",
       bgColor: bgColors[1],
     },
     {
       id: 2,
-      link: "facebook.com/alton.rupok",
+      link: "https://facebook.com/alton.rupok",
+      description: "facebook.com/alton.rupok",
       name: "মোঃ রূপক",
-      avatar: "/reviews/facebook/HaSan-TaWsif.webp",
+      avatar: "/reviews/facebook/mdrupok.webp",
       text: "প্রায়োগিক প্ল্যাটফর্মটা ব্যবহার করে আমার সত্যিই দারুণ লাগলো! অনলাইনে ক্যারিয়ার বানাতে চাইলে এটাই একরকম পারফেক্ট জায়গা। ভিডিওগুলো ছোট ছোট আর একদম সহজভাবে বুঝানো, তাই শিখতেও ঝামেলা হয় না। বাংলায় এমন অ্যাডভান্স কোর্স আমি আগে কোথাও দেখিনি, একদম নতুন এক্সপেরিয়েন্স বলতেই হবে। সবচেয়ে ভালো লেগেছে, দেশের সেরা মেন্টরদের কোর্স একসাথে এই প্ল্যাটফর্মে পাওয়া যায়, আর কোর্সগুলার কোয়ালিটি সত্যিই ইন্টারন্যাশনাল লেভেলের। আমি ব্যক্তিগতভাবে অনেক স্যাটিসফায়েড, আর অন্যদেরও রেকমেন্ড করব যেন প্রায়োগিক থেকে কোর্স করে।",
       bgColor: bgColors[2],
     },
@@ -113,7 +115,7 @@ const PrimeIntro = () => {
                     </h4>
                     <Link href={testimonial.link}>
                       <p className="text-gray-600 text-sm hover:underline hover:text-brand">
-                        {testimonial.link}
+                        {testimonial.description}
                       </p>
                     </Link>
                   </div>

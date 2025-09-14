@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader } from "lucide-react";
-import CoursesGrid from "@/app/test/_components/CoursesGrid";
+import CoursesGrid from "../../../_components/CoursesGrid";
 
 interface CategoryCoursesClientSectionProps {
   categorySlug: string;

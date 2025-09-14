@@ -1,5 +1,4 @@
 import {
-  getCategoriesDBCall,
   getCategoryCoursesDBCall,
 } from "@/lib/data-access-layer/categories";
 import { 
@@ -11,9 +10,9 @@ import {
 } from "@/lib/data-access-layer/course";
 
 
-import CoursesGrid from "@/app/test/_components/CoursesGrid";
 import CategoryCoursesClientSection from "./CategoryCoursesClientSection";
 import { NoResultsMessage } from "../../../_components/NoResultsMessage";
+import CoursesGrid from "../../../_components/CoursesGrid";
 
 
 const FILTER_TYPES = ["recent", "older", "prime", "live"] as const;
