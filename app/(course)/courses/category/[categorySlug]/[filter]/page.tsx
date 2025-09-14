@@ -174,13 +174,13 @@ const CategoryFilterPage = async ({
           />
 
           {/* Server Component for Initial Courses (SEO) */}
-          <Suspense fallback={<CoursesGridSkeleton />}>
+    
             <CategoryCoursesSection
               categorySlug={categorySlug}
               pageType="category-filter"
               filter={filter as FilterType}
             />
-          </Suspense>
+
         </div>
       </div>
     </section>

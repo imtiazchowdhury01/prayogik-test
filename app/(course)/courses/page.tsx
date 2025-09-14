@@ -6,8 +6,8 @@ import CategorySidebar from "./_components/CategorySidebar";
 import CategoryHeader from "./category/[categorySlug]/_components/CategoryHeader";
 import { getCategoriesDBCall } from "@/lib/data-access-layer/categories";
 
-const CoursesPage = async() => {
-  const categories = await getCategoriesDBCall()
+const CoursesPage = async () => {
+  const categories = await getCategoriesDBCall();
   return (
     <div className="flex py-6 sm:py-[60px] lg:space-x-5 app-container gap-x-[6px]">
       {/* Sidebar */}
@@ -27,10 +27,7 @@ const CoursesPage = async() => {
             isCoursespage={true}
           />
 
-          {/* Server Component for Initial Courses (SEO) */}
-          <Suspense fallback={<CoursesGridSkeleton />}>
-            <CoursesSection />
-          </Suspense>
+          <CoursesSection />
         </div>
       </div>
     </div>

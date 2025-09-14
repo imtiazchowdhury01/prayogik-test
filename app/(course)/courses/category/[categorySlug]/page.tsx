@@ -131,13 +131,13 @@ const CategorySlugPage = async ({
             />
           </div>
 
-          {/* Server Component for Initial Courses (SEO) */}
-          <Suspense fallback={<CoursesGridSkeleton />}>
+          {/* Server Component for Initial Courses */}
+        
             <CategoryCoursesSection
               categorySlug={slug}
               pageType={isFilterType ? "filter" : "category"}
             />
-          </Suspense>
+         
         </div>
       </div>
     </section>
