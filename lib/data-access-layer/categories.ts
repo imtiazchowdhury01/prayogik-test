@@ -33,6 +33,40 @@ const getCategoriesDBCall = async () => {
     return [];
   }
 };
+const getChildCategoriesDBCall = async () => {
+  try {
+    const categories = await db.category.findMany({
+      where: {
+        isChild: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        parentCategoryId: true,
+        isChild: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: {
+          select: {
+            courses: {
+              where: {
+                isPublished: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        updatedAt: "desc",
+      },
+    });
+    return categories;
+  } catch (error) {
+    console.error("Error categories db call:", error);
+    return [];
+  }
+};
 
 const getCategoryCoursesDBCall = cache(
   async (slug: string, page: number = 1, pageSize: number = 24) => {
@@ -143,7 +177,8 @@ const getCategoryNameBySlugDBCall = async (slug: string) => {
 
 export {
   getCategoriesDBCall,
+  getChildCategoriesDBCall,
   getCategoryCoursesDBCall,
   getCategoryCoursesCountDBCall,
-  getCategoryNameBySlugDBCall
+  getCategoryNameBySlugDBCall,
 };

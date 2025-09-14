@@ -1,11 +1,11 @@
 import EventCard from "@/components/EventCard";
-import {  getFilteredEventsDBCall } from "@/lib/data-access-layer/events";
+import { getFilteredEventsDBCall } from "@/lib/data-access-layer/events";
 
 export default async function UpcomingEvents() {
   const events = await getFilteredEventsDBCall();
- 
-  if(events?.length === 0){
-    return null
+
+  if (events?.length === 0) {
+    return null;
   }
 
   return (
@@ -15,7 +15,7 @@ export default async function UpcomingEvents() {
           আপকামিং ইভেন্ট
         </h2>
         <p className="mt-2 md:mt-4 md:my-4 text-base text-fontcolor-subtitle text-center md:text-left">
-          নতুন স্কিল শেখার ইভেন্ট শুরু হচ্ছে শিগগিরই
+          নতুন স্কিল শেখার ইভেন্ট শুরু হচ্ছে শীঘ্রই
         </p>
       </div>
 

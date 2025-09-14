@@ -65,7 +65,7 @@ export const verifyEmailTemplate = (
                                     </p>
                                     <p
                                       style="font-size:16px;line-height:26px;margin:16px 0;font-family:'Open Sans', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;font-weight:300;color:#404040">
-                                      কোন সাহায্য প্রয়োজন? <a href=${contactUrl} style="color:#067df7;text-decoration-line:none;text-decoration:underline" target="_blank">যোগাযোগ করুন</a> অথবা contact[@]prayogik.com এ ইমেইল করুন।
+                                      কোন সাহায্য প্রয়োজন? <a href=${contactUrl} style="color:#067df7;text-decoration-line:none;text-decoration:underline" target="_blank">যোগাযোগ করুন</a> অথবা contact@prayogik.com এ ইমেইল করুন।
                                     </p>
                                     
                                   </td>

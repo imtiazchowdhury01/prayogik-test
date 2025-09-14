@@ -26,9 +26,12 @@ const PrayogikIntro = () => {
   ];
 
   return (
-    <div className="bg-brand text-white px-8 lg:px-16 py-10 rounded-l-lg">
-      <div className="mx-auto">
-        <div className="h-8 md:h-10 w-36 md:w-40 mb-8">
+    <div
+      id="left-section"
+      className="bg-brand xl:w-1/2 w-full hidden lg:flex justify-center items-center text-white px-10 xl:px-16 py-0 rounded-none xl:rounded-l-lg min-h-screen xl:min-h-fit "
+    >
+      <div className="mx-auto text-justify">
+        <div className="h-8 md:h-10 w-36 md:w-40 xl:mb-8 mt-10">
           <Link href="/">
             <Image
               src="/Prayogik-nav-logo-white.svg"
@@ -42,11 +45,11 @@ const PrayogikIntro = () => {
           </Link>
         </div>
 
-        <div className="mb-12 mt-20">
-          <h2 className="text-xl font-bold leading-relaxed mb-6">
+        <div className="mb-8 lg:mb-10 xl:mb-16 mt-8 xl:mt-12">
+          <h2 className="text-lg lg:text-xl font-bold leading-relaxed mb-4 xl:mb-4">
             জ্ঞান অর্জন করুন, সহজে শিখুন, একসাথে এগিয়ে যান।
           </h2>
-          <p className="text-base font-light text-gray-100 leading-relaxed max-w-xl">
+          <p className=" lg:text-sm xl:text-base font-light text-gray-100 leading-relaxed max-w-xl">
             আপনার পছন্দের বিষয়ে সেরা কোর্সটি খুঁজে নিন। অভিজ্ঞ শিক্ষকদের কাছ
             থেকে শিখে আপনার দক্ষতাকে এক নতুন স্তরে নিয়ে যান।
           </p>
@@ -55,12 +58,14 @@ const PrayogikIntro = () => {
         <div className="space-y-8">
           {features.map((feature, index) => (
             <div key={index} className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center flex-shrink-0">
-                <feature.icon className="w-6 h-6" />
+              <div className="xl:w-12 w-10 xl:h-12 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <feature.icon className="xl:w-6 w-4 xl:h-6 h-4" />
               </div>
               <div>
-                <h3 className="text-lg font-bold mb-2">{feature.title}</h3>
-                <p className="text-base font-light text-gray-100 leading-relaxed max-w-xl">
+                <h3 className="text-md xl:text-md font-bold mb-2">
+                  {feature.title}
+                </h3>
+                <p className="lg:text-sm xl:text-base font-light text-gray-100 leading-relaxed max-w-xl">
                   {feature.description}
                 </p>
               </div>
@@ -68,8 +73,8 @@ const PrayogikIntro = () => {
           ))}
         </div>
 
-        <div className="my-16">
-          <p className="text-sm opacity-75 leading-relaxed">
+        <div className="mt-4 lg:mt-8 xl:my-16">
+          <p className="text-xs xl:text-sm font-light xl:font-normal xl:opacity-75 leading-relaxed">
             *শিক্ষার্থীদের জন্য সহজ ও কার্যকর শিক্ষার পদ্ধতি সাহায্যে নতুন
             দিগন্ত উন্মোচন।
           </p>

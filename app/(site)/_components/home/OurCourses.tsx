@@ -11,7 +11,6 @@ import { ArrowRight, ChevronRight, MoveRight } from "lucide-react";
 import { clientApi } from "@/lib/utils/openai/client";
 import { cookies } from "next/headers";
 
-
 const OurCourses = async () => {
   const { userId } = await getServerUserSession();
 
@@ -44,7 +43,7 @@ const OurCourses = async () => {
               কোর্সসমূহ
             </h4>
             <p className="mt-2 md:mt-4 md:my-4 text-base text-fontcolor-subtitle text-center md:text-left">
-              ইন-ডিমান্ড ও ফিউচার-রেডি ডিজিটাল মার্কেটিং এক্সপার্টাইজ তৈরি করুন।
+              ইন-ডিমান্ড ও ফিউচার-রেডি ডিজিটাল মার্কেটিং এক্সপার্টিজ তৈরি করুন।
               নিজেকে এগিয়ে রাখুন।
             </p>
           </div>

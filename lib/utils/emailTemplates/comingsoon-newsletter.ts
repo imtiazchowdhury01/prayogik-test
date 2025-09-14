@@ -270,7 +270,7 @@ export const newsletterSubscriberConfirmationTemplate = (
 
                         <p
                           style="font-size:16px;line-height:26px;margin:25px 0;font-family:'Open Sans', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;font-weight:300;color:#404040">
-                          কোনো প্রশ্ন থাকলে? <a href="${contactLink}" style="color:#14b8a9;text-decoration:none;font-weight:500;" target="_blank">আমাদের সাথে যোগাযোগ করুন</a> অথবা contact[@]prayogik.com এ ইমেইল করুন।
+                          কোনো প্রশ্ন থাকলে? <a href="${contactLink}" style="color:#14b8a9;text-decoration:none;font-weight:500;" target="_blank">আমাদের সাথে যোগাযোগ করুন</a> অথবা contact@prayogik.com এ ইমেইল করুন।
                         </p>
 
                         <p

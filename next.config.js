@@ -41,7 +41,7 @@ const nextConfig = {
       },
     ],
     minimumCacheTTL: 86400, // 24 hours
-    formats: ["image/avif", "image/webp"],
+    formats: ["image/webp", "image/avif"],
     contentDispositionType: "attachment",
     dangerouslyAllowSVG: false,
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],

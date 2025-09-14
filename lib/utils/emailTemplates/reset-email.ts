@@ -74,7 +74,7 @@ export const resetEmailTemplate = (resetUrl: string, contactUrl: string) => {
                              যদি আপনি পাসওয়ার্ড পরিবর্তন করতে না চান অথবা এরকম কোনো অনুরোধ করেননি, তাহলে এই মেসেজটি উপেক্ষা করে মুছে ফেলুন।
                             </p>
                             <p style="font-size:16px;line-height:26px;margin:16px 0;font-family:'Open Sans', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;font-weight:300;color:#404040">
-                               সাহায্যের প্রয়োজন? <a href=${contactUrl} style="color:#067df7;text-decoration-line:none;text-decoration:underline; cursor: pointer;" target="_blank">যোগাযোগ করুন</a> অথবা contact[@]prayogik.com এ ইমেইল করুন।
+                               সাহায্যের প্রয়োজন? <a href=${contactUrl} style="color:#067df7;text-decoration-line:none;text-decoration:underline; cursor: pointer;" target="_blank">যোগাযোগ করুন</a> অথবা contact@prayogik.com এ ইমেইল করুন।
                             </p>
                         </td>
                         </tr>

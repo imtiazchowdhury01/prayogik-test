@@ -46,7 +46,7 @@ export const sendCredentialTemplate = (email, username, password) => {
                           আপনার অ্যাকাউন্টের নিরাপত্তা নিশ্চিত করতে, এই তথ্য কারো সাথে শেয়ার করবেন না।
                         </p>
                         <p style="font-size:16px;line-height:26px;margin:16px 0;font-family:'Open Sans', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;font-weight:300;color:#404040">
-                          সাহায্যের জন্য <a href="mailto:contact[@]prayogik.com" style="color:#067df7;text-decoration:underline;">যোগাযোগ করুন</a>
+                          সাহায্যের জন্য <a href="mailto:contact@prayogik.com" style="color:#067df7;text-decoration:underline;">যোগাযোগ করুন</a>
                         </p>
                         <p style="font-size:16px;line-height:26px;margin:16px 0;font-family:'Open Sans', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;font-weight:300;color:#404040">
                           শুভ অধ্যয়ন!

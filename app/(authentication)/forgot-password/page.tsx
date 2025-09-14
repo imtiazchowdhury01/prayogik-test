@@ -132,58 +132,56 @@ export default function ForgotPassword() {
 
   if (status === "unauthenticated") {
     return (
-      <div className="bg-[#F3F9F9] rounded-lg md:rounded-r-lg w-full md:w-1/2 p-20 flex justify-center items-center">
-        <div>
-          <div className="mb-8">
-            <h2 className="text-2xl font-semibold">পাসওয়ার্ড রিসেট করুন</h2>
-            <p className="text-sm text-muted-foreground">
-              আমরা আপনাকে একটি ইমেল পাঠাবো যাতে আপনি আপনার পাসওয়ার্ড রিসেট করতে
-              পারেন।
-            </p>
+      <div id="forget-password" className="w-full">
+        <div className="mb-8">
+          <h2 className="text-2xl font-semibold">পাসওয়ার্ড রিসেট করুন</h2>
+          <p className="text-sm text-muted-foreground">
+            আমরা আপনাকে একটি ইমেল পাঠাবো যাতে আপনি আপনার পাসওয়ার্ড রিসেট করতে
+            পারেন।
+          </p>
+        </div>
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-fontcolor-title ">
+              ইমেইল
+            </label>
+            <input
+              type="email"
+              value={email}
+              placeholder="ইমেইল লিখুন"
+              onChange={(e) => setEmail(e.target.value)}
+              className="mt-1 w-full h-12 outline-none focus-visible:ring-0 shadow-sm border border-gray-200  rounded-md bg-white"
+            />
+            {hasSubmitted && errors.email && (
+              <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+            )}
           </div>
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-fontcolor-title ">
-                ইমেইল
-              </label>
-              <input
-                type="email"
-                value={email}
-                placeholder="ইমেইল লিখুন"
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 w-full h-12 outline-none focus-visible:ring-0 shadow-sm border border-gray-200  rounded-md bg-white"
-              />
-              {hasSubmitted && errors.email && (
-                <p className="mt-1 text-sm text-red-500">{errors.email}</p>
-              )}
-            </div>
 
-            <button
-              type="submit"
-              disabled={!isFormValid || isSubmitting || loading || cooldown > 0}
-              className={`w-full h-12 hover:bg-primary-700 mt-6 duration-300 text-white p-2 rounded-md bg-primary-brand transition ${
-                !isFormValid || isSubmitting || loading || cooldown > 0
-                  ? "opacity-50 cursor-not-allowed"
-                  : ""
-              }`}
-            >
-              {isSubmitting
-                ? "পাঠানো হচ্ছে..."
-                : cooldown > 0
-                ? `আবার চেষ্টা করুন - ${convertNumberToBangla(
-                    cooldown
-                  )} সেকেন্ড পর`
-                : "রিসেট লিঙ্ক পাঠান"}
-            </button>
-          </form>
-          <div className="flex items-center justify-center mt-5 text-sm">
-            <Link
-              href="/signin"
-              className="block transition-all duration-300 text-fontcolor-description hover:opacity-70"
-            >
-              ফিরে যান
-            </Link>
-          </div>
+          <button
+            type="submit"
+            disabled={!isFormValid || isSubmitting || loading || cooldown > 0}
+            className={`w-full h-12 hover:bg-primary-700 mt-6 duration-300 text-white p-2 rounded-md bg-primary-brand transition ${
+              !isFormValid || isSubmitting || loading || cooldown > 0
+                ? "opacity-50 cursor-not-allowed"
+                : ""
+            }`}
+          >
+            {isSubmitting
+              ? "পাঠানো হচ্ছে..."
+              : cooldown > 0
+              ? `আবার চেষ্টা করুন - ${convertNumberToBangla(
+                  cooldown
+                )} সেকেন্ড পর`
+              : "রিসেট লিঙ্ক পাঠান"}
+          </button>
+        </form>
+        <div className="flex items-center justify-center mt-5 text-sm">
+          <Link
+            href="/signin"
+            className="block transition-all duration-300 text-fontcolor-description hover:opacity-70"
+          >
+            ফিরে যান
+          </Link>
         </div>
       </div>
     );

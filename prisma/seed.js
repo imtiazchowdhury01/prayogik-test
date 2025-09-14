@@ -22,6 +22,21 @@ const categoryData = [
         slug: "affiliate-marketing",
         isChild: true,
       },
+      {
+        name: "ই-কমার্স",
+        slug: "ecommerce",
+        isChild: true,
+      },
+      {
+        name: "B2B মার্কেটিং",
+        slug: "b2b-marketing",
+        isChild: true,
+      },
+      {
+        name: "প্রডাক্ট মার্কেটিং",
+        slug: "product-marketing",
+        isChild: true,
+      },
     ],
   },
 
@@ -204,7 +219,7 @@ export async function seedRank() {
 const discountData = [
   {
     name: "Default",
-    discountPercentage: 70,
+    discountPercentage: 50,
     isDefault: true,
   },
   {

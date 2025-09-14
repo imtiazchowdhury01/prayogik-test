@@ -33,6 +33,7 @@ const groupCategories = (categories: Category[]): GroupedCategories => {
   categories.forEach((category: any) => {
     if (category.parentCategoryId === null) {
       grouped.parentCategories.push(category);
+      console.log(grouped.parentCategories, "parent");
     } else {
       if (!grouped.childCategories[category.parentCategoryId]) {
         grouped.childCategories[category.parentCategoryId] = [];
@@ -56,7 +57,7 @@ const CategorySidebar = async () => {
   try {
     const categories = await getCategoriesDBCall();
     const groupedCategories = groupCategories(categories);
-
+console.log(groupedCategories, "GROUP categories");
     return (
       <div>
         {/* CSS for dropdown functionality */}
@@ -156,7 +157,7 @@ const CategorySidebar = async () => {
 
                           <div className="dropdown-content border-l ml-4 mt-2">
                             {/* Parent category link in dropdown */}
-                            <Link
+                            {/* <Link
                               href={`/courses/category/${parentCategory.slug}`}
                               prefetch={false}
                               className="block py-2 px-4 cursor-pointer text-sm transition-colors text-gray-600 hover:bg-sidebar-highlight"
@@ -171,7 +172,7 @@ const CategorySidebar = async () => {
                                   )
                                 </span>
                               )}
-                            </Link>
+                            </Link> */}
 
                             {/* Child category links */}
                             {groupedCategories.childCategories[
@@ -242,105 +243,3 @@ const CategorySidebar = async () => {
 };
 
 export default CategorySidebar;
-
-// import React from "react";
-
-// import Link from "next/link";
-// import { Category } from "@prisma/client";
-// import { textLangChecker } from "@/lib/utils/textLangChecker";
-// import { getCategoriesDBCall } from "@/lib/data-access-layer/categories";
-
-// interface ICategory {
-//   id: string;
-//   name: string;
-//   slug: string;
-//   parentCategoryId: string | null;
-//   isChild: boolean;
-//   _count: {
-//     courses: number;
-//   };
-// }
-
-// interface GroupedCategories {
-//   parentCategories: ICategory[];
-//   childCategories: { [parentId: string]: ICategory[] };
-// }
-
-// // Helper function to group categories (pure function, no state needed)
-// const groupCategories = (categories: Category[]): GroupedCategories => {
-//   const grouped: GroupedCategories = {
-//     parentCategories: [],
-//     childCategories: {},
-//   };
-
-//   categories.forEach((category: any) => {
-//     if (category.parentCategoryId === null) {
-//       grouped.parentCategories.push(category);
-//     } else {
-//       if (!grouped.childCategories[category.parentCategoryId]) {
-//         grouped.childCategories[category.parentCategoryId] = [];
-//       }
-//       grouped.childCategories[category.parentCategoryId].push(category);
-//     }
-//   });
-
-//   // Sort parent categories - those with children first
-//   grouped.parentCategories.sort((a, b) => {
-//     const aHasChildren = !!grouped.childCategories[a.id]?.length;
-//     const bHasChildren = !!grouped.childCategories[b.id]?.length;
-//     if (aHasChildren === bHasChildren) return 0;
-//     return aHasChildren ? -1 : 1;
-//   });
-
-//   return grouped;
-// };
-
-// const CategorySidebar = async () => {
-//   try {
-//     const categories = await getCategoriesDBCall();
-//     const groupedCategories = groupCategories(categories);
-//     console.log(groupedCategories);
-//     return (
-//       <aside className="w-full h-[600px] overflow-y-auto bg-white lg:border lg:border-gray-200 rounded-lg lg:shadow-custom p-4 lg:sticky lg:top-[10%] lg:max-w-sm">
-//         {/* Header */}
-//         <div className="mb-1">
-//           <Link
-//             href="/courses"
-//             prefetch={false}
-//             className="block w-full text-left text-lg font-bold py-2 px-2 rounded transition-colors text-gray-700 hover:bg-sidebar-highlight"
-//           >
-//             সকল কোর্স
-//           </Link>
-//         </div>
-
-//         {categories.length > 0 &&
-//           categories.map((parentCategory: ICategory) => (
-//             <div key={parentCategory.id}>
-//               <Link
-//                 href={`/courses/category/${parentCategory.slug}`}
-//                 prefetch={false}
-//                 className="flex items-center justify-between py-3 px-2 cursor-pointer hover:bg-sidebar-highlight transition-colors rounded text-gray-700"
-//               >
-//                 <div className="flex-1 flex items-center">
-//                   <span className="text-sm">
-//                     {textLangChecker(parentCategory.name)}
-//                   </span>
-//                 </div>
-//               </Link>
-//             </div>
-//           ))}
-//       </aside>
-//     );
-//   } catch (error) {
-//     console.error("Error loading categories:", error);
-//     return (
-//       <aside className="w-full bg-white lg:border lg:border-gray-200 rounded-lg lg:shadow-custom p-4 lg:sticky lg:top-[10%] lg:max-w-sm">
-//         <div className="text-center py-8 text-gray-500">
-//           Failed to load categories
-//         </div>
-//       </aside>
-//     );
-//   }
-// };
-
-// export default CategorySidebar;

@@ -70,7 +70,7 @@ export default function UserProfileMenus({ session, pathName }) {
 
   // console.log("subscription result:", subscription);
   const isSubscribed = subscription?.status === "ACTIVE";
-  const isTrial = subscription?.isTrial;
+  const isTrial = subscription?.subscriptionPlan?.isTrial;
   const isExpired = subscription?.status === "EXPIRED";
   const subscriptionName =
     subscription?.subscriptionPlan?.name || "সাবস্ক্রিপশন";

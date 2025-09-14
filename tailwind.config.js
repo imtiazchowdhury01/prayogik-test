@@ -41,6 +41,8 @@ module.exports = {
         "card-black-text": "#010F0E",
         "sidebar-highlight": "#F3F9F9",
         brand: "#0D9488",
+        signinLayoutBg: "#ebeef5",
+        signinBg: "#F3F9F9",
         "brand-light": "#C2E4E1",
         "brand-accent": "#F3F9F9",
         "brand-accent-deep": "#E7F4F3",

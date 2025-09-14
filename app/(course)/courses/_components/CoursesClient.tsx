@@ -9,18 +9,24 @@ interface CoursesClientSectionProps {
   initialPagination: any;
 }
 
-const CoursesClientSection = ({ initialPagination }: CoursesClientSectionProps) => {
+const CoursesClientSection = ({
+  initialPagination,
+}: CoursesClientSectionProps) => {
   const [additionalCourses, setAdditionalCourses] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [currentPage, setCurrentPage] = useState<number>(initialPagination.currentPage || 1);
-  const [hasNextPage, setHasNextPage] = useState<boolean>(initialPagination.hasNextPage || false);
+  const [currentPage, setCurrentPage] = useState<number>(
+    initialPagination.currentPage || 1
+  );
+  const [hasNextPage, setHasNextPage] = useState<boolean>(
+    initialPagination.hasNextPage || false
+  );
   const [filters, setFilters] = useState<any>({});
 
   const loadMoreCourses = async () => {
     setIsLoading(true);
     try {
       const nextPage = currentPage + 1;
-      
+
       const queryParams = new URLSearchParams({
         page: nextPage.toString(),
         limit: (initialPagination.limit || 12).toString(),
@@ -36,7 +42,7 @@ const CoursesClientSection = ({ initialPagination }: CoursesClientSectionProps) 
       const data = await response.json();
 
       if (data.courses) {
-        setAdditionalCourses(prev => [...prev, ...data.courses]);
+        setAdditionalCourses((prev) => [...prev, ...data.courses]);
         setCurrentPage(nextPage);
         setHasNextPage(data.pagination.hasNextPage);
       }
@@ -69,13 +75,6 @@ const CoursesClientSection = ({ initialPagination }: CoursesClientSectionProps) 
               "আরও দেখুন"
             )}
           </Button>
-        </div>
-      )}
-
-      {/* Loading overlay for filtering */}
-      {isLoading && additionalCourses.length === 0 && (
-        <div className="flex items-center justify-center py-8">
-          <Loader className="animate-spin h-8 w-8 text-primary-brand" />
         </div>
       )}
     </>

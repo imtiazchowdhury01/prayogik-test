@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { revalidatePage } from "@/actions/revalidatePage";
-import { fetchCategories } from "@/services";
+import { getChildCategoriesDBCall } from "@/lib/data-access-layer/categories";
 
 interface CategoryFormProps {
   initialData: Course;
@@ -62,12 +62,13 @@ export const CategoryForm = ({ initialData, courseId }: CategoryFormProps) => {
 
       setCategoriesLoading(true);
       try {
-        const fetchedCategories = await fetchCategories();
+        const fetchedCategories = await getChildCategoriesDBCall();
 
         const categoryOptions = fetchedCategories.map((category) => ({
           label: category?.name,
           value: category?.id,
         }));
+        console.log({fetchedCategories, categoryOptions, fetchedCategoriesCount: fetchedCategories.length, categoryOptionsCount:categoryOptions.length});
         setCategories(categoryOptions);
       } catch (error) {
         console.error("Error fetching categories:", error);

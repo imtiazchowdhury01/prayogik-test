@@ -8,6 +8,10 @@ import { cookies } from "next/headers";
 import { Suspense } from "react";
 import MessageClose from "./message-close";
 import { convertNumberToBangla } from "@/lib/convertNumberToBangla";
+import {
+  getSubscriptionDBCall,
+  getSubscriptionPlanByIdDBCall,
+} from "@/lib/data-access-layer/subscriptions";
 
 // Main subscription message component
 const SubscriptionMessageContent = async (): Promise<JSX.Element | null> => {
@@ -16,13 +20,13 @@ const SubscriptionMessageContent = async (): Promise<JSX.Element | null> => {
   });
 
   const subscription = SubscriptionResponse?.body as any;
-  // console.log("subscription result:", subscription);
 
   // Early return for inactive subscriptions or active non-trial
   if (
     !subscription?.status ||
     subscription.status === "INACTIVE" ||
-    (subscription.status === "ACTIVE" && !subscription.isTrial)
+    (subscription.status === "ACTIVE" &&
+      !subscription?.subscriptionPlan?.isTrial)
   ) {
     return null;
   }
