@@ -6,6 +6,7 @@ import nodemailer from "nodemailer";
 import { sendSubscriptionCredential } from "@/lib/utils/emailTemplates/sendSubscriptionCredential";
 import preparePurchaseDetails from "@/lib/utils/preparePurchaseDetails";
 import { sendAdminNotification } from "@/lib/utils/emailTemplates/sendAdminNotification";
+import { PurchaseType } from "@prisma/client";
 
 // Types for the trial callback payload
 interface TrialCallbackPayload {
@@ -187,6 +188,7 @@ async function handleTrialPurchase(
 export async function POST(request: NextRequest) {
   try {
     const payload: TrialCallbackPayload = await request.json();
+
     // Validate required fields
     // if (!payload.subscriptionPlanId) {
     //   return createErrorResponse("Subscription plan ID is required");
@@ -280,7 +282,7 @@ export async function POST(request: NextRequest) {
 
         // Prepare purchase details for email template
         const purchaseDetailsForEmail = await preparePurchaseDetails(
-          payload,
+          { ...payload, purchaseType: PurchaseType.TRIAL },
           purchase,
           subscription,
           courseForEmail,
@@ -298,8 +300,7 @@ export async function POST(request: NextRequest) {
         const mailOptions = {
           from: `"প্রায়োগিক" <${process.env.SMTP_USERNAME}>`,
           to: payload?.email,
-          subject:
-            "প্রয়োগিকে স্বাগতম! আপনার অ্যাকাউন্ট তৈরি হয়েছে।",
+          subject: "প্রয়োগিকে স্বাগতম! আপনার অ্যাকাউন্ট তৈরি হয়েছে।",
           html: sendSubscriptionCredential(
             payload.email,
             username,

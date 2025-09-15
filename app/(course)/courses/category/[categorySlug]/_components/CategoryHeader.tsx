@@ -1,7 +1,7 @@
 // CategoryHeader.tsx - Client Component (mobile sidebar + filters)
 "use client";
 import React, { useState } from "react";
-import { getCategoriesDBCall, getChildCategoriesDBCall } from "@/lib/data-access-layer/categories";
+
 
 import {
   CategoryFilterSelect,
