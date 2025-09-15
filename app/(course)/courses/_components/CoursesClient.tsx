@@ -42,7 +42,15 @@ const CoursesClientSection = ({
       const data = await response.json();
 
       if (data.courses) {
-        setAdditionalCourses((prev) => [...prev, ...data.courses]);
+        const coursesWithNullProgress = data.courses.map((course: any) => ({
+          ...course,
+          progress: null,
+        }));
+
+        setAdditionalCourses((prevCourses: any[]) => [
+          ...prevCourses,
+          ...coursesWithNullProgress,
+        ]);
         setCurrentPage(nextPage);
         setHasNextPage(data.pagination.hasNextPage);
       }

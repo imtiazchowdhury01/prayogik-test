@@ -106,7 +106,7 @@ const CategorySlugPage = async ({
   const slug = params.categorySlug;
   const isFilterType = FILTER_TYPES.includes(slug as FilterType);
   const categoryName = await getCategoryNameBySlugDBCall(slug);
-  const displayName = categoryName ? `${categoryName} কোর্সসমূহ` : "সকল কোর্স";
+  // const displayName = categoryName ? `${categoryName} কোর্সসমূহ` : "সকল কোর্স";
   return (
     <section className="min-h-[50vh]">
       {/* Breadcrumbs */}
@@ -132,45 +132,14 @@ const CategorySlugPage = async ({
           </div>
 
           {/* Server Component for Initial Courses */}
-        
-            <CategoryCoursesSection
-              categorySlug={slug}
-              pageType={isFilterType ? "filter" : "category"}
-            />
-         
+
+          <CategoryCoursesSection
+            categorySlug={slug}
+            pageType={isFilterType ? "filter" : "category"}
+          />
         </div>
       </div>
     </section>
-    // <section className="min-h-[50vh]">
-    //   {/* Breadcrumbs */}
-    //   <CoursesBreadcrumb isCategoryPage={true} />
-
-    //   <div className="flex py-6 sm:py-[60px] lg:space-x-5 app-container gap-x-[6px]">
-    //     {/* Sidebar */}
-    //     <div className="hidden lg:block lg:w-1/4">
-    //       <Suspense fallback={<CategorySidebarSkeleton />}>
-    //         <CategorySidebar />
-    //       </Suspense>
-    //     </div>
-
-    //     {/* Main Content */}
-    //     <div className="w-full lg:w-3/4">
-    //       {/* Header with mobile sidebar and filters */}
-    //       <CategoryHeader
-    //         categorySlug={slug}
-    //         pageType={isFilterType ? "filter" : "category"}
-    //       />
-
-    //       {/* Server Component for Initial Courses (SEO) */}
-    //       <Suspense fallback={<CoursesGridSkeleton />}>
-    //         <CategoryCoursesSection
-    //           categorySlug={slug}
-    //           pageType={isFilterType ? "filter" : "category"}
-    //         />
-    //       </Suspense>
-    //     </div>
-    //   </div>
-    // </section>
   );
 };
 

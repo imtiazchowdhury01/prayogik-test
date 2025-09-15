@@ -9,6 +9,11 @@ export const footerSocialLinks = [
     icon: "/icon/youtube.svg",
     path: "https://www.youtube.com/@prayogikofficial",
   },
+  {
+    title: "linkedin",
+    icon: "/icon/linkedin.svg",
+    path: "https://www.linkedin.com/company/prayogikbd",
+  },
 ];
 export const footerOthersLinks = [
   // {

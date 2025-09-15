@@ -8,7 +8,7 @@ import {
 
 const LiveScheduleDetails = ({ course }: any) => {
   return (
-    <section id="live-schedule">
+    <section id="live-schedule" className="mt-7">
       <h4 className="mb-4 text-xl font-bold text-fontcolor-title">
         কোর্সের সময়সূচী ও ক্লাসসংখ্যা
       </h4>

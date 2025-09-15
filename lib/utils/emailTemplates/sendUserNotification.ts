@@ -428,6 +428,9 @@ export const sendUserNotification = (
                             `
                                 : ""
                             }
+                           ${
+                             purchaseDetailsForEmail?.coursePrice !== null
+                               ? `
                             ${
                               purchaseDetailsForEmail?.purchaseType !== "TRIAL"
                                 ? `
@@ -481,6 +484,9 @@ export const sendUserNotification = (
                                 })}
                               </td>
                             </tr>
+                           `
+                               : ""
+                           }
                           </table>
                         </div>
                         `

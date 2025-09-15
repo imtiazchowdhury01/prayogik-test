@@ -37,6 +37,11 @@ const categoryData = [
         slug: "product-marketing",
         isChild: true,
       },
+      {
+        name: "সার্চ ইঞ্জিন মার্কেটিং",
+        slug: "search-engine-marketing",
+        isChild: true,
+      },
     ],
   },
 

@@ -27,7 +27,7 @@ const StudentFeedback = () => {
       name: "শফিকুল ইসলাম",
       text: 'আমি "Prayogik" প্ল্যাটফর্ম থেকে কয়েকটি কোর্স করেছি এবং শেখার অভিজ্ঞতাটা বেশ ভালো লেগেছে। কোর্সগুলো ছোট ছোট মডিউলে সাজানো, তাই সময় কম লাগলেও সহজে বোঝা যায়। কনটেন্টগুলো খুব বেশি জটিল নয়, তবে পরিষ্কারভাবে ব্যাখ্যা করা হয়েছে এবং বাস্তব উদাহরণও ছিল। এতে বিষয়গুলো বুঝতে সুবিধা হয়েছে। আমার মনে হয়েছে, যদি কিছু কোর্সে রিয়েল প্রজেক্ট-ভিত্তিক অ্যাসাইনমেন্ট থাকত, তাহলে আরও ভালো হতো। সব মিলিয়ে, যারা নতুন স্কিল শিখতে চান তাদের জন্য এটি একটি কার্যকর প্ল্যাটফর্ম। আমার অভিজ্ঞতা ইতিবাচক ছিল এবং আমি অন্যদেরও এটি ব্যবহার করতে বলব',
       avatar: "/reviews/shafikul.webp",
-      bgColor: bgColors[1],
+      bgColor: bgColors[2],
     },
     {
       id: 3,
@@ -35,7 +35,7 @@ const StudentFeedback = () => {
       name: "রুদ্রনীল সৌরভ",
       text: "প্রায়োগিকের এই উদ্যোগ সত্যিই প্রশংসনীয়। এখানে বহুমুখী লার্নিং এর ব্যবস্থা থাকার কারণে শিক্ষার্থীরা বাস্তব কাজ শেখার আত্মবিশ্বাস অর্জন করতে পারবে বলে আমি মনে করি। কোর্সগুলো বিগিনার ফ্রেন্ডলি থেকে শুরু করে অ্যাডভান্সড লেভেল পর্যন্ত আপডেটেড কনটেন্টে ভরপুর। আমি নিজে এখান থেকে ভ্যালু পেয়েছি এবং আত্মবিশ্বাসের সঙ্গে বলতে পারি—আমি নির্দ্বিধায় প্রায়োগিকের কোর্সগুলো অন্যদের রিকমেন্ড করব।",
       avatar: "/reviews/rudroneel.png",
-      bgColor: bgColors[2],
+      bgColor: bgColors[1],
     },
     {
       id: 4,
@@ -51,7 +51,7 @@ const StudentFeedback = () => {
       name: "এম. ডি. কামরুল হাসান",
       text: "কোর্সটি আমার প্রত্যাশার থেকেও বেশি মূল্য দিয়েছে। কোর্সের বিষয়বস্তু খুবই প্রাসঙ্গিক ও বাস্তবমুখী। বাস্তব উদাহরণের মাধ্যমে কৌশল শেখানো হয়েছে, যা আমার পেশাগত দক্ষতা উন্নত করতে দারুণ সহায়ক হয়েছে। যদি কারো কিছু শেখার আগ্রহ থাকে নিঃসন্দেহে এই প্লাটফর্ম থেকে শিখতে পারেন যা আপনার স্কিল ডেভলপমেন্ট করতে সাহায্য করবে। সর্বপরি এটা বলতে পারি প্রায়োগিক হচ্ছে দেশ সেরা অনলাইন আইটি ট্রেনিং প্লাটফর্ম।",
       avatar: "/reviews/kamrul.webp",
-      bgColor: bgColors[0],
+      bgColor: bgColors[1],
     },
     {
       id: 6,
@@ -59,7 +59,7 @@ const StudentFeedback = () => {
       name: "মো. আল-আমিন ইসলাম",
       text: "প্রোয়োগিকের এই উদ্যোগ নিঃসন্দেহে প্রশংসনীয়। আমি মনে করি এই প্লাটফর্মের মাধ্যমে শিক্ষার্থীরা অনেক উপকৃত হবে। আমি শর্ট কোর্স থেকে আমি বাস্তব অর্থেই অনেক জ্ঞান অর্জন করেছি। তাই আমি প্রোয়োগিকের এই প্লাটফর্মের কোর্সগুলো আমি নিরদ্বিধায় রেকোমেন্ড করছি।",
       avatar: "",
-      bgColor: bgColors[1],
+      bgColor: bgColors[0],
     },
     {
       id: 7,
@@ -67,7 +67,7 @@ const StudentFeedback = () => {
       name: "আশরাফুল আলম",
       text: "আমি প্রায়োগিকের কয়েকটি প্রফেশনাল কোর্স করেছি। এর মধ্যে SaaS Go-To-Market Strategy, Mastering Content Strategy, B2B Outbound Marketing Automation কোর্সগুলো আমার কাছে সবচেয়ে বেশি মূল্যবান লেগেছে। প্রতিটি কোর্সের কনটেন্ট ছিল সুসংগঠিত এবং বাস্তব অভিজ্ঞতার উপর ভিত্তি করে তৈরি। শেখার প্রক্রিয়াটা ছিল সহজবোধ্য, ফলে নতুন বিষয়গুলোও ভালোভাবে আয়ত্ত করতে পেরেছি। এগুলো করার পর কাজের জায়গায় সরাসরি প্রয়োগ করার মতো কিছু কৌশল শিখেছি, যেটা আমার জন্য সবচেয়ে বড় অর্জন। আমার কাছে এটি একটি ইতিবাচক অভিজ্ঞতা ছিল এবং শেখার দিক থেকে আমি অনেক উপকৃত হয়েছি।",
       avatar: "",
-      bgColor: bgColors[0],
+      bgColor: bgColors[2],
     },
     {
       id: 8,
@@ -75,7 +75,7 @@ const StudentFeedback = () => {
       name: "অরিদ্র চন্দ্র দাস",
       text: '"প্রায়োগিক" নিয়ে যদি এক বাক্যে বলি তাহলে বলবো, এটি হলো একটি ই-লাইব্রেরী। না, এটি বইয়ের কোনো লাইব্রেরী নয়, স্কিল ডেভেলপমেন্টের অনলাইন লাইব্রেরী। যেখানে আপনি একটি সাবস্ক্রিপশনের মাধ্যমে বিভিন্ন ধরনের প্রয়োজনীয় কোর্স করতে পারবেন। যেহেতু আমরা সব স্কিলে পারদর্শী হতে পারবো না, তবুও আমাদের প্রধান স্কিলের পাশাপাশি অন্যান্য স্কিলগুলো সম্পর্কেও ধারণা রাখতে হয়। কিন্তু এক্ষেত্রে আমাদের সমস্যা হলো আমারা সঠিক কোর্স/ মেন্টরের সন্ধান পাই না। আর পেলেও আলাদা আলাদা করে কোর্স কিনতে হয় যা আমাদের দেশের প্রেক্ষাপটে অত্যন্ত ব্যয় এবং সময়সাপেক্ষ। আর "প্রায়োগিক" এই সবকিছুর সমাধান নিয়ে এসেছে।',
       avatar: "",
-      bgColor: bgColors[1],
+      bgColor: bgColors[0],
     },
     {
       id: 9,
@@ -91,7 +91,7 @@ const StudentFeedback = () => {
       name: "হাসান তাওসিফ",
       text: 'প্রায়োগিক প্ল্যাটফর্মটা আমার কাছে একেবারেই ভিন্ন লেগেছে। এখানে শুধু বইয়ের মতো তত্ত্ব না, বরং বাস্তব জীবনে কীভাবে কাজ করতে হয় সেটাই শেখানো হয়। নামের মতোই সত্যিকারের "প্রায়োগিক" শেখা। ভবিষ্যতে তারা যেভাবে আরও কোর্স, আন্তর্জাতিক মানের কনটেন্ট আর ক্যারিয়ার গড়ার সুযোগ তৈরি করতে চাচ্ছে – সেটা সত্যিই অনুপ্রেরণাদায়ক। আমার মনে হয় এই উদ্যোগটা বাংলাদেশের তরুণদের জন্য অনেক দরকার ছিল।',
       avatar: "/reviews/facebook/HaSan-TaWsif.webp",
-      bgColor: bgColors[2],
+      bgColor: bgColors[1],
     },
     {
       id: 11,
@@ -119,32 +119,34 @@ const StudentFeedback = () => {
       />
       <div className="px-6 md:px-8 lg:px-8 xl:px-8 2xl:px-0 max-w-7xl mx-auto ">
         {/* grid layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7 transition-all duration-300 ease-in-out">
+        <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-3 gap-4">
           {roadmapTestimonials.map((testimonial, index) => (
             <Card
               key={testimonial.id}
-              className={`${testimonial.bgColor} border-0  shadow-sm h-full transition-all duration-300 ease-in-out transform`}
+              className={`${testimonial.bgColor} border-0 shadow-sm break-inside-avoid mb-6`}
               style={{
                 animationDelay: `${index * 50}ms`,
               }}
             >
-              <CardContent className="p-6 flex flex-col h-full">
+              <CardContent className="p-6">
                 {/* Quote Icon */}
                 <div className="mb-4">
                   <QouteIcon />
                 </div>
-                {/* Testimonial Text */}
                 <TestimonialModal testimonial={testimonial} />
+
+                {/* Divider */}
                 <hr className="mb-4 border-gray-300" />
+
                 {/* Profile Section */}
-                <div className="flex items-center gap-3 mt-auto">
+                <div className="flex items-center gap-3">
                   <div className="relative aspect-square w-10 h-10">
                     <Image
                       src={testimonial.avatar || "/reviews/default.png"}
                       alt={`${testimonial.name}'s profile picture`}
                       width={80}
                       height={80}
-                      quality={85}
+                      quality={75}
                       className="rounded-full object-cover w-full h-full"
                       loading="eager"
                       sizes="40px"
@@ -154,7 +156,11 @@ const StudentFeedback = () => {
                     <h4 className="font-semibold text-gray-900 text-base">
                       {testimonial.name}
                     </h4>
-                    <p className="text-gray-600 text-sm">{testimonial.title}</p>
+                    {testimonial.title && (
+                      <p className="text-gray-600 text-sm">
+                        {testimonial.title}
+                      </p>
+                    )}
                   </div>
                 </div>
               </CardContent>

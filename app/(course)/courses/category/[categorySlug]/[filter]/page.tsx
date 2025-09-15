@@ -146,7 +146,7 @@ const CategoryFilterPage = async ({
 
   const categories = await getCategoriesDBCall();
   const category = categories.find((cat) => cat.slug === categorySlug);
-
+  
   if (!category) {
     return <div>Category not found</div>;
   }

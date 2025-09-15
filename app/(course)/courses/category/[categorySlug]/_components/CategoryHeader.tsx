@@ -1,7 +1,7 @@
 // CategoryHeader.tsx - Client Component (mobile sidebar + filters)
 "use client";
 import React, { useState } from "react";
-import { getCategoriesDBCall } from "@/lib/data-access-layer/categories";
+import { getCategoriesDBCall, getChildCategoriesDBCall } from "@/lib/data-access-layer/categories";
 
 import {
   CategoryFilterSelect,
@@ -39,7 +39,7 @@ const CategoryHeader = ({
     loadData();
   }, [categorySlug, pageType]);
 
-  const displayName = categoryName ? `${categoryName} কোর্সসমূহ` : "সকল কোর্স";
+  const displayName = categoryName ? `${categoryName}` : "সকল কোর্স";
 
   return (
     <>

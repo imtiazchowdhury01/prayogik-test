@@ -47,6 +47,7 @@ const CourseCheckout = async ({
   }
 
   // Get the first price for regular pricing
+  const isFreeCourse = course?.prices[0]?.isFree;
   const regularPrice = course.prices?.[0];
   const regularAmount = regularPrice?.regularAmount || 0;
   const discountedAmount = regularPrice?.discountedAmount;
@@ -133,7 +134,11 @@ const CourseCheckout = async ({
                       রেগুলার প্রাইস:
                     </span>
                     <span className="text-lg font-semibold">
-                      ৳{convertNumberToBangla(regularAmount)}
+                      {!isFreeCourse ? (
+                        <span>৳{convertNumberToBangla(regularAmount)}</span>
+                      ) : (
+                        <span>*ফ্রি</span>
+                      )}
                     </span>
                   </div>
                   {hasDiscount && (
@@ -181,6 +186,7 @@ const CourseCheckout = async ({
               availableSubscriptionPlans={availableSubscriptionPlans}
               course={course}
               savedPriceType={savedPriceType}
+              isFreeCourse={isFreeCourse}
               hasDiscount={hasDiscount}
               discountedAmount={discountedAmount}
               regularAmount={regularAmount}

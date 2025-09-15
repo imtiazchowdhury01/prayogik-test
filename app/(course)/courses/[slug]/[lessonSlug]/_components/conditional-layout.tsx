@@ -65,10 +65,11 @@ const ConditionalLayoutContent = ({
                 </span>{" "}
                 <span>
                   {courseResponse?.teacherProfile?.subjectSpecializations[0]}{" "}
-                  এক্সপার্ট এবং{" "}
+                  এক্সপার্ট
                 </span>
                 {courseResponse?.teacherProfile?.yearsOfExperience && (
                   <span>
+                    এবং{" "}
                     {convertNumberToBangla(
                       courseResponse?.teacherProfile?.yearsOfExperience.split(
                         " "

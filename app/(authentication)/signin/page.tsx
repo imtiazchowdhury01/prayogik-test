@@ -232,15 +232,6 @@ export default function SignIn() {
         </button>
       </form>
       <div className="mt-4 text-center text-sm">
-        <div className="flex gap-1 flex-row justify-center">
-          {/* <p className="text-muted-foreground">আপনার কোন অ্যাকাউন্ট নেই?</p> */}
-          {/* <Link
-              className="font-semibold hover:text-brand text-gray-700"
-              href="/prime"
-            >
-              ফ্রি ট্রায়াল নিন
-            </Link> */}
-        </div>
         <p className="text-muted-foreground text-xs sm:text-sm xl:text-sm mt-4">
           উপরে ক্লিক করে, আমি{" "}
           <Link href="/terms-conditions">

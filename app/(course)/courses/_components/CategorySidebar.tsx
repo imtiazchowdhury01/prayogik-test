@@ -57,7 +57,7 @@ const CategorySidebar = ({ categories }: { categories: Category[] }) => {
     const groupedCategories = groupCategories(categories);
 
     return (
-      <div>
+      <div className="w-full bg-white lg:border lg:border-gray-200 rounded-lg lg:shadow-custom p-4 lg:sticky lg:top-[10%] lg:max-w-sm">
         {/* CSS for dropdown functionality */}
         <style
           dangerouslySetInnerHTML={{
@@ -89,7 +89,7 @@ const CategorySidebar = ({ categories }: { categories: Category[] }) => {
           }}
         />
 
-        <aside className="w-full bg-white lg:border lg:border-gray-200 rounded-lg lg:shadow-custom p-4 lg:sticky lg:top-[10%] lg:max-w-sm">
+        <aside>
           {/* Header */}
           <div className="mb-1">
             <Link

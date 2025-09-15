@@ -19,16 +19,12 @@ export const generalSchema = z.object({
     )
     .optional(),
   phoneNumber: z
-    .string()
+    .string({ required_error: "Please enter a phone number" })
+    .nonempty("Phone number is required")
+    .min(11, "Must be a valid 11 digit phone number (01XXXXXXXXX)")
     .max(11, "Must be a valid 11 digit phone number (01XXXXXXXXX)"),
 });
 export const contactSchema = z.object({
-  // phoneNumber: z
-  //   .string()
-  //   .regex(
-  //     /^\+8801[3-9]\d{8}$/,
-  //     "Must be a valid Bangladesh phone number (+8801XXXXXXXXX)"
-  //   ),
   city: z.string().optional(),
   state: z.string().optional(),
   country: z.string().optional(),

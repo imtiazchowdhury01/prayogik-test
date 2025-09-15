@@ -26,10 +26,10 @@ const TestimonialModal = ({ testimonial }: any) => {
 
   // Function to check if text needs truncation (roughly 3 lines worth of characters)
   const shouldShowReadMore = (text: string) => {
-    return text && text.length > 140; // Adjust this number based on your design
+    return text && text.length > 500; // Adjust this number based on your design
   };
 
-  const getPreviewText = (text: string, limit: number = 140) => {
+  const getPreviewText = (text: string, limit: number = 500) => {
     if (!text) return "";
     if (text.length <= limit) return text;
 
@@ -45,12 +45,12 @@ const TestimonialModal = ({ testimonial }: any) => {
   };
   return (
     <>
-      <div className="text-gray-950 mb-6 leading-relaxed text-base flex-grow md:overflow-hidden text-justify">
+      <div className="text-gray-950 mb-6 leading-relaxed text-sm flex-grow md:overflow-hidden text-justify">
         {shouldShowReadMore(testimonial?.text) ? (
           <p className="inline">
-            <span>{getPreviewText(testimonial?.text, 140)}</span>{" "}
+            <span>{getPreviewText(testimonial?.text, 500)}</span>{" "}
             <button
-              className="text-sm text-gray-600 hover:text-gray-700 hover:underline inline font-medium"
+              className="text-sm text-brand hover:text-brand/75 hover:underline inline font-medium transition-all duration-300"
               onClick={() => handleReadMore(testimonial)}
             >
               আরো পড়ুন

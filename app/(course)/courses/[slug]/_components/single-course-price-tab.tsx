@@ -405,7 +405,7 @@ const SingleCoursePriceTab = ({
               <div>
                 <p className="text-2xl font-bold">*ফ্রি</p>
                 <Button
-                  onClick={() => handleFreeCourseAccess(course.id)}
+                  onClick={handleRedirectToCheckout}
                   disabled={preview || isAccessingFreeCourse} // Disable in preview mode
                   className={twMerge(
                     "w-full hover:bg-primary-brand hover:text-white bg-primary-brand text-white transition-opacity mt-3",
@@ -413,11 +413,11 @@ const SingleCoursePriceTab = ({
                       "opacity-50 cursor-not-allowed hover:bg-primary-brand" // Style disabled state
                   )}
                 >
-                  {isAccessingFreeCourse ? (
+                  {isRedirecting ? (
                     <Loader className="w-4 h-4 animate-spin" />
                   ) : (
                     <>
-                      ফ্রি এক্সেস করুন
+                      কোর্সটি কিনুন
                       {/* {preview && " (প্রিভিউ মোড)"} */}
                     </>
                   )}

@@ -424,7 +424,7 @@ async function getEmailResourceDetails(payload: any) {
   if (payload.courseId) {
     courseForEmail = await db.course.findUnique({
       where: { id: payload.courseId },
-      select: { title: true },
+      select: { title: true, prices: true },
     });
   }
 
@@ -504,7 +504,6 @@ class PurchaseEmailService {
         subscriptionPlanForEmail,
         eventForEmail
       );
-
 
       // Determine email subject based on context
       const isNewUserWithCredentials =

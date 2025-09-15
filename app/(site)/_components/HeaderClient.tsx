@@ -39,14 +39,14 @@ export default function ClientHeader({ navigation }: ClientHeaderProps) {
       setSearchTerm("");
     }
   };
-  
+
   return (
     <>
       {/* Subscription Check - only renders if session exists */}
       {session && <SubscriptionCheck />}
 
       {/* Desktop Search and User Menu */}
-      <div className="items-center justify-end hidden xl:flex gap-x-3">
+      <div className="items-center justify-end hidden lg:flex gap-x-3">
         {/* Search Form */}
         <form
           onSubmit={searchHandler}

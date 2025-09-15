@@ -77,7 +77,7 @@ export const PersonalInfoForm = ({
   const formValues = watch();
 
   const onSubmitHandler = async (data: any) => {
-    console.log("data result:", data);
+    // console.log("data result:", data);
     // Convert education array from objects to strings before submitting
     const formattedData = {
       ...data,

@@ -17,6 +17,7 @@ export async function handleCheckout(formData: FormData) {
   const name = formData.get("name") as string;
   const profession = formData.get("profession") as string;
   const phoneNumber = formData.get("mobile") as string;
+  const isFreeCourse = formData.get("isFreeCourse") as boolean;
 
   const payload = {
     email,
@@ -33,6 +34,7 @@ export async function handleCheckout(formData: FormData) {
         ? 0
         : Number(parseFloat(amount).toFixed(2)),
     type: purchasedType,
+    isFreeCourse, // For Free Course Access
   };
 
   try {

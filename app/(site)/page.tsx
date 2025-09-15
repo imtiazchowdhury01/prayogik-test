@@ -1,11 +1,11 @@
 import ActionBanner from "@/components/common/ActionBanner";
 import type { Metadata } from "next";
-import OurExperts from "../_components/home/OurExperts";
-import PrayogikHero from "../_components/home/PrayogikHero";
-import SuccessStory from "../_components/home/SuccessStory";
-import UpcomingEvents from "../_components/home/UpcomingEvents";
+import OurExperts from "./_components/home/OurExperts";
+import SuccessStory from "./_components/home/SuccessStory";
+import UpcomingEvents from "./_components/home/UpcomingEvents";
 import HomeCourses from "./_components/HomeCourses";
 import LiveCourses from "./_components/LiveCourses";
+import PrayogikHero from "./_components/home/PrayogikHero";
 
 export const metadata: Metadata = {
   title: "Prayogik – Practical Courses in Bangla for Career Skills",

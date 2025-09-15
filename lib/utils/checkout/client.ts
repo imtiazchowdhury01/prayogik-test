@@ -13,6 +13,10 @@ export async function handleTrialPurchase(payload: any) {
   const data = await response.json();
 
   if (data.success) {
+    if(payload?.isFreeCourse){
+      
+    }
+
     await clearServerCart();
     return {
       success: data.success,

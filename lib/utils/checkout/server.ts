@@ -631,7 +631,7 @@ async function handleTrialPurchase(
     const purchase = await db.purchase.create({
       data: {
         studentProfileId: studentProfile.id,
-        subscriptionPlanId: payload.subscriptionPlanId,
+        subscriptionPlanId: subscriptionPlan.id,
         purchaseType: "TRIAL",
         purchaseDuration: subscriptionPlan.trialDurationInDays || 30,
         expiresAt: trialEndsAt,

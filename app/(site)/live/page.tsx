@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import OurExperts from "../_components/home/OurExperts";
 import SuccessStory from "../_components/home/SuccessStory";
-import LiveCourses from "../home/_components/LiveCourses";
+import LiveCourses from "../_components/LiveCourses";
 import CommonHeroSection from "@/components/common/CommonHeroSection";
 
 export const metadata: Metadata = {

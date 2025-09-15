@@ -1,27 +1,25 @@
-"use client";
 import SectionTitle from "@/components/common/SectionTitle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
 import QouteIcon from "../_utils/QouteIcon";
 import TestimonialModal from "@/components/common/TestimonialModal";
-// import { primeTestimonials } from "@/data/testimonials-data";
 
 const StudentFeedback = () => {
   const bgColors = ["bg-[#F8F3E9]", "bg-[#E9F8F2]", "bg-[#EEF8E9]"];
   // from facebook
   const primeTestimonials = [
     {
-      id: 1,
+      id: 4,
       title: "",
-      name: "আল মাহমুদ",
-      avatar: "",
-      text: "প্রায়োগিক একটি কার্যকর লার্নিং প্ল্যাটফর্ম, যেখানে সহজ কোর্স, নোটস, কুইজ ও টিপস শিক্ষার্থীদের ক্যারিয়ার উন্নয়নকে সহজ ও আকর্ষণীয় করে তোলে।",
+      name: "আহসান চৌধুরী",
+      avatar: "/reviews/facebook/Ahsan Chowdhury.webp",
+      text: "নতুন বা মিডলেভেল SEO শিখতে বা দক্ষতা বাড়াতে চাইলে প্রায়োগিক বাংলাদেশের অন্যতম শীর্ষ ই-লার্নিং প্ল্যাটফর্ম। অত্যন্ত প্রফেশনাল ও সুপারিশকৃত।",
       bgColor: bgColors[0],
     },
+
     {
       id: 2,
       title: "",
@@ -39,23 +37,32 @@ const StudentFeedback = () => {
       bgColor: bgColors[2],
     },
     {
-      id: 4,
+      id: 1,
       title: "",
-      name: "মোঃ আবু ওবাইদা জায়েদ",
-      avatar: "/reviews/facebook/Abu-Obaida-Zayed.webp",
-      text: "প্রায়োগিক প্ল্যাটফর্মের উদ্যোগ সত্যিই প্রশংসনীয়। আমাদের মতো শিক্ষার্থীদের জন্য বাস্তব জীবনে প্রয়োজনীয় স্কিল নিয়ে কোর্স করানো হচ্ছে, যা অন্য জায়গায় সচরাচর পাওয়া যায় না। আমি ফেসবুক এ্যাওয়ার্নেস কোর্স করেছি এবং দেখেছি অল্প সময়ের মধ্যে স্পষ্টভাবে মূল বিষয়গুলো তুলে ধরা হয়েছে। শেখার অভিজ্ঞতা খুবই ইন্টারেক্টিভ এবং সহজবোধ্য। ভবিষ্যতে আরও ডিজিটাল মার্কেটিং ও স্কিল ডেভেলপমেন্ট সম্পর্কিত কোর্স এলে তা অনেক উপকারে আসবে বলে মনে করি। আমি অবশ্যই অন্যদেরকে এই প্ল্যাটফর্ম রেকমেন্ড করবো।",
-      bgColor: bgColors[2],
+      name: "আল মাহমুদ",
+      avatar: "",
+      text: "প্রায়োগিক একটি কার্যকর লার্নিং প্ল্যাটফর্ম, যেখানে সহজ কোর্স, নোটস, কুইজ ও টিপস শিক্ষার্থীদের ক্যারিয়ার উন্নয়নকে সহজ ও আকর্ষণীয় করে তোলে।",
+      bgColor: bgColors[1],
     },
+
     {
-      id: 5,
+      id: 6,
       title: "",
       name: "মোঃ অলিউল্লাহ মির্ধা",
       avatar: "/reviews/facebook/mridha.webp",
       text: "বাংলাদেশের অনলাইন লার্নিং প্ল্যাটফর্মগুলোর মধ্যে আপনাদের কোর্সগুলো সত্যিই আলাদা। সাজানো-গোছানো ছোট ছোট ভিডিওতে শেখা অনেক সহজ হয়েছে। যদি প্র্যাকটিক্যাল অ্যাসাইনমেন্ট আর এমসিকিউ যুক্ত হয়, তাহলে শিক্ষার্থীরা আরও দক্ষ হয়ে উঠবে। আমি নির্দ্বিধায় অন্যদেরও এই প্ল্যাটফর্ম রেকমেন্ড করব।",
+      bgColor: bgColors[1],
+    },
+    {
+      id: 5,
+      title: "",
+      name: "আজাদ আবুল",
+      avatar: "/reviews/facebook/Azad Abul.webp",
+      text: "যারা নিখুঁতভাবে SEO শিখতে চান তাদের জন্য এটি গুরুত্বপূর্ণ।",
       bgColor: bgColors[0],
     },
     {
-      id: 6,
+      id: 7,
       title: "",
       name: "নজরুল ইসলাম তুহিন",
       avatar: "/reviews/facebook/nazrul-islam-tohin.webp",
@@ -63,64 +70,48 @@ const StudentFeedback = () => {
       bgColor: bgColors[1],
     },
     {
-      id: 7,
+      id: 8,
+      title: "",
+      name: "মোঃ আবু ওবাইদা জায়েদ",
+      avatar: "/reviews/facebook/Abu-Obaida-Zayed.webp",
+      text: "প্রায়োগিক প্ল্যাটফর্মের উদ্যোগ সত্যিই প্রশংসনীয়। আমাদের মতো শিক্ষার্থীদের জন্য বাস্তব জীবনে প্রয়োজনীয় স্কিল নিয়ে কোর্স করানো হচ্ছে, যা অন্য জায়গায় সচরাচর পাওয়া যায় না। আমি ফেসবুক এ্যাওয়ার্নেস কোর্স করেছি এবং দেখেছি অল্প সময়ের মধ্যে স্পষ্টভাবে মূল বিষয়গুলো তুলে ধরা হয়েছে। শেখার অভিজ্ঞতা খুবই ইন্টারেক্টিভ এবং সহজবোধ্য। ভবিষ্যতে আরও ডিজিটাল মার্কেটিং ও স্কিল ডেভেলপমেন্ট সম্পর্কিত কোর্স এলে তা অনেক উপকারে আসবে বলে মনে করি। আমি অবশ্যই অন্যদেরকে এই প্ল্যাটফর্ম রেকমেন্ড করবো।",
+      bgColor: bgColors[0],
+    },
+
+    {
+      id: 9,
       title: "",
       name: "আরিফুর রহমান",
       avatar: "/reviews/facebook/Arifur Rahman.webp",
       text: "খুবই সুন্দর এবং গুছালো একটি কোর্স বিশেষ করে যারা ব্যাকলিংক এর প্রতি জানতে আগ্রহী এবং ব্যাকলিংক ইন্ডাস্ট্রিতে নিজের ক্যারিয়ার গড়তে আগ্রহী তাদের জন্য এই কোর্সটি আমার মতে মাস্ট করতে হবে কারণ আমি সাধারণত দেশ এবং বিদেশের অনেক কোর্স করেছি তবে এত সুন্দর ক্লিয়ার কনসেপ্ট আসলে কারো কাছ থেকে পাইনি যেটা আমি আবুল কাশেম ভাই এর কাছ থেকে পেয়েছি।আমার কাছে এই কোর্সের সবচাইতে যে জিনিসটা বেশি ভালো লেগেছে সেটা হচ্ছে তার শেখানোর দক্ষতা। আসলে আমরা অনেক জায়গায় অনেকের কাছ থেকে কোর্স করি কিন্তু সবাই সেইভাবে এত সুন্দর ভাবে গুছিয়ে যে উপস্থাপনা করব এত সুন্দর ভাবে বুঝিয়ে বলবে আপনাকে বোঝাবে সে জিনিসটা কিন্তু আসলে সবার মধ্যে না ।  এমনকি আমি নিজেও অনেক সময় অনেক মানুষকে অনেক কিছু বুঝাতে গিয়ে আটকে যাই, আসলে কিভাবে বুঝাবো কিভাবে বুঝলে তারা খুব ভালোভাবে বুঝতে পারবেন এই বিষয়গুলো আমি নিজেও খুব ভালো পারিনা,কিন্তু আমি আবুল কাশেম ভাইয়ের কাছে যখন কোর্স করছি তখন আমার কাছে সবচাইতে সবচেয়ে বেশি ভালো লাগছে তার টিচিং স্কিলস টা, বেশি ভালো লাগছে খুব সুন্দর ভাবে গুছিয়ে এক্সাম্পলস বুঝিয়ে দিতে পারেন এ জিনিসটা সবচাইতে আমার কাছে বেশি ভালো লেগেছ,ছাড়াও আরেকটা জিনিস ভালো লাগে সেটা হচ্ছে যে উনি অনেক ফিউচারিস্টিক মানে ভবিষ্যতের যে কাজকর্মগুলো  কিভাবে হবে, কিভাবে আমাদের নিজেদেরকে ভবিষ্যতের কাজগুলোর জন্য সর্বদা নিজেকে আপডেট রাখতে হবে।কারন আমি এখন যে কাজগুলো করছি যে নিয়মে করছি ভবিষ্যতে সেই কাজগুলো সেই নিয়মে নাও হতে পারে, হয়তো বা নিয়ম পরিবর্তন হতে পারে অথবা কাজের ধরন পরিবর্তন হতে পারে এই বিষয়গুলো মূলত আমাদের সবাইকে জানা উচিত কারণ বিগত তিন চার বছরেও এসইও ইন্ডাস্ট্রিতে যেভাবে কাজ করতো সার্চ ইঞ্জিন আপডেটের ফলে সেই অনেক কাজ অনেক নিয়ম পরিবর্তন হয়েছে অতএব এই পরিবর্তনের সাথে নিজেদেরকে কিভাবে সবসময় আপডেট রাখা যায় এবং সে অনুযায়ী কাজ করা যায় যাতে করে আমাদের ওয়েবসাইট গুলো, গুগোল বা কোন সার্চ ইঞ্জিন আপডেটের ফলে রেংক না হারায় ট্রাফিক যাতে ডাউন হয়ে না যায় সেভাবে করে কিভাবে নিজের স্কিল সবসময় আপডেট রাখা যায় এগুলো খুব সুন্দরভাবে উনি বুঝিয়ে দিয়েছেন যেটা আমার কাছে খুবই ভালো লেগেছে।",
-      bgColor: bgColors[0],
-    },
-    {
-      id: 8,
-      title: "",
-      name: "আহসান চৌধুরী",
-      avatar: "/reviews/facebook/Ahsan Chowdhury.webp",
-      text: "নতুন বা মিডলেভেল SEO শিখতে বা দক্ষতা বাড়াতে চাইলে প্রায়োগিক বাংলাদেশের অন্যতম শীর্ষ ই-লার্নিং প্ল্যাটফর্ম। অত্যন্ত প্রফেশনাল ও সুপারিশকৃত।",
-      bgColor: bgColors[1],
-    },
-    {
-      id: 9,
-      title: "",
-      name: "এআর দিপু",
-      avatar: "/reviews/facebook/AR Dipu.webp",
-      text: "আমি এখানে হাট লিঙ্ক-বিল্ডিং কৌশল সম্পর্কে একটি স্পষ্ট নির্দেশিকা পেয়েছি।",
       bgColor: bgColors[2],
     },
+
     {
       id: 10,
       title: "",
-      name: "আজাদ আবুল",
-      avatar: "/reviews/facebook/Azad Abul.webp",
-      text: "যারা নিখুঁতভাবে SEO শিখতে চান তাদের জন্য এটি গুরুত্বপূর্ণ।",
+      name: "বাবুল সাহা",
+      avatar: "/reviews/facebook/Babul Saha.webp",
+      text: "প্রায়োগিক হলো সেরা ডিজিটাল মার্কেটিং সেন্টার।",
       bgColor: bgColors[2],
     },
     {
       id: 11,
       title: "",
-      name: "বাবুল সাহা",
-      avatar: "/reviews/facebook/Babul Saha.webp",
-      text: "প্রায়োগিক হলো সেরা ডিজিটাল মার্কেটিং সেন্টার।",
+      name: "উমর ফারুক",
+      avatar: "/reviews/omarfaruk.webp",
+      text: "প্রায়োগিকের বহুমুখী কোর্সে অংশগ্রহণ আমার জন্য জ্ঞান ও দক্ষতা বৃদ্ধির এক অসাধারণ অভিজ্ঞতা ছিল প্রায়োগিকের এই উদ্যোগ নিঃসন্দেহে প্রশংসনীয়। আমি মনে করি এই প্লাটফর্মের মাধ্যমে শিক্ষার্থীরা অনেক উপকৃত হবে। আমি শর্ট কোর্স থেকে আমি বাস্তব অর্থেই অনেক জ্ঞান অর্জন করেছি। তাই আমি প্রোয়োগিকের এই প্লাটফর্মের কোর্সগুলো আমি নিরদ্বিধায় রেকোমেন্ড করছি।",
       bgColor: bgColors[0],
     },
     {
       id: 12,
       title: "",
-      name: "উমর ফারুক",
-      avatar: "/reviews/omarfaruk.webp",
-      text: "প্রায়োগিকের বহুমুখী কোর্সে অংশগ্রহণ আমার জন্য জ্ঞান ও দক্ষতা বৃদ্ধির এক অসাধারণ অভিজ্ঞতা ছিল প্রায়োগিকের এই উদ্যোগ নিঃসন্দেহে প্রশংসনীয়। আমি মনে করি এই প্লাটফর্মের মাধ্যমে শিক্ষার্থীরা অনেক উপকৃত হবে। আমি শর্ট কোর্স থেকে আমি বাস্তব অর্থেই অনেক জ্ঞান অর্জন করেছি। তাই আমি প্রোয়োগিকের এই প্লাটফর্মের কোর্সগুলো আমি নিরদ্বিধায় রেকোমেন্ড করছি।",
+      name: "এআর দিপু",
+      avatar: "/reviews/facebook/AR Dipu.webp",
+      text: "আমি এখানে হাট লিঙ্ক-বিল্ডিং কৌশল সম্পর্কে একটি স্পষ্ট নির্দেশিকা পেয়েছি।",
       bgColor: bgColors[1],
     },
   ];
-  const [currentPage, setCurrentPage] = useState(0);
-  const ITEMS_PER_PAGE = 12;
-
-  const showMoreItems = () => {
-    setCurrentPage((prev) => prev + 1);
-  };
-
-  const startIndex = currentPage * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const visibleTestimonials = primeTestimonials.slice(startIndex, endIndex);
 
   return (
     <div>
@@ -130,14 +121,11 @@ const StudentFeedback = () => {
       />
       <div className="px-6 md:px-8 lg:px-8 xl:px-8 2xl:px-0 max-w-7xl mx-auto ">
         {/* grid layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7 transition-all duration-300 ease-in-out">
-          {visibleTestimonials.map((testimonial, index) => (
+        <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-3 gap-4">
+          {primeTestimonials.map((testimonial) => (
             <Card
               key={testimonial.id}
-              className={`${testimonial.bgColor} border-0 shadow-sm h-full transition-all duration-300 ease-in-out transform`}
-              style={{
-                animationDelay: `${index * 50}ms`,
-              }}
+              className={`${testimonial.bgColor} border-0 shadow-sm break-inside-avoid mb-6`}
             >
               <CardContent className="p-6 flex flex-col h-full">
                 {/* Quote Icon */}

@@ -19,7 +19,13 @@ type purchaseDetails = {
   eventstatus: string | null;
   trialStartDate: any;
   trialEndDate: any;
+  coursePrice: number | null;
 };
+
+function getCoursePrice(prices?: { isFree: boolean; regularAmount: number }[]) {
+  if (!prices || prices.length === 0) return null;
+  return prices[0].isFree ? null : prices[0].regularAmount || null;
+}
 
 const preparePurchaseDetails = async (
   payload: any,
@@ -37,6 +43,7 @@ const preparePurchaseDetails = async (
     expiresAt: purchase?.expiresAt || subscription?.expiresAt || null,
     isTrial: subscription?.isTrial || false,
     courseName: null,
+    coursePrice: null,
     subscriptionPlanName: subscription?.subscriptionPlan?.name || null,
     eventName: null,
     eventDate: null,
@@ -52,13 +59,26 @@ const preparePurchaseDetails = async (
 
   // Get course details if courseId exists
   if (payload.courseId && !course) {
+    console.log("FROM IF CONDITION: ", payload.courseId);
     const courseData = await db.course.findUnique({
       where: { id: payload.courseId },
-      select: { title: true },
+      select: {
+        title: true,
+        prices: {
+          select: {
+            isFree: true,
+            regularAmount: true,
+          },
+        },
+      },
     });
+    console.log("FROM IF CONDITION Course: ", courseData);
     purchaseDetails.courseName = courseData?.title || null;
+    purchaseDetails.coursePrice = getCoursePrice(courseData?.prices);
   } else if (course) {
+    console.log(course, "courseInfo");
     purchaseDetails.courseName = course.title;
+    purchaseDetails.coursePrice = getCoursePrice(course.prices);
   }
 
   // Get subscription plan details if subscriptionPlanId exists
@@ -107,7 +127,7 @@ const preparePurchaseDetails = async (
     purchaseDetails.eventZoomLink = event.zoomLink;
     purchaseDetails.eventstatus = event.status;
   }
-
+  console.log(purchaseDetails, "Purchase details form prepareDatails fn");
   return purchaseDetails;
 };
 
