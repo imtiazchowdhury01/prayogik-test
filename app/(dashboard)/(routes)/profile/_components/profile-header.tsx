@@ -44,17 +44,17 @@ const ProfileHeader = ({ userData }: any) => {
                       {userData.phoneNumber}
                     </span>
                   </div>
-                  {userData.teacherProfile.yearsOfExperience && (
+                  {userData?.teacherProfile?.yearsOfExperience ? (
                     <div className="flex items-center gap-2 text-muted-foreground mb-3">
                       <Briefcase className="w-4 h-4 flex-shrink-0" />
                       <span className="text-sm sm:text-base">
-                        {userData.teacherProfile.yearsOfExperience
-                          ? userData.teacherProfile.yearsOfExperience
+                        {userData?.teacherProfile.yearsOfExperience
+                          ? userData?.teacherProfile.yearsOfExperience
                           : "No"}{" "}
                         experience
                       </span>
                     </div>
-                  )}
+                  ) : null}
                 </div>
 
                 <div className="flex items-center gap-3">

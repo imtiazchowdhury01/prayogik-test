@@ -59,8 +59,12 @@ export const EventActions = ({
       setIsLoading(true);
       await axios.delete(`/api/admin/event/${eventId}`);
       toast.success("Event deleted");
-
-      router.replace(`/admin/events`);
+      await revalidatePage([
+        { route: "/" },
+        { route: "/home" },
+        { route: "/events" },
+      ]);
+      router.push(`/admin/events`);
     } catch (error) {
       console.log(error);
       if (error.response && error.response.data) {
@@ -70,11 +74,6 @@ export const EventActions = ({
       }
     } finally {
       setIsLoading(false);
-      await revalidatePage([
-        { route: "/" },
-        { route: "/home" },
-        { route: "/events" },
-      ]);
     }
   };
 

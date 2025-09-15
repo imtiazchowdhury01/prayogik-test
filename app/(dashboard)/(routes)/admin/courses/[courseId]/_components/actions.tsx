@@ -1,6 +1,7 @@
 // @ts-nocheck
 "use client";
 
+import { revalidatePage } from "@/actions/revalidatePage";
 import { Button } from "@/components/ui/button";
 import { Urls } from "@/constants/urls";
 import { useConfettiStore } from "@/hooks/use-confetti-store";
@@ -34,6 +35,12 @@ export const Actions = ({ disabled, courseId, isPublished }: ActionsProps) => {
         await api.patch(`${Urls.admin.courses}/${courseId}/publish`);
         toast.success("Course published");
         confetti.onOpen();
+      await revalidatePage([
+        { route: "/" },
+        { route: "/home" },
+        { route: "/live" },
+      { route: "/(course)/courses", type: "layout" },
+      ]);
       }
       router.refresh();
     } catch {
@@ -50,6 +57,12 @@ export const Actions = ({ disabled, courseId, isPublished }: ActionsProps) => {
       toast.success("Course deleted");
       router.refresh();
       router.push(`/admin/courses`);
+      await revalidatePage([
+        { route: "/" },
+        { route: "/home" },
+        { route: "/live" },
+        { route: "/courses" },
+      ]);
     } catch (error) {
       if (error.response && error.response.status === 400) {
         toast.error(error.response.data); // Show the error message returned from the API

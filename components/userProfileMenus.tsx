@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
   Menubar,
   MenubarContent,
@@ -31,26 +30,26 @@ import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { useEffect, useState } from "react";
 import { clientApi } from "@/lib/utils/openai/client";
+import { useQuery } from "@tanstack/react-query";
+import { QueryKeys } from "@/constants/query-keys";
+import { clientSidefetchUserSubscription } from "@/lib/utils/openai/client/user";
 
-export default function UserProfileMenus({ session, pathName }) {
-  const [subscription, setSubscription] = useState<any>(null);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const SubscriptionResponse = await clientApi.getUserSubscriptions({});
-        setSubscription(SubscriptionResponse?.body ?? null);
-      } catch (error) {
-        console.error("Failed to fetch subscription:", error);
-        setSubscription(null);
-      }
-    })();
-  }, [session]);
+export default function UserProfileMenus({ session, pathName }: any) {
+  const {
+    data: subscription,
+    error,
+    isLoading,
+  } = useQuery<any>({
+    queryKey: [QueryKeys.USER_SUBSCRIPTION],
+    queryFn: clientSidefetchUserSubscription,
+    staleTime: 5 * 60 * 1000,
+    enabled: !!session,
+  });
 
   const router = useRouter();
 
   // Function to format display name based on word count
-  const formatDisplayName = (name) => {
+  const formatDisplayName = (name: string) => {
     if (!name || typeof name !== "string") return "";
 
     const words = name.trim().split(/\s+/); // Split by whitespace and remove empty strings
@@ -78,13 +77,13 @@ export default function UserProfileMenus({ session, pathName }) {
   // console.log("subscription result:", session);
 
   // Prevent menu from closing when clicking on text elements
-  const handleTextClick = (e) => {
+  const handleTextClick = (e: any) => {
     e.preventDefault();
     e.stopPropagation();
   };
 
   // Handle navigation and close menu
-  const handleNavigation = (path) => {
+  const handleNavigation = (path: any) => {
     // Menu will close automatically due to onSelect
     router.push(path);
   };

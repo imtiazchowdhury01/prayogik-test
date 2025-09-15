@@ -2,7 +2,7 @@
 import { cache } from "react";
 import { db } from "../db";
 
-const getCategoriesDBCall = async () => {
+const getCategoriesDBCall = cache(async () => {
   try {
     const categories = await db.category.findMany({
       select: {
@@ -32,7 +32,7 @@ const getCategoriesDBCall = async () => {
     console.error("Error categories db call:", error);
     return [];
   }
-};
+});
 const getChildCategoriesDBCall = async () => {
   try {
     const categories = await db.category.findMany({

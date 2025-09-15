@@ -1,10 +1,13 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { clearServerCart, setServerCart } from "@/lib/actions/cart-cookie";
 import { useSession } from "next-auth/react";
 import { Loader } from "lucide-react"; // Import the loader icon
+import { useQuery } from "@tanstack/react-query";
+import { QueryKeys } from "@/constants/query-keys";
+import { clientSidefetchUserSubscription } from "@/lib/utils/openai/client/user";
 
 // Types
 interface SubscriptionPlan {
@@ -55,39 +58,19 @@ const PurchasePlanButton: React.FC<PurchasePlanButtonProps> = ({
   children,
 }) => {
   const router = useRouter();
-  const { status } = useSession();
-  const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false); // New state for button action loading
-  const [activeSubscription, setActiveSubscription] =
-    useState<ActiveSubscription | null>(null);
+  const { data: session, status } = useSession();
+  const [actionLoading, setActionLoading] = useState(false); // New state for
 
-  // Fetch subscription data
-  const fetchSubscriptionData = useCallback(async () => {
-    if (status === "loading") return;
-
-    try {
-      setLoading(true);
-
-      if (status === "authenticated") {
-        const response = await fetch("/api/user/subscription");
-        const data = response.ok ? await response.json() : null;
-
-        // console.log("subscriptionData result:", data);
-        setActiveSubscription(data);
-      } else {
-        setActiveSubscription(null);
-      }
-    } catch (error) {
-      console.error("Error fetching subscription data:", error);
-      setActiveSubscription(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [status]);
-
-  useEffect(() => {
-    fetchSubscriptionData();
-  }, [fetchSubscriptionData]);
+  const {
+    data: activeSubscription,
+    error,
+    isLoading: loading,
+  } = useQuery<any>({
+    queryKey: [QueryKeys.USER_SUBSCRIPTION],
+    queryFn: clientSidefetchUserSubscription,
+    staleTime: 5 * 60 * 1000, // 5 minutes — don't refetch unless stale
+    enabled: !!session,
+  });
 
   // Computed values
   const isActivePlan = activeSubscription?.subscriptionPlanId === plan?.id;
@@ -98,12 +81,12 @@ const PurchasePlanButton: React.FC<PurchasePlanButtonProps> = ({
     : false;
 
   const isCurrentlyOnTrial =
-    activeSubscription?.isTrial &&
+    activeSubscription?.subscriptionPlan?.isTrial &&
     activeSubscription?.trialEndsAt &&
     new Date(activeSubscription.trialEndsAt) > currentDate;
 
   const isTrialExpired =
-    activeSubscription?.isTrial &&
+    activeSubscription?.subscriptionPlan?.isTrial &&
     activeSubscription?.trialEndsAt &&
     new Date(activeSubscription.trialEndsAt) < currentDate;
 
@@ -130,7 +113,9 @@ const PurchasePlanButton: React.FC<PurchasePlanButtonProps> = ({
     const planDuration = plan?.durationInYears || plan?.durationInMonths;
     const planType = plan?.type === "YEARLY" ? "বছরের" : "মাসের";
     const actionText =
-      isExpired || isTrialExpired ? "প্ল্যান পরিবর্তন করুন" : "এখনই কিনুন";
+      isExpired || isTrialExpired || activeSubscription
+        ? "প্ল্যান পরিবর্তন করুন"
+        : "এখনই কিনুন";
 
     return `${actionText}`;
   }, [

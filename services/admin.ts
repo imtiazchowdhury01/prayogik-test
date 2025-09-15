@@ -1,4 +1,5 @@
 "use server";
+import { revalidatePage } from "@/actions/revalidatePage";
 import { Urls } from "@/constants/urls";
 import {
   Course,
@@ -184,7 +185,15 @@ const createOrupdateSubscriptionDiscount = async (
     throw new Error("Failed to fetch dashboard stats");
   }
 
-  revalidatePath("/admin/manage/subscription-discounts");
+  revalidatePage([
+    {
+      route: "/admin/manage/subscription-discounts",
+    },
+    {
+      route: "/",
+      type: "layout",
+    },
+  ]);
   return response.json();
 };
 
@@ -211,10 +220,12 @@ const subscriptionPlan = async (url: any, method: any, data: any) => {
     body: JSON.stringify(data),
   });
 
- const responseData = await response.json();
+  const responseData = await response.json();
 
   if (!response.ok) {
-    throw new Error(responseData.message || "Failed to create or update subscription plan!");
+    throw new Error(
+      responseData.message || "Failed to create or update subscription plan!"
+    );
   }
 
   revalidatePath("/admin/subscription-plans");

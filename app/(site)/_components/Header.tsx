@@ -49,7 +49,7 @@ export default function Header() {
             />
           </Link>
 
-          <div className="hidden mr-4 xl:flex">
+          <div className="hidden mr-4 lg:flex">
             {navigation.map((item) => (
               <Link
                 key={item.name}

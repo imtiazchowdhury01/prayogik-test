@@ -1,6 +1,7 @@
 import React, { Suspense } from "react";
 import CoursesSection from "./_components/CoursesSection";
 import CategorySidebarSkeleton from "./_components/CategorySidebarSkeleton";
+import CoursesGridSkeleton from "./_components/CoursesGridSkeleton";
 import CategorySidebar from "./_components/CategorySidebar";
 import CategoryHeader from "./category/[categorySlug]/_components/CategoryHeader";
 import { getCategoriesDBCall } from "@/lib/data-access-layer/categories";
@@ -22,9 +23,9 @@ const CoursesPage = async () => {
           {/* Header with mobile sidebar and filters */}
           <CategoryHeader
             categorySlug={""}
+            categories={categories}
             pageType="category"
             isCoursespage={true}
-            categories={categories}
           />
 
           <CoursesSection />

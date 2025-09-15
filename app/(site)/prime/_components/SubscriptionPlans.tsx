@@ -74,6 +74,10 @@ import SubscriptionPlanCard from "./SubscriptionPlanCard";
 import { SubscriptionPlan } from "@prisma/client";
 import PurchasePlanButton from "./PurchasePlanButton";
 import { RefreshCcw } from "lucide-react";
+import dynamic from "next/dynamic";
+const UserTrialPlan = dynamic(() => import("./UserTrialPlan"), {
+  ssr: false,
+});
 
 const features: string[] = [
   "সময়কাল ২ বছর",
@@ -104,6 +108,8 @@ export default async function SubscriptionPlans(): Promise<JSX.Element> {
           />
         ))}
       </div>
+
+      <UserTrialPlan trialPlan={trialPlan} />
     </div>
   );
 }

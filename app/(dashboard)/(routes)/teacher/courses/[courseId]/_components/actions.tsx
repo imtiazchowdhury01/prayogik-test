@@ -70,6 +70,12 @@ export const Actions = ({
       setIsLoading(true);
       await axios.delete(`/api/courses/${courseId}`);
       toast.success("Course deleted");
+      await revalidatePage([
+        { route: "/" },
+        { route: "/home" },
+        { route: "/live" },
+        { route: "/(course)/courses", type: "layout" },
+      ]);
       if (isAdmin) {
         router.replace(`/admin/courses`);
       } else {
@@ -83,12 +89,6 @@ export const Actions = ({
       }
     } finally {
       setIsLoading(false);
-      await revalidatePage([
-        { route: "/" },
-        { route: "/home" },
-        { route: "/live" },
-        { route: "/(course)/courses", type: "layout" },
-      ]);
     }
   };
 

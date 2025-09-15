@@ -188,7 +188,6 @@ async function handleTrialPurchase(
 export async function POST(request: NextRequest) {
   try {
     const payload: TrialCallbackPayload = await request.json();
-
     // Validate required fields
     // if (!payload.subscriptionPlanId) {
     //   return createErrorResponse("Subscription plan ID is required");

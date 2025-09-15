@@ -24,7 +24,7 @@ export default function HomePage() {
         backgroundImage="/Launching-offer-BG.svg"
         imageSrc="/images/prime/video-frame-bg.webp"
       />
-      <div className="mb-24">
+      <div>
         <LiveCourses isLivePage={true} />
       </div>
       <SuccessStory />

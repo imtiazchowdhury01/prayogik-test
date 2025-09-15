@@ -63,21 +63,21 @@ export default function TeacherForm({
     email: z.string().min(1, { message: "Email is required" }),
     bio: z.string(),
     yearsOfExperience: z.string(),
-    education: z
-      .array(
-        z.object({
-          degree: z.string().optional(),
-          major: z.string().optional(),
-          passingYear: z.string().optional(),
-        })
-      )
-      .optional(),
+    // education: z
+    //   .array(
+    //     z.object({
+    //       degree: z.string().optional(),
+    //       major: z.string().optional(),
+    //       passingYear: z.string().optional(),
+    //     })
+    //   )
+    //   .optional(),
     subjectSpecializations: z.array(z.string()),
-    expertiseLevel: z.enum([
-      TeacherExpertiseLevel.ENTRY_LEVEL,
-      TeacherExpertiseLevel.EXPERT,
-      TeacherExpertiseLevel.MID_LEVEL,
-    ]),
+    // expertiseLevel: z.enum([
+    //   TeacherExpertiseLevel.ENTRY_LEVEL,
+    //   TeacherExpertiseLevel.EXPERT,
+    //   TeacherExpertiseLevel.MID_LEVEL,
+    // ]),
     dateOfBirth: z.date(),
     gender: z.string(),
     phoneNumber: z.string(),
@@ -125,10 +125,10 @@ export default function TeacherForm({
       yearsOfExperience: initialData?.teacherProfile?.yearsOfExperience || "",
       subjectSpecializations:
         initialData?.teacherProfile?.subjectSpecializations || [],
-      expertiseLevel:
-        initialData?.teacherProfile?.expertiseLevel ||
-        TeacherExpertiseLevel.ENTRY_LEVEL,
-      education: parsedEducation || [],
+      // expertiseLevel:
+      //   initialData?.teacherProfile?.expertiseLevel ||
+      //   TeacherExpertiseLevel.ENTRY_LEVEL,
+      // education: parsedEducation || [],
       dateOfBirth: new Date(initialData?.dateOfBirth),
       gender: initialData?.gender || "",
       phoneNumber: initialData.phoneNumber || "",
@@ -153,9 +153,9 @@ export default function TeacherForm({
       // Format education data before sending
       const formattedData = {
         ...data,
-        education: data.education.map(
-          (edu) => `${edu.degree} - ${edu.major} - ${edu.passingYear}`
-        ),
+        // education: data.education.map(
+        //   (edu) => `${edu.degree} - ${edu.major} - ${edu.passingYear}`
+        // ),
       };
 
       const result = await updateTeacherByAdmin(teacherId, formattedData);
@@ -268,45 +268,45 @@ export default function TeacherForm({
                         </Select>
                       ) : field.name === "email" ? (
                         <Input {...field} disabled />
-                      ) : field.name === "expertiseLevel" ? (
-                        <RadioGroup
-                          {...field}
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <div className="flex gap-4 items-center">
-                            {Object.keys(TeacherExpertiseLevel).map((level) => {
-                              const banglaLabels = {
-                                ENTRY_LEVEL: "নতুন",
-                                MID_LEVEL: "মধ্যম",
-                                EXPERT: "বিশেষজ্ঞ",
-                              };
-                              return (
-                                <FormItem
-                                  key={level}
-                                  className="flex items-center space-x-3 space-y-0"
-                                >
-                                  <FormControl>
-                                    <RadioGroupItem
-                                      value={level}
-                                      label={banglaLabels[level] || level}
-                                    />
-                                  </FormControl>
-                                  <FormLabel className="font-normal text-sm">
-                                    {banglaLabels[level] ||
-                                      String(level?.split("_")[0])
-                                        .charAt(0)
-                                        .toUpperCase() +
-                                        String(level?.split("_")[0])
-                                          .slice(1)
-                                          .toLowerCase()}
-                                  </FormLabel>
-                                </FormItem>
-                              );
-                            })}
-                          </div>
-                        </RadioGroup>
-                      ) : field.name === "subjectSpecializations" ? (
+                      ) : // ) : field.name === "expertiseLevel" ? (
+                      //   <RadioGroup
+                      //     {...field}
+                      //     onValueChange={field.onChange}
+                      //     defaultValue={field.value}
+                      //   >
+                      //     <div className="flex gap-4 items-center">
+                      //       {Object.keys(TeacherExpertiseLevel).map((level) => {
+                      //         const banglaLabels = {
+                      //           ENTRY_LEVEL: "নতুন",
+                      //           MID_LEVEL: "মধ্যম",
+                      //           EXPERT: "বিশেষজ্ঞ",
+                      //         };
+                      //         return (
+                      //           <FormItem
+                      //             key={level}
+                      //             className="flex items-center space-x-3 space-y-0"
+                      //           >
+                      //             <FormControl>
+                      //               <RadioGroupItem
+                      //                 value={level}
+                      //                 label={banglaLabels[level] || level}
+                      //               />
+                      //             </FormControl>
+                      //             <FormLabel className="font-normal text-sm">
+                      //               {banglaLabels[level] ||
+                      //                 String(level?.split("_")[0])
+                      //                   .charAt(0)
+                      //                   .toUpperCase() +
+                      //                   String(level?.split("_")[0])
+                      //                     .slice(1)
+                      //                     .toLowerCase()}
+                      //             </FormLabel>
+                      //           </FormItem>
+                      //         );
+                      //       })}
+                      //     </div>
+                      //   </RadioGroup>
+                      field.name === "subjectSpecializations" ? (
                         <MultiSelect
                           options={
                             categories?.map((v) => ({
@@ -321,14 +321,14 @@ export default function TeacherForm({
                           animation={0.2}
                           // maxCount={3}
                         />
-                      ) : field.name === "education" ? (
-                        <EducationForm
-                          initialEducations={field.value || []}
-                          onUpdateEducations={(updatedEducations) => {
-                            field.onChange(updatedEducations);
-                          }}
-                        />
-                      ) : field.name === "bio" ? (
+                      ) : // ) : field.name === "education" ? (
+                      //   <EducationForm
+                      //     initialEducations={field.value || []}
+                      //     onUpdateEducations={(updatedEducations) => {
+                      //       field.onChange(updatedEducations);
+                      //     }}
+                      //   />
+                      field.name === "bio" ? (
                         <Textarea
                           placeholder="আপনার সম্পর্কে সংক্ষেপে কিছু বলুন"
                           {...field}

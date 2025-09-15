@@ -1,7 +1,10 @@
 // CategoryHeader.tsx - Client Component (mobile sidebar + filters)
 "use client";
 import React, { useState } from "react";
-
+import {
+  getCategoriesDBCall,
+  getChildCategoriesDBCall,
+} from "@/lib/data-access-layer/categories";
 
 import {
   CategoryFilterSelect,
@@ -15,17 +18,15 @@ interface CategoryHeaderProps {
   pageType: "category" | "filter" | "category-filter";
   isCoursespage?: boolean;
   categoryName?: string;
-  categories: Category[]
+  categories: Category[];
 }
-
-
 
 const CategoryHeader = ({
   categorySlug,
   pageType,
+  categories,
   isCoursespage = false,
   categoryName = "",
-  categories
 }: CategoryHeaderProps) => {
   const [showSidebar, setShowSidebar] = useState<boolean>(false);
 

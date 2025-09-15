@@ -169,9 +169,9 @@ const CategoryFilterPage = async ({
           {/* Header with mobile sidebar and filters */}
           <CategoryHeader
             categorySlug={categorySlug}
+            categories={categories}
             pageType="category-filter"
             categoryName={getCategoryName(filter)}
-            categories={categories}
           />
 
           {/* Server Component for Initial Courses (SEO) */}

@@ -8,6 +8,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import React, { Suspense } from "react";
 import "./globals.css";
+import QueryClientProviderLayout from "@/components/query-client-provider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -42,9 +43,11 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <AuthProvider>
-          <Suspense>
-            <div>{children}</div>
-          </Suspense>
+          <QueryClientProviderLayout>
+            <Suspense>
+              <div>{children}</div>
+            </Suspense>
+          </QueryClientProviderLayout>
           <ConfettiProvider />
           <ToastProvider />
         </AuthProvider>

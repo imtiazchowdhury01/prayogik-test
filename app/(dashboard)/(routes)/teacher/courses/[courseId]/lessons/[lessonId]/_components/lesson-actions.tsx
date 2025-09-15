@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { Loader } from "lucide-react";
+import { revalidatePage } from "@/actions/revalidatePage";
 
 interface LessonActionsProps {
   disabled: boolean;
@@ -41,6 +42,12 @@ export const LessonActions = ({
         );
         toast.success("Lesson published");
       }
+      await revalidatePage([
+        { route: "/" },
+        { route: "/home" },
+        { route: "/live" },
+        { route: "/(course)/courses", type: "layout" },
+      ]);
       router.refresh();
     } catch {
       toast.error("Something went wrong");
@@ -60,6 +67,12 @@ export const LessonActions = ({
       } else {
         router.replace(`/teacher/courses/${courseId}`);
       }
+      await revalidatePage([
+        { route: "/" },
+        { route: "/home" },
+        { route: "/live" },
+        { route: "/(course)/courses", type: "layout" },
+      ]);
       router.refresh();
     } catch (error) {
       console.error("Error deleting chapter:", error);
