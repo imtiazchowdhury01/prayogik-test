@@ -146,7 +146,7 @@ const CategoryFilterPage = async ({
 
   const categories = await getCategoriesDBCall();
   const category = categories.find((cat) => cat.slug === categorySlug);
-  
+
   if (!category) {
     return <div>Category not found</div>;
   }
@@ -171,16 +171,16 @@ const CategoryFilterPage = async ({
             categorySlug={categorySlug}
             pageType="category-filter"
             categoryName={getCategoryName(filter)}
+            categories={categories}
           />
 
           {/* Server Component for Initial Courses (SEO) */}
-    
-            <CategoryCoursesSection
-              categorySlug={categorySlug}
-              pageType="category-filter"
-              filter={filter as FilterType}
-            />
 
+          <CategoryCoursesSection
+            categorySlug={categorySlug}
+            pageType="category-filter"
+            filter={filter as FilterType}
+          />
         </div>
       </div>
     </section>

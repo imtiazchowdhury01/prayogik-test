@@ -21,7 +21,7 @@ const CoursesSection = async () => {
       <CoursesGrid courses={courses} />
 
       {/* Client component for dynamic loading and filtering */}
-      {/* <CoursesClientSection initialPagination={pagination} /> */}
+      <CoursesClientSection initialPagination={pagination} />
     </div>
   );
 };

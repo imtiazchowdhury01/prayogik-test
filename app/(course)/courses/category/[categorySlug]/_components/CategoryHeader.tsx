@@ -8,12 +8,14 @@ import {
   GeneralFilterSelect,
 } from "@/app/(course)/courses/_components/SelectFilterOption";
 import SidebarSheetComponent from "../../../_components/SidebarSheetComponent";
+import { Category } from "@prisma/client";
 
 interface CategoryHeaderProps {
   categorySlug: string;
   pageType: "category" | "filter" | "category-filter";
   isCoursespage?: boolean;
   categoryName?: string;
+  categories: Category[]
 }
 
 
@@ -23,21 +25,11 @@ const CategoryHeader = ({
   pageType,
   isCoursespage = false,
   categoryName = "",
+  categories
 }: CategoryHeaderProps) => {
   const [showSidebar, setShowSidebar] = useState<boolean>(false);
-  const [categories, setCategories] = useState<any[]>([]);
 
   const toggleSidebarHandler = () => setShowSidebar((prev) => !prev);
-
-  // Load categories and category name on mount
-  React.useEffect(() => {
-    const loadData = async () => {
-      const categoriesData = await getCategoriesDBCall();
-      setCategories(categoriesData);
-    };
-
-    loadData();
-  }, [categorySlug, pageType]);
 
   const displayName = categoryName ? `${categoryName}` : "সকল কোর্স";
 

@@ -24,6 +24,7 @@ const CoursesPage = async () => {
             categorySlug={""}
             pageType="category"
             isCoursespage={true}
+            categories={categories}
           />
 
           <CoursesSection />
