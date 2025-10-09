@@ -1,35 +1,67 @@
-// api/teacher/payment/paymentMethods/[id]/route.ts
+// src/app/api/teacher/payment/paymentMethods/[id]/route.ts
+
+// @ts-nocheck
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const teacherId = searchParams.get("teacherId");
+
+  const paymentMethods = await db.paymentMethod.findMany({
+    where: { teacherId },
+  });
+
+  return NextResponse.json(paymentMethods);
+}
+
+export async function POST(request: Request) {
+  const { teacherId, accountNumber, details, type, active } =
+    await request.json();
+
+  const newPaymentMethod = await db.paymentMethod.create({
+    data: {
+      teacherId,
+      accountNumber,
+      details,
+      type,
+      active: active !== undefined ? active : true, // Set active to true by default
+    },
+  });
+
+  return NextResponse.json(newPaymentMethod);
+}
 
 export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   const { id } = params;
-  const { isPrimary } = await request.json();
+  const { active } = await request.json();
 
   try {
-    const updatedBankAccount = await db.bankAccount.update({
+    // Update the selected payment method
+    const updatedPaymentMethod = await db.paymentMethod.update({
       where: { id },
-      data: { isPrimary },
+      data: { active },
     });
 
-    if (isPrimary && updatedBankAccount.teacherProfileId) {
-      await db.bankAccount.updateMany({
+    // If setting this method to active, deactivate all other accounts
+    if (active) {
+      await db.paymentMethod.updateMany({
         where: {
-          teacherProfileId: updatedBankAccount.teacherProfileId,
-          id: { not: id },
+          teacherId: updatedPaymentMethod.teacherId, // Assuming you have the teacherId available
+          id: { not: id }, // Exclude the current account
         },
-        data: { isPrimary: false },
+        data: { active: false }, // Deactivate others
       });
     }
 
-    return NextResponse.json(updatedBankAccount);
+    return NextResponse.json(updatedPaymentMethod);
   } catch (error) {
-    console.error("Error updating bank account:", error);
+    console.error("Error updating payment method:", error);
     return NextResponse.json(
-      { error: "Error updating bank account" },
+      { error: "Error updating payment method" },
       { status: 500 }
     );
   }
@@ -42,17 +74,17 @@ export async function DELETE(
   const { id } = params;
 
   try {
-    await db.bankAccount.delete({
+    await db.paymentMethod.delete({
       where: { id },
     });
 
     return NextResponse.json({
-      message: "Bank account deleted successfully",
+      message: "Payment method deleted successfully",
     });
   } catch (error) {
-    console.error("Error deleting bank account:", error);
+    console.error("Error deleting payment method:", error);
     return NextResponse.json(
-      { error: "Error deleting bank account" },
+      { error: "Error deleting payment method" },
       { status: 500 }
     );
   }

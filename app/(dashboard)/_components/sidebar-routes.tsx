@@ -28,7 +28,6 @@ import {
   LayoutGrid,
   CalendarRange,
   GraduationCap,
-  Wallet,
 } from "lucide-react";
 
 import {
@@ -46,8 +45,6 @@ const studentRoutes = [
   { icon: LayoutGrid, label: "Dashboard", href: "/dashboard", isParent: true },
   // { icon: Compass, label: "Browse", href: "/search", isParent: true },
   { icon: User, label: "Profile", href: "/profile", isParent: true },
-  { icon: Wallet, label: "Wallet", href: "/wallet", isParent: true },
-  { icon: Award, label: "Referral", href: "/referral", isParent: true },
 ];
 
 const onboardRoute = [
@@ -78,18 +75,6 @@ const teacherRoutes = [
     href: "/teacher/accounts",
     isParent: true,
   },
-  {
-    icon: Wallet,
-    label: "Wallet",
-    href: "/wallet",
-    isParent: true,
-  },
-  {
-    icon: Award,
-    label: "Referral",
-    href: "/teacher/referral",
-    isParent: true,
-  }
 ];
 
 const adminRoute = [

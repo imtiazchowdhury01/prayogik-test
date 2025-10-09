@@ -1,24 +1,8 @@
-// api/courses/[courseId]/lessons/[lessonId]/complete/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 
-interface CompleteRequest {
-  lessonId: string;
-  courseId: string;
-}
-
-interface CompleteResponse {
-  success?: boolean;
-  message?: string;
-  error?: string;
-  isCompleted?: boolean;
-  progress?: number;
-}
-
-export async function POST(
-  req: NextRequest
-): Promise<NextResponse<CompleteResponse>> {
+export async function POST(req: NextRequest) {
   try {
     const { userId } = await getServerUserSession();
 
@@ -26,8 +10,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body: CompleteRequest = await req.json();
-    const { lessonId, courseId } = body;
+    const { lessonId, courseId } = await req.json();
 
     if (!lessonId || !courseId) {
       return NextResponse.json(
@@ -36,9 +19,9 @@ export async function POST(
       );
     }
 
+    // Get student profile
     const studentProfile = await db.studentProfile.findUnique({
-      where: { userId },
-      select: { id: true },
+      where: { userId: userId },
     });
 
     if (!studentProfile) {
@@ -48,11 +31,12 @@ export async function POST(
       );
     }
 
+    // Check if already completed
     const existingProgress = await db.progress.findUnique({
       where: {
         studentProfileId_lessonId: {
           studentProfileId: studentProfile.id,
-          lessonId,
+          lessonId: lessonId,
         },
       },
     });
@@ -64,11 +48,12 @@ export async function POST(
       });
     }
 
-    await db.progress.upsert({
+    // Mark as complete
+    const progress = await db.progress.upsert({
       where: {
         studentProfileId_lessonId: {
           studentProfileId: studentProfile.id,
-          lessonId,
+          lessonId: lessonId,
         },
       },
       update: {
@@ -76,17 +61,17 @@ export async function POST(
       },
       create: {
         studentProfileId: studentProfile.id,
-        lessonId,
+        lessonId: lessonId,
         isCompleted: true,
       },
     });
 
+    // Calculate course progress
     const course = await db.course.findUnique({
       where: { id: courseId },
       include: {
         lessons: {
           where: { isPublished: true },
-          select: { id: true },
         },
       },
     });
@@ -105,10 +90,9 @@ export async function POST(
       },
     });
 
-    const progressPercentage =
-      course.lessons.length > 0
-        ? Math.round((completedLessons / course.lessons.length) * 100)
-        : 0;
+    const progressPercentage = Math.round(
+      (completedLessons / course.lessons.length) * 100
+    );
 
     return NextResponse.json({
       success: true,
@@ -116,7 +100,7 @@ export async function POST(
       progress: progressPercentage,
     });
   } catch (error) {
-    console.error("[COMPLETE_LESSON_ERROR]", error);
+    console.error("Error marking lesson complete:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

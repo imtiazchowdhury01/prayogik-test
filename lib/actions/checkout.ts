@@ -6,7 +6,6 @@ import {
   handleBkashPayment,
   handleTrialPurchase,
 } from "../utils/checkout/client";
-import { processDevPayment } from "../utils/checkout/dev-payment";
 
 export async function handleCheckout(formData: FormData) {
   const subscriptionPlanId = formData.get("planId") as string;
@@ -38,14 +37,7 @@ export async function handleCheckout(formData: FormData) {
   };
 
   try {
-    // if (process.env.NODE_ENV === 'development') {
-    //   return await processDevPayment(payload);
-
-    //   // console.log("Checkout Payload:", payload);
-    // }
-    // else {
-      return await handleBkashPayment(payload);
-    // }
+    return await handleBkashPayment(payload);
   } catch (error) {
     console.error("Checkout error:", error);
     return {

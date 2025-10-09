@@ -315,11 +315,11 @@ export function CoursesTab({
               )}
 
               {/* Error state */}
-              {/* {purchasedError && (
+              {purchasedError && (
                 <div className="text-center text-red-500 py-4">
                   Error loading courses: {purchasedError.message}
                 </div>
-              )} */}
+              )}
 
               {purchasedCourses.length === 0 && !purchasedLoading && (
                 <EmptyContent

@@ -1,16 +1,17 @@
-// api/teacher/ranks/route.ts
+// @ts-nocheck
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 
+// GET API to fetch teacher ranks
 export async function GET() {
   try {
+    // Fetching ranks from the database using Prisma
     const ranks = await db.teacherRank.findMany();
+
+    // Return ranks as JSON response
     return NextResponse.json(ranks);
   } catch (error) {
     console.error("Error fetching ranks:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch ranks" },
-      { status: 500 }
-    );
+    return NextResponse.error();
   }
 }

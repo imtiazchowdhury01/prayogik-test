@@ -19,7 +19,7 @@ export const accountCreationTemplate = (
                     <body style="background-color:#f6f9fc;padding:10px 0">
                       <div
                         style="display:none;overflow:hidden;line-height:1px;opacity:0;max-height:0;max-width:0">
-                         আপনার অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে - প্রায়োগিক
+                         আপনার অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে - প্রয়োগিক
                         <div></div>
                       </div>
                       <table
@@ -53,7 +53,7 @@ export const accountCreationTemplate = (
                                         হ্যালো ${name},
                                       </p>
                                       <p
-                                        style="font-size:16px;line-height:26px;margin:16px 0;font-family:'Open Sans', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;font-weight:300;color:#404040">অ্যাডমিন কর্তৃক আপনার প্রায়োগিক প্ল্যাটফর্মে অ্যাকাউন্ট সফলভাবে তৈরি করা হয়েছে। প্ল্যাটফর্মে স্বাগতম!
+                                        style="font-size:16px;line-height:26px;margin:16px 0;font-family:'Open Sans', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;font-weight:300;color:#404040">অ্যাডমিন কর্তৃক আপনার প্রয়োগিক প্ল্যাটফর্মে অ্যাকাউন্ট সফলভাবে তৈরি করা হয়েছে। প্ল্যাটফর্মে স্বাগতম!
                                       </p>
                                       <p
                                         style="font-size:16px;line-height:26px;margin:16px 0;font-family:'Open Sans', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;font-weight:300;color:#404040">
@@ -80,7 +80,7 @@ export const accountCreationTemplate = (
                                       <p
                                         style="font-size:16px;line-height:26px;margin:16px 0;font-family:'Open Sans', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;font-weight:300;color:#404040">
                                         শুভেচ্ছাসহ,<br>
-                                        প্রায়োগিক টিম
+                                        প্রয়োগিক টিম
                                       </p>
                                     </td>
                                   </tr>

@@ -1,166 +1,104 @@
-// api/courses/[courseId]/lessons/route.ts
-import { useCourseByTeacherOrCoTeacher } from "@/hooks/useTeacherProfile";
+// @ts-nocheck
+
+import {
+  useCoTeacherProfileId,
+  useCourseByTeacherOrCoTeacher,
+  useTeacherProfile,
+} from "@/hooks/useTeacherProfile";
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
+// import { compositeSlugify } from "@/lib/slugify";
 import { isTeacher } from "@/lib/teacher";
-import { NextRequest, NextResponse } from "next/server";
-import type { Prisma } from "@prisma/client";
+import { NextResponse } from "next/server";
 
-// ========== TYPE DEFINITIONS ==========
-
-interface RouteParams {
-  params: {
-    courseId: string;
-  };
-}
-
-interface CreateLessonRequest {
-  title: string;
-  slug: string;
-}
-
-interface ErrorResponse {
-  error: boolean;
-  message: string;
-}
-
-type Lesson = Prisma.LessonGetPayload<{}>;
-
-// ========== POST HANDLER (Create Lesson) ==========
-
-export async function POST(
-  req: NextRequest,
-  { params }: RouteParams
-): Promise<NextResponse<Lesson | ErrorResponse>> {
+// CREATE a new lesson
+export async function POST(req, { params }) {
   try {
-    const { courseId } = params;
-
-    if (!courseId) {
-      return NextResponse.json(
-        { error: true, message: "Missing courseId" },
-        { status: 400 }
-      );
-    }
-
-    const { userId, isAdmin } = await getServerUserSession();
+    const { userId, isAdmin } = await getServerUserSession(req); // Fetch the user ID and admin status from session
 
     if (!userId) {
-      return NextResponse.json(
-        { error: true, message: "Unauthorized Access" },
-        { status: 401 }
-      );
+      throw new Error("Unauthorized Access");
     }
 
     // Check if user is admin or teacher
-    const userIsTeacher = await isTeacher(userId);
-
-    if (!isAdmin && !userIsTeacher) {
-      return NextResponse.json(
-        {
-          error: true,
-          message: "Unauthorized Access - Not a teacher or admin",
-        },
-        { status: 401 }
-      );
+    if (!isAdmin && !isTeacher(userId)) {
+      throw new Error("Unauthorized Access");
     }
 
-    // If not admin, verify ownership/co-teaching
+    const teacherProfile = await db.teacherProfile.findUnique({
+      where: {
+        userId: userId, // Getting the teacher profile using userId
+      },
+    });
+    let teachersProfileId = teacherProfile?.id;
+
+    // If not admin, ensure that the user is the owner of the course or co-teacher
     if (!isAdmin) {
-      const courseOwner = await useCourseByTeacherOrCoTeacher(userId, courseId);
+      const courseOwner = await useCourseByTeacherOrCoTeacher(
+        userId,
+        params.courseId
+      );
 
       if (!courseOwner) {
-        return NextResponse.json(
-          {
-            error: true,
-            message: "Unauthorized Access - Not course owner or co-teacher",
-          },
-          { status: 401 }
-        );
+        throw new Error("Unauthorized Access");
       }
     }
 
-    const body: CreateLessonRequest = await req.json();
-    const { title, slug } = body;
-
-    if (!title || !slug) {
-      return NextResponse.json(
-        { error: true, message: "Title and slug are required" },
-        { status: 400 }
-      );
-    }
-
-    // Check if slug already exists for this course
-    const lessonWithSameSlug = await db.lesson.findFirst({
-      where: {
-        courseId,
-        slug,
-      },
-    });
-
-    if (lessonWithSameSlug) {
-      return NextResponse.json(
-        { error: true, message: "Slug already exists" },
-        { status: 400 }
-      );
-    }
-
-    // Fetch the last lesson to determine position
+    // Fetch the last lesson to determine the position for the new lesson
     const lastLesson = await db.lesson.findFirst({
       where: {
-        courseId,
+        courseId: params.courseId,
       },
       orderBy: {
         position: "desc",
-      },
-      select: {
-        position: true,
       },
     });
 
     const newPosition = lastLesson ? lastLesson.position + 1 : 1;
 
-    // Create new lesson
+    const { title, slug } = await req.json();
+
+    // Ensure the slug is unique
+    const lessonWithSameSlug = await db.lesson.findFirst({
+      where: {
+        courseId: params.courseId,
+        slug,
+      },
+    });
+
+    if (lessonWithSameSlug) {
+      return new NextResponse("Slug already exists", { status: 401 });
+    }
+
+    // Create a new lesson
     const lesson = await db.lesson.create({
       data: {
         title,
-        slug,
-        courseId,
+        courseId: params.courseId,
         position: newPosition,
+        slug,
       },
     });
 
     return NextResponse.json(lesson);
-  } catch (error: any) {
-    console.error("[CREATE_LESSON_ERROR]", error);
-    return NextResponse.json(
+  } catch (error) {
+    console.log("[LESSONS]", error);
+    return new NextResponse(
       {
         error: true,
-        message: error?.message || "Internal Server Error",
+        message: error.message,
       },
       { status: 500 }
     );
   }
 }
 
-// ========== GET HANDLER (Read All Lessons) ==========
-
-export async function GET(
-  req: NextRequest,
-  { params }: RouteParams
-): Promise<NextResponse<Lesson[] | ErrorResponse>> {
+// READ all lessons for a course
+export async function GET(req, { params }) {
   try {
-    const { courseId } = params;
-
-    if (!courseId) {
-      return NextResponse.json(
-        { error: true, message: "Missing courseId" },
-        { status: 400 }
-      );
-    }
-
     const lessons = await db.lesson.findMany({
       where: {
-        courseId,
+        courseId: params.courseId,
       },
       orderBy: {
         position: "asc",
@@ -168,12 +106,114 @@ export async function GET(
     });
 
     return NextResponse.json(lessons);
-  } catch (error: any) {
-    console.error("[GET_LESSONS_ERROR]", error);
-    return NextResponse.json(
+  } catch (error) {
+    console.log("[LESSONS]", error);
+    return new NextResponse(
       {
         error: true,
-        message: error?.message || "Internal Server Error",
+        message: error.message,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+// UPDATE a lesson
+export async function PATCH(req, { params }) {
+  try {
+    const { userId, isAdmin } = await getServerUserSession(req); // Fetch the user ID and admin status from session
+
+    if (!userId) {
+      throw new Error("Unauthorized Access");
+    }
+
+    // Check if user is admin or teacher
+    if (!isAdmin && !isTeacher(userId)) {
+      throw new Error("Unauthorized Access");
+    }
+
+    const teacherProfileId = await useTeacherProfile(userId);
+
+    // If not admin, ensure that the user is the owner of the course or co-teacher
+    if (!isAdmin) {
+      const courseOwner = await useCourseByTeacherOrCoTeacher(
+        userId,
+        params.courseId
+      );
+
+      if (!courseOwner) {
+        throw new Error("Unauthorized Access");
+      }
+    }
+
+    const { title, slug } = await req.json();
+
+    // Update the lesson
+    const updatedLesson = await db.lesson.update({
+      where: {
+        id: params.lessonId,
+      },
+      data: {
+        title,
+        slug,
+      },
+    });
+
+    return NextResponse.json(updatedLesson);
+  } catch (error) {
+    console.log("[LESSONS]", error);
+    return new NextResponse(
+      {
+        error: true,
+        message: error.message,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE a lesson
+export async function DELETE(req, { params }) {
+  try {
+    const { userId, isAdmin } = await getServerUserSession(req); // Fetch the user ID and admin status from session
+
+    if (!userId) {
+      throw new Error("Unauthorized Access");
+    }
+
+    // Check if user is admin or teacher
+    if (!isAdmin && !isTeacher(userId)) {
+      throw new Error("Unauthorized Access");
+    }
+
+    const teacherProfileId = await useTeacherProfile(userId);
+
+    // If not admin, ensure that the user is the owner of the course or co-teacher
+    if (!isAdmin) {
+      const courseOwner = await useCourseByTeacherOrCoTeacher(
+        userId,
+        params.courseId
+      );
+
+      if (!courseOwner) {
+        throw new Error("Unauthorized Access");
+      }
+    }
+
+    // Delete the lesson
+    await db.lesson.delete({
+      where: {
+        id: params.lessonId,
+      },
+    });
+
+    return new NextResponse(null, { status: 204 });
+  } catch (error) {
+    console.log("[LESSONS]", error);
+    return new NextResponse(
+      {
+        error: true,
+        message: error.message,
       },
       { status: 500 }
     );

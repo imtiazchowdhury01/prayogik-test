@@ -1,29 +1,35 @@
-// api/teacher/payment/paymentHistory/route.ts
 export const dynamic = "force-dynamic";
+import { useTeacherProfile } from "@/hooks/useTeacherProfile";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 
+// GET API to fetch payment history based on teacherId
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const teacherProfileId = searchParams.get("teacherProfileId");
+    const teacherId = searchParams.get("teacherId");
+    // const teacherProfileId = await useTeacherProfile(userId);
 
-    if (!teacherProfileId) {
+    // Validate teacherId is provided
+    if (!teacherId) {
       return NextResponse.json(
-        { message: "Teacher Profile ID is required" },
+        { message: "Teacher Id is required" },
         { status: 400 }
       );
     }
 
-    const paymentHistory = await db.teacherPayments.findMany({
-      where: {
-        teacherProfileId: teacherProfileId,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    // Fetching payment history from the database using Prisma
+    const paymentHistory =
+      (await db.teacherPayments.findMany({
+        where: {
+          teacherProfileId: teacherId, // Use teacherId as string
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      })) || [];
 
+    // Return payment history as JSON response
     return NextResponse.json(paymentHistory);
   } catch (error: any) {
     console.error(

@@ -1,38 +1,14 @@
-// api/admin/users/[userId]/route.ts
+// @ts-nocheck
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getServerUserSession } from "@/lib/getServerUserSession";
-import { Role, UserAccountStatus, UserPlanType } from "@prisma/client";
+import {
+  addMonths,
+  addYears,
+} from "@/lib/utils/expireDate/generate-expire-date";
 
-interface UpdateUserData {
-  name?: string;
-  username?: string;
-  email?: string;
-  avatarUrl?: string;
-  emailVerified?: boolean;
-  role?: Role;
-  accountStatus?: UserAccountStatus;
-  currentPlan?: UserPlanType;
-  bio?: string;
-  dateOfBirth?: Date;
-  gender?: string;
-  education?: string[];
-  nationality?: string;
-  phoneNumber?: string;
-  profession?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  zipCode?: string;
-  facebook?: string;
-  linkedin?: string;
-  twitter?: string;
-  youtube?: string;
-  website?: string;
-  others?: string;
-  [key: string]: any;
-}
-
+// Update a specific teacher's details
 export async function PUT(
   request: Request,
   { params }: { params: { userId: string } }
@@ -41,17 +17,14 @@ export async function PUT(
 
   const { userId } = params;
 
-  const body = await request.json();
-  const { subscriptionListIds, ...updatedData } = body as {
-    subscriptionListIds?: string[];
-    [key: string]: any;
-  };
-
+  // Get the updated data from the request body
+  const { subscriptionListIds, ...updatedData } = await request.json();
   try {
     if (!isAdmin) {
       return new NextResponse("Unauthorized Admin", { status: 401 });
     }
 
+    // Fetch the existing teacher data
     const existingUser = await db.user.findUnique({
       where: { id: userId },
       include: {
@@ -64,14 +37,17 @@ export async function PUT(
       },
     });
 
+    // If the teacher doesn't exist, return a not found error
     if (!existingUser) {
       return NextResponse.json({ message: "User not found." }, { status: 404 });
     }
 
-    const dataToUpdateOnUserModel: Partial<UpdateUserData> = {};
-    const dataToUpdateOnTeacherProfileModel: Record<string, any> = {};
-    const dataToUpdateOnStudentProfileModel: Record<string, any> = {};
+    // Create a new data object with only the fields that need to be updated
+    const dataToUpdateOnUserModel: any = {};
+    const dataToUpdateOnTeacherProfileModel: any = {};
+    const dataToUpdateOnStudentProfileModel: any = {};
 
+    // Define TeacherProfile fields based on your schema
     const teacherProfileFields = [
       "totalSales",
       "lastPaymentDate",
@@ -83,47 +59,24 @@ export async function PUT(
       "expertiseLevel",
       "teacherRankId",
       "coTeachingCourseIds",
-      "coTeachingCertificationIds",
     ];
 
-    const userFields = [
-      "name",
-      "username",
-      "email",
-      "avatarUrl",
-      "emailVerified",
-      "role",
-      "accountStatus",
-      "currentPlan",
-      "bio",
-      "dateOfBirth",
-      "gender",
-      "education",
-      "nationality",
-      "phoneNumber",
-      "profession",
-      "city",
-      "state",
-      "country",
-      "zipCode",
-      "facebook",
-      "linkedin",
-      "twitter",
-      "youtube",
-      "website",
-      "others",
-    ];
-
+    // Dynamically add fields from updatedData if they exist
     for (const key of Object.keys(updatedData)) {
-      if (userFields.includes(key)) {
+      if (key in existingUser) {
         dataToUpdateOnUserModel[key] = updatedData[key];
       }
+      // Check if key is for TeacherProfile
+      if (existingUser.teacherProfile && key in existingUser.teacherProfile) {
+        dataToUpdateOnTeacherProfileModel[key] = updatedData[key];
+      }
 
+      // Check if key is for TeacherProfile - use the defined fields array instead of checking null object
       if (teacherProfileFields.includes(key)) {
         dataToUpdateOnTeacherProfileModel[key] = updatedData[key];
       }
 
-      if (key === "enrolledCourseIds") {
+      if (existingUser.studentProfile && key in existingUser.studentProfile) {
         dataToUpdateOnStudentProfileModel[key] = updatedData[key];
       }
     }
@@ -138,10 +91,11 @@ export async function PUT(
     if (Object.keys(dataToUpdateOnTeacherProfileModel).length > 0) {
       if (existingUser.teacherProfile) {
         await db.teacherProfile.update({
-          where: { id: existingUser.teacherProfile.id },
+          where: { id: existingUser.teacherProfile?.id },
           data: dataToUpdateOnTeacherProfileModel,
         });
       } else {
+        // Fetch all ranks
         const unsortedRanks = await db.teacherRank.findMany();
         const ranks = unsortedRanks.sort(
           (a, b) => a.numberOfSales - b.numberOfSales
@@ -157,55 +111,52 @@ export async function PUT(
       }
     }
 
-    if (
-      existingUser.studentProfile?.id &&
-      dataToUpdateOnStudentProfileModel.enrolledCourseIds
-    ) {
-      const existingEnrollments = await db.enrolledStudents.findMany({
-        where: { studentProfileId: existingUser.studentProfile.id },
-        select: { courseId: true },
+    const existingEnrollments = await db.enrolledStudents.findMany({
+      where: { studentProfileId: existingUser.studentProfile?.id },
+      select: { courseId: true },
+    });
+
+    const existingCourseIds: any = new Set(
+      existingEnrollments.map((e) => e.courseId)
+    );
+
+    const updatedCourseIds: any = new Set(
+      dataToUpdateOnStudentProfileModel.enrolledCourseIds || []
+    );
+
+    // **Find New Courses to Add**
+    const newCourseIds = [...updatedCourseIds].filter(
+      (courseId) => !existingCourseIds.has(courseId)
+    );
+
+    // **Find Removed Courses to Delete**
+    const removedCourseIds = [...existingCourseIds].filter(
+      (courseId) => !updatedCourseIds.has(courseId)
+    );
+
+    // **Insert New Courses**
+    if (newCourseIds.length > 0) {
+      await db.enrolledStudents.createMany({
+        data: newCourseIds.map((courseId) => ({
+          studentProfileId: existingUser.studentProfile?.id,
+          courseId: courseId,
+        })),
       });
-
-      const existingCourseIds = existingEnrollments
-        .map((e) => e.courseId)
-        .filter((id): id is string => id !== null);
-
-      const updatedCourseIds =
-        (dataToUpdateOnStudentProfileModel.enrolledCourseIds as string[]) || [];
-
-      const newCourseIds = updatedCourseIds.filter(
-        (courseId) => !existingCourseIds.includes(courseId)
-      );
-
-      const removedCourseIds = existingCourseIds.filter(
-        (courseId) => !updatedCourseIds.includes(courseId)
-      );
-
-      if (newCourseIds.length > 0) {
-        await db.enrolledStudents.createMany({
-          data: newCourseIds.map((courseId) => ({
-            studentProfileId: existingUser.studentProfile!.id,
-            courseId: courseId,
-          })),
-        });
-      }
-
-      if (removedCourseIds.length > 0) {
-        await db.enrolledStudents.deleteMany({
-          where: {
-            studentProfileId: existingUser.studentProfile.id,
-            courseId: { in: removedCourseIds },
-          },
-        });
-      }
     }
 
-    if (existingUser.studentProfile?.id && subscriptionListIds !== undefined) {
+    // ======== SUBSCRIPTION HANDLING START ========
+
+    if (existingUser.studentProfile?.id) {
+      // Check for existing subscription (any plan)
       const existingSubscription = await db.subscription.findFirst({
         where: { studentProfileId: existingUser.studentProfile.id },
       });
 
+      // Case 1: Empty array - handle subscription removal
       if (subscriptionListIds.length === 0) {
+        // console.log("Empty subscription list - deactivating subscription");
+
+        // Only deactivate if there's an existing active subscription
         if (existingSubscription) {
           await db.subscription.update({
             where: { id: existingSubscription.id },
@@ -214,7 +165,10 @@ export async function PUT(
             },
           });
         }
-      } else {
+      }
+      // Case 2: Has subscription IDs
+      else {
+        // console.log("Processing subscription with IDs:", subscriptionListIds);
         const subscriptionPlanId = subscriptionListIds[0];
 
         const subscriptionPlan = await db.subscriptionPlan.findUnique({
@@ -228,37 +182,55 @@ export async function PUT(
           );
         }
 
+        // Calculate expiration
         const now = new Date();
         let expiresAt = new Date(now);
-        let trialEndsAt: Date | null = null;
-        let trialStartedAt: Date | null = null;
+        let trialEndsAt = null;
+        let trialStartedAt = null;
+        let remainingDays = 0;
 
+        // UPGRADE LOGIC: Add remaining time from current subscription
         if (existingSubscription && existingSubscription.status === "ACTIVE") {
           const currentExpiryDate = new Date(existingSubscription.expiresAt);
 
-          if (currentExpiryDate > now && !subscriptionPlan.isTrial) {
-            expiresAt = new Date(currentExpiryDate);
+          // Only add remaining time if current subscription hasn't expired
+          if (currentExpiryDate > now) {
+            // Calculate remaining time from current subscription
+            const remainingTime = currentExpiryDate.getTime() - now.getTime();
+            remainingDays = Math.ceil(remainingTime / (1000 * 60 * 60 * 24));
+
+            // Start from current expiry date instead of now for non-trial subscriptions
+            if (!subscriptionPlan.isTrial) {
+              expiresAt = new Date(currentExpiryDate);
+            }
           }
         }
 
+        // Add new subscription duration based on plan type
         if (subscriptionPlan.type === "MONTHLY") {
           expiresAt.setMonth(
             expiresAt.getMonth() + (subscriptionPlan.durationInMonths || 1)
           );
+          // console.log("Added monthly duration, new expiry:", expiresAt);
         } else if (subscriptionPlan.type === "YEARLY") {
           expiresAt.setFullYear(
             expiresAt.getFullYear() + (subscriptionPlan.durationInYears || 1)
           );
+          // console.log("Added yearly duration, new expiry:", expiresAt);
         } else if (subscriptionPlan.isTrial) {
+          // For trial subscriptions, always start fresh (don't add remaining time)
           trialStartedAt = new Date();
           trialEndsAt = new Date();
-          expiresAt = new Date();
+          expiresAt = new Date(); // Reset to now for trial
 
           const trialDuration = subscriptionPlan.trialDurationInDays || 30;
           trialEndsAt.setDate(trialEndsAt.getDate() + trialDuration);
           expiresAt.setDate(expiresAt.getDate() + trialDuration);
+
+          // console.log("Trial subscription, duration:", trialDuration, "days");
         }
 
+        // Check if user has ever used a trial before
         const hasUsedTrialBefore = await db.subscription.findFirst({
           where: {
             studentProfileId: existingUser.studentProfile.id,
@@ -266,8 +238,11 @@ export async function PUT(
           },
         });
 
+        // Determine if this should be treated as a trial
+        // Only allow trial if: plan is trial AND user has never used trial before
         const isTrial = subscriptionPlan.isTrial && !hasUsedTrialBefore;
 
+        // Update existing or create new subscription
         if (existingSubscription) {
           await db.subscription.update({
             where: { id: existingSubscription.id },
@@ -283,6 +258,7 @@ export async function PUT(
                 : existingSubscription.trialEndsAt,
             },
           });
+          // console.log("Updated existing subscription");
         } else {
           await db.subscription.create({
             data: {
@@ -295,11 +271,23 @@ export async function PUT(
               trialEndsAt,
             },
           });
+          // console.log("Created new subscription");
         }
       }
     }
 
-    const updatedUser = await db.user.findUnique({
+    // ======== SUBSCRIPTION HANDLING END ========
+    // **Delete Removed Courses**
+    if (removedCourseIds.length > 0) {
+      await db.enrolledStudents.deleteMany({
+        where: {
+          studentProfileId: existingUser.studentProfile?.id,
+          courseId: { in: removedCourseIds },
+        },
+      });
+    }
+
+    const updatedTeacher = await db.user.findUnique({
       where: { id: userId },
       include: {
         teacherProfile: true,
@@ -307,22 +295,19 @@ export async function PUT(
       },
     });
 
-    return NextResponse.json(updatedUser, { status: 200 });
+    return NextResponse.json(updatedTeacher, { status: 200 });
   } catch (error) {
-    console.log("ERROR_FROM_UPDATE_USER_API", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    console.log("ERROR_FROM_UPDATE_TEACHER_API", error);
+    // Return an error response
     return NextResponse.json(
-      { message: "Failed to update user.", error: errorMessage },
+      { message: "Failed to update teacher.", error: error.message },
       { status: 400 }
     );
   }
 }
 
-export async function GET(
-  request: Request,
-  { params }: { params: { userId: string } }
-) {
+// get single teacher details
+export async function GET(request, { params }) {
   const { userId } = params;
 
   try {
@@ -346,7 +331,8 @@ export async function GET(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const userSubscription = await db.subscription.findFirst({
+    // get the user's subscription information
+    let userSubscription = await db.subscription.findUnique({
       where: {
         studentProfileId: userData.studentProfile?.id,
         status: "ACTIVE",
@@ -361,7 +347,6 @@ export async function GET(
         },
       },
     });
-
     if (userSubscription) {
       return NextResponse.json({
         ...userData,
@@ -371,19 +356,19 @@ export async function GET(
     return NextResponse.json(userData);
   } catch (error) {
     console.error("Error fetching user details:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { message: "Failed to get user.", error: errorMessage },
+      { message: "Failed to get teacher.", error: error },
       { status: 400 }
     );
   }
 }
 
+// DELETE
 export async function DELETE(
   req: Request,
   { params }: { params: { userId: string } }
 ) {
+  // console.log("DELETE API HITTED");
   const { userId } = params;
 
   try {
@@ -394,13 +379,12 @@ export async function DELETE(
       );
     }
 
+    // First, get basic user info to check profiles
     const user = await db.user.findUnique({
       where: { id: userId },
       include: {
         teacherProfile: { select: { id: true } },
         studentProfile: { select: { id: true } },
-        wallet: { select: { id: true } },
-        affiliateProfile: { select: { id: true } },
       },
     });
 
@@ -411,32 +395,17 @@ export async function DELETE(
       );
     }
 
-    if (user.wallet) {
-      await deleteWallet(user.wallet.id);
-    }
-
+    // Delete student profile and related data if exists
     if (user.studentProfile) {
       await deleteStudentProfile(user.studentProfile.id);
     }
 
+    // Delete teacher profile and related data if exists
     if (user.teacherProfile) {
       await deleteTeacherProfile(user.teacherProfile.id);
     }
 
-    if (user.affiliateProfile) {
-      await deleteAffiliateProfile(user.affiliateProfile.id);
-    }
-
-    await db.referral.deleteMany({
-      where: {
-        OR: [{ referrerUserId: userId }, { refereeUserId: userId }],
-      },
-    });
-
-    await db.eventRegistration.deleteMany({
-      where: { userId },
-    });
-
+    // Finally delete the user
     const deletedUser = await db.user.delete({
       where: { id: userId },
     });
@@ -471,21 +440,9 @@ export async function DELETE(
   }
 }
 
-async function deleteWallet(walletId: string) {
-  await db.$transaction([
-    db.walletTransaction.deleteMany({
-      where: { walletId },
-    }),
-    db.creditLot.deleteMany({
-      where: { walletId },
-    }),
-    db.wallet.delete({
-      where: { id: walletId },
-    }),
-  ]);
-}
-
+// Helper function to delete student profile and all related data
 async function deleteStudentProfile(studentProfileId: string) {
+  // Delete nested comment replies first
   await db.$transaction(async (tx) => {
     const comments = await tx.comment.findMany({
       where: { studentProfileId },
@@ -499,10 +456,12 @@ async function deleteStudentProfile(studentProfileId: string) {
     }
   });
 
+  // Delete student's comments
   await db.comment.deleteMany({
     where: { studentProfileId },
   });
 
+  // Delete student's ratings and reviews
   await db.$transaction([
     db.rating.deleteMany({
       where: { studentProfileId },
@@ -512,22 +471,27 @@ async function deleteStudentProfile(studentProfileId: string) {
     }),
   ]);
 
+  // Delete progress records
   await db.progress.deleteMany({
     where: { studentProfileId },
   });
 
+  // Delete enrolled students records
   await db.enrolledStudents.deleteMany({
     where: { studentProfileId },
   });
 
+  // Delete subscription if exists
   await db.subscription.deleteMany({
     where: { studentProfileId },
   });
 
+  // Delete purchase history
   await db.purchaseHistory.deleteMany({
     where: { studentProfileId },
   });
 
+  // Handle purchases and related data
   const purchases = await db.purchase.findMany({
     where: { studentProfileId },
     select: { id: true },
@@ -537,23 +501,8 @@ async function deleteStudentProfile(studentProfileId: string) {
     const purchaseIds = purchases.map((p) => p.id);
 
     await db.$transaction([
-      db.creditPayment.deleteMany({
+      db.aamarPayData.deleteMany({
         where: { purchaseId: { in: purchaseIds } },
-      }),
-      db.mobilePayment.deleteMany({
-        where: { purchaseId: { in: purchaseIds } },
-      }),
-      db.cashPayment.deleteMany({
-        where: { purchaseId: { in: purchaseIds } },
-      }),
-      db.cardPayment.deleteMany({
-        where: { purchaseId: { in: purchaseIds } },
-      }),
-      db.referrerCommission.deleteMany({
-        where: { sourcePurchaseId: { in: purchaseIds } },
-      }),
-      db.affiliateEarning.deleteMany({
-        where: { sourcePurchaseId: { in: purchaseIds } },
       }),
       db.teacherRevenue.deleteMany({
         where: { purchaseId: { in: purchaseIds } },
@@ -564,12 +513,15 @@ async function deleteStudentProfile(studentProfileId: string) {
     ]);
   }
 
+  // Finally delete the student profile
   await db.studentProfile.delete({
     where: { id: studentProfileId },
   });
 }
 
+// Helper function to delete teacher profile and all related data
 async function deleteTeacherProfile(teacherProfileId: string) {
+  // Delete teacher financial records
   await db.$transaction([
     db.teacherBalance.deleteMany({
       where: { teacherProfileId },
@@ -585,50 +537,17 @@ async function deleteTeacherProfile(teacherProfileId: string) {
     }),
   ]);
 
-  await db.bankAccount.deleteMany({
+  // Delete payment methods
+  await db.paymentMethod.deleteMany({
     where: { teacherProfileId },
   });
 
-  await db.payoutRequest.deleteMany({
+  // Delete teacher's purchases
+  await db.purchase.deleteMany({
     where: { teacherProfileId },
   });
 
-  const purchases = await db.purchase.findMany({
-    where: { teacherProfileId },
-    select: { id: true },
-  });
-
-  if (purchases.length > 0) {
-    const purchaseIds = purchases.map((p) => p.id);
-
-    await db.$transaction([
-      db.creditPayment.deleteMany({
-        where: { purchaseId: { in: purchaseIds } },
-      }),
-      db.mobilePayment.deleteMany({
-        where: { purchaseId: { in: purchaseIds } },
-      }),
-      db.cashPayment.deleteMany({
-        where: { purchaseId: { in: purchaseIds } },
-      }),
-      db.cardPayment.deleteMany({
-        where: { purchaseId: { in: purchaseIds } },
-      }),
-      db.referrerCommission.deleteMany({
-        where: { sourcePurchaseId: { in: purchaseIds } },
-      }),
-      db.affiliateEarning.deleteMany({
-        where: { sourcePurchaseId: { in: purchaseIds } },
-      }),
-      db.teacherRevenue.deleteMany({
-        where: { purchaseId: { in: purchaseIds } },
-      }),
-      db.purchase.deleteMany({
-        where: { id: { in: purchaseIds } },
-      }),
-    ]);
-  }
-
+  // Get all courses created by this teacher
   const courses = await db.course.findMany({
     where: { teacherProfileId },
     select: { id: true },
@@ -636,62 +555,33 @@ async function deleteTeacherProfile(teacherProfileId: string) {
 
   if (courses.length > 0) {
     const courseIds = courses.map((c) => c.id);
+
+    // Delete all course-related data in batches
     await deleteCoursesAndRelatedData(courseIds);
   }
 
-  const certifications = await db.certification.findMany({
-    where: { teacherProfileId },
-    select: { id: true },
-  });
-
-  if (certifications.length > 0) {
-    const certificationIds = certifications.map((c) => c.id);
-    await deleteCertificationsAndRelatedData(certificationIds);
-  }
-
-  await db.courseRoadmap.deleteMany({
-    where: { teacherId: teacherProfileId },
-  });
-
+  // Remove teacher from co-teaching relationships
   await db.course.updateMany({
     where: { coTeacherIds: { has: teacherProfileId } },
-    data: { coTeacherIds: [] },
+    data: { coTeacherIds: { set: [] } },
   });
 
-  await db.certification.updateMany({
-    where: { coTeacherIds: { has: teacherProfileId } },
-    data: { coTeacherIds: [] },
-  });
-
+  // Finally delete the teacher profile
   await db.teacherProfile.delete({
     where: { id: teacherProfileId },
   });
 }
 
-async function deleteAffiliateProfile(affiliateProfileId: string) {
-  await db.$transaction([
-    db.affiliateEarning.deleteMany({
-      where: { affiliateProfileId },
-    }),
-    db.bankAccount.deleteMany({
-      where: { affiliateProfileId },
-    }),
-    db.payoutRequest.deleteMany({
-      where: { affiliateProfileId },
-    }),
-    db.affiliateProfile.delete({
-      where: { id: affiliateProfileId },
-    }),
-  ]);
-}
-
+// Helper function to delete courses and all their related data
 async function deleteCoursesAndRelatedData(courseIds: string[]) {
+  // First get all lessons for these courses
   const lessons = await db.lesson.findMany({
     where: { courseId: { in: courseIds } },
     select: { id: true },
   });
   const lessonIds = lessons.map((l) => l.id);
 
+  // Delete all related data in parallel where possible
   await db.$transaction([
     db.enrolledStudents.deleteMany({
       where: { courseId: { in: courseIds } },
@@ -714,11 +604,9 @@ async function deleteCoursesAndRelatedData(courseIds: string[]) {
     db.attachment.deleteMany({
       where: { courseId: { in: courseIds } },
     }),
-    db.liveSchedule.deleteMany({
-      where: { courseId: { in: courseIds } },
-    }),
   ]);
 
+  // Handle purchases for these courses
   const purchases = await db.purchase.findMany({
     where: { courseId: { in: courseIds } },
     select: { id: true },
@@ -728,23 +616,8 @@ async function deleteCoursesAndRelatedData(courseIds: string[]) {
     const purchaseIds = purchases.map((p) => p.id);
 
     await db.$transaction([
-      db.creditPayment.deleteMany({
+      db.aamarPayData.deleteMany({
         where: { purchaseId: { in: purchaseIds } },
-      }),
-      db.mobilePayment.deleteMany({
-        where: { purchaseId: { in: purchaseIds } },
-      }),
-      db.cashPayment.deleteMany({
-        where: { purchaseId: { in: purchaseIds } },
-      }),
-      db.cardPayment.deleteMany({
-        where: { purchaseId: { in: purchaseIds } },
-      }),
-      db.referrerCommission.deleteMany({
-        where: { sourcePurchaseId: { in: purchaseIds } },
-      }),
-      db.affiliateEarning.deleteMany({
-        where: { sourcePurchaseId: { in: purchaseIds } },
       }),
       db.teacherRevenue.deleteMany({
         where: { purchaseId: { in: purchaseIds } },
@@ -755,115 +628,25 @@ async function deleteCoursesAndRelatedData(courseIds: string[]) {
     ]);
   }
 
-  await db.bkashPurchaseHistory.deleteMany({
-    where: { courseId: { in: courseIds } },
-  });
-
+  // Delete prices
   await db.price.deleteMany({
     where: { courseId: { in: courseIds } },
   });
 
-  const bundles = await db.bundle.findMany({
-    where: { courseIds: { hasSome: courseIds } },
-    select: { id: true, courseIds: true },
-  });
-
-  for (const bundle of bundles) {
-    const updatedCourseIds = bundle.courseIds.filter(
-      (id) => !courseIds.includes(id)
-    );
-    await db.bundle.update({
-      where: { id: bundle.id },
-      data: { courseIds: updatedCourseIds },
-    });
-  }
-
-  const membershipPlans = await db.membershipPlan.findMany({
-    where: { courseIds: { hasSome: courseIds } },
-    select: { id: true, courseIds: true },
-  });
-
-  for (const plan of membershipPlans) {
-    const updatedCourseIds = plan.courseIds.filter(
-      (id) => !courseIds.includes(id)
-    );
-    await db.membershipPlan.update({
-      where: { id: plan.id },
-      data: { courseIds: updatedCourseIds },
-    });
-  }
-
-  const certifications = await db.certification.findMany({
-    where: { courseIds: { hasSome: courseIds } },
-    select: { id: true, courseIds: true },
-  });
-
-  for (const cert of certifications) {
-    const updatedCourseIds = cert.courseIds.filter(
-      (id) => !courseIds.includes(id)
-    );
-    await db.certification.update({
-      where: { id: cert.id },
-      data: { courseIds: updatedCourseIds },
-    });
-  }
-
-  await db.course.deleteMany({
-    where: { id: { in: courseIds } },
-  });
-}
-
-async function deleteCertificationsAndRelatedData(certificationIds: string[]) {
+  // Remove courses from bundles and membership plans
   await db.$transaction([
-    db.enrolledStudents.deleteMany({
-      where: { certificationId: { in: certificationIds } },
+    db.bundle.updateMany({
+      where: { courseIds: { hasSome: courseIds } },
+      data: { courseIds: { set: [] } },
     }),
-    db.price.deleteMany({
-      where: { certificationId: { in: certificationIds } },
+    db.membershipPlan.updateMany({
+      where: { courseIds: { hasSome: courseIds } },
+      data: { courseIds: { set: [] } },
     }),
   ]);
 
-  const purchases = await db.purchase.findMany({
-    where: { certificationId: { in: certificationIds } },
-    select: { id: true },
-  });
-
-  if (purchases.length > 0) {
-    const purchaseIds = purchases.map((p) => p.id);
-
-    await db.$transaction([
-      db.creditPayment.deleteMany({
-        where: { purchaseId: { in: purchaseIds } },
-      }),
-      db.mobilePayment.deleteMany({
-        where: { purchaseId: { in: purchaseIds } },
-      }),
-      db.cashPayment.deleteMany({
-        where: { purchaseId: { in: purchaseIds } },
-      }),
-      db.cardPayment.deleteMany({
-        where: { purchaseId: { in: purchaseIds } },
-      }),
-      db.referrerCommission.deleteMany({
-        where: { sourcePurchaseId: { in: purchaseIds } },
-      }),
-      db.affiliateEarning.deleteMany({
-        where: { sourcePurchaseId: { in: purchaseIds } },
-      }),
-      db.teacherRevenue.deleteMany({
-        where: { purchaseId: { in: purchaseIds } },
-      }),
-      db.purchase.deleteMany({
-        where: { id: { in: purchaseIds } },
-      }),
-    ]);
-  }
-
-  await db.bkashPurchaseHistory.deleteMany({
-    where: { certificationId: { in: certificationIds } },
-  });
-
-  await db.certification.deleteMany({
-    where: { id: { in: certificationIds } },
+  // Finally delete the courses
+  await db.course.deleteMany({
+    where: { id: { in: courseIds } },
   });
 }

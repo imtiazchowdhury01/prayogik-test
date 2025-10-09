@@ -1,11 +1,13 @@
-// api/user/userprogress/route.ts
 import { NextResponse } from "next/server";
+import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { db } from "@/lib/db";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const userId = searchParams.get("userId");
   const courseId = searchParams.get("courseId");
+
+  const studentProfileId = await useStudentProfile(userId!);
 
   if (!userId || !courseId) {
     return NextResponse.json(
@@ -15,21 +17,9 @@ export async function GET(request: Request) {
   }
 
   try {
-    const studentProfile = await db.studentProfile.findUnique({
-      where: { userId },
-      select: { id: true },
-    });
-
-    if (!studentProfile) {
-      return NextResponse.json(
-        { error: "Student profile not found" },
-        { status: 404 }
-      );
-    }
-
     const progress = await db.progress.findMany({
       where: {
-        studentProfileId: studentProfile.id,
+        studentProfileId,
         lesson: {
           courseId: courseId,
         },

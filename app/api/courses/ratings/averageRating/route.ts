@@ -1,23 +1,17 @@
-// api/courses/ratings/averageRating/route.ts
-export const dynamic = "force-dynamic";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const courseId = searchParams.get("courseId");
+
+  if (!courseId) {
+    return NextResponse.json({ message: "Missing courseId" }, { status: 400 });
+  }
+
   try {
-    const { searchParams } = new URL(request.url);
-    const courseId = searchParams.get("courseId");
-
-    if (!courseId) {
-      return NextResponse.json(
-        { message: "Missing courseId" },
-        { status: 400 }
-      );
-    }
-
     const ratings = await db.rating.findMany({
       where: { courseId },
-      select: { value: true },
     });
 
     const averageRating =
@@ -26,17 +20,20 @@ export async function GET(request: Request) {
           ratings.length
         : 0;
 
-    const enrolledStudentsCount = await db.enrolledStudents.count({
-      where: { courseId },
+    const course = await db.course.findUnique({
+      where: { id: courseId },
+      select: { enrolledStudents: true },
     });
 
+    const enrolledStudents = course ? course.enrolledStudents.length : 0;
+
     return NextResponse.json({
-      averageRating: Math.round(averageRating * 10) / 10, // Round to 1 decimal place
+      averageRating,
       ratingsCount: ratings.length,
-      enrolledStudents: enrolledStudentsCount,
+      enrolledStudents,
     });
   } catch (error) {
-    console.error("[GET_AVERAGE_RATING_ERROR]", error);
+    console.error(error);
     return NextResponse.json(
       { message: "Failed to get average rating and enrollment info" },
       { status: 500 }

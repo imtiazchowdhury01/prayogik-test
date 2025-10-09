@@ -1,7 +1,7 @@
 import React, { Suspense } from "react";
 import CoursesSection from "./_components/CoursesSection";
 import CategorySidebarSkeleton from "./_components/CategorySidebarSkeleton";
-// import CoursesGridSkeleton from "./_components/CoursesGridSkeleton";
+import CoursesGridSkeleton from "./_components/CoursesGridSkeleton";
 import CategorySidebar from "./_components/CategorySidebar";
 import CategoryHeader from "./category/[categorySlug]/_components/CategoryHeader";
 import { getCategoriesDBCall } from "@/lib/data-access-layer/categories";

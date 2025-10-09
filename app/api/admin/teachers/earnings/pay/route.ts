@@ -1,24 +1,22 @@
-// api/admin/teachers/earnings/pay/route.ts
+// @ts-nocheck
+
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 import { updateTeacherBalance } from "@/lib/utils/purchase";
 import { NextResponse } from "next/server";
-import { TeacherPaymentStatus } from "@prisma/client";
 
 export async function POST(req: Request) {
   try {
+    // Verify if the user is an admin
     const { userId, isAdmin } = await getServerUserSession();
     if (!userId || !isAdmin) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { earningId, amount_paid, payment_status } = body as {
-      earningId: string;
-      amount_paid: number;
-      payment_status: TeacherPaymentStatus;
-    };
+    // Parse the request body
+    const { earningId, amount_paid, payment_status } = await req.json();
 
+    // Validate the request body
     if (!earningId || !amount_paid || !payment_status) {
       return NextResponse.json(
         { error: "Missing required fields" },
@@ -26,6 +24,7 @@ export async function POST(req: Request) {
       );
     }
 
+    // Fetch the earning record
     const earningRecord = await db.teacherMonthlyEarnings.findUnique({
       where: { id: earningId },
     });
@@ -39,6 +38,7 @@ export async function POST(req: Request) {
 
     const { teacherProfileId, month, year, total_earned } = earningRecord;
 
+    // Calculate total paid so far for the specific month and year
     const payments = await db.teacherPayments.findMany({
       where: {
         teacherProfileId,
@@ -53,6 +53,7 @@ export async function POST(req: Request) {
     );
     const balance_remaining = total_earned - total_paid;
 
+    // Validate if the requested amount_paid is valid
     if (amount_paid > balance_remaining) {
       return NextResponse.json(
         { error: "Invalid payment amount" },
@@ -60,6 +61,7 @@ export async function POST(req: Request) {
       );
     }
 
+    // Create a new payment record
     const newPayment = await db.teacherPayments.create({
       data: {
         teacherProfileId,
@@ -67,12 +69,13 @@ export async function POST(req: Request) {
         month_paid_for: month,
         year_paid_for: year,
         payment_status,
-        payment_date: new Date(),
+        payment_date: new Date(), // Set the payment date to the current date
       },
     });
 
+    // Call the utitlity update Teacher Balance
     if (newPayment) {
-      await updateTeacherBalance(teacherProfileId);
+      updateTeacherBalance(teacherProfileId);
     }
 
     return NextResponse.json(

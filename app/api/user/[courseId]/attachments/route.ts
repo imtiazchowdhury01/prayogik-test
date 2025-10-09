@@ -1,4 +1,3 @@
-// api/user/[courseId]/attachments/route.ts
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
@@ -9,19 +8,19 @@ export async function POST(
   { params }: { params: { courseId: string } }
 ) {
   try {
-    const { userId } = await getServerUserSession();
+    const { userId } = await getServerUserSession(req); // Get userId from session
     const { url } = await req.json();
 
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const teacherProfileId = await useTeacherProfile(userId);
+       const teacherProfileId = await useTeacherProfile(userId);
 
     const courseOwner = await db.course.findUnique({
       where: {
         id: params.courseId,
-        teacherProfileId,
+        teacherProfileId, // Assuming userId corresponds to teacherId in Course model
       },
     });
 
@@ -32,7 +31,7 @@ export async function POST(
     const attachment = await db.attachment.create({
       data: {
         url,
-        name: url.split("/").pop() || "attachment",
+        name: url.split("/").pop(),
         courseId: params.courseId,
       },
     });

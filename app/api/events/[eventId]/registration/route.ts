@@ -1,9 +1,6 @@
-// api/events/[eventId]/registration/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
-
-// ========== TYPE DEFINITIONS ==========
 
 interface RouteParams {
   params: {
@@ -11,49 +8,17 @@ interface RouteParams {
   };
 }
 
-interface RegistrationDetails {
-  isApproved: boolean | null;
-}
-
-interface RegistrationData {
-  isRegistered: boolean;
-  isApproved: boolean | null;
-  isPaid: boolean;
-  canProceed: boolean;
-  message: string;
-  registrationDetails: RegistrationDetails | null;
-}
-
-interface SuccessResponse {
-  success: boolean;
-  data: RegistrationData;
-}
-
-interface ErrorResponse {
-  success?: boolean;
-  error: string;
-}
-
-// ========== GET HANDLER ==========
-
-export async function GET(
-  request: NextRequest,
-  { params }: RouteParams
-): Promise<NextResponse<SuccessResponse | ErrorResponse>> {
+export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    const { userId } = await getServerUserSession(request);
     const { eventId } = params;
 
-    if (!eventId) {
+    // Validate required parameters
+    if (!userId || !eventId) {
       return NextResponse.json(
-        { error: "Missing eventId parameter" },
+        { error: "Missing userId or eventId parameter" },
         { status: 400 }
       );
-    }
-
-    const { userId } = await getServerUserSession();
-
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Get event details
@@ -71,12 +36,12 @@ export async function GET(
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
-    // Check if user is already registered
+    // Check if user is already registered for this event
     const existingRegistration = await db.eventRegistration.findUnique({
       where: {
         userId_eventId: {
-          userId,
-          eventId,
+          userId: userId,
+          eventId: eventId,
         },
       },
       select: {
@@ -84,15 +49,14 @@ export async function GET(
       },
     });
 
-    // Check if user has paid
+    // Check if user has already paid for this event
     const existingPurchase = await db.purchase.findFirst({
       where: {
         studentProfile: {
-          userId,
+          userId: userId,
         },
-        eventId,
+        eventId: eventId,
         purchaseType: "EVENT",
-        paymentStatus: "COMPLETED",
       },
       select: {
         id: true,
@@ -102,8 +66,9 @@ export async function GET(
 
     const hasPaid = !!existingPurchase;
     const isPaidEvent = event.type === "PAID" && (event.price ?? 0) > 0;
+    const isRegistered = !!existingRegistration;
 
-    // User not registered
+    // If user is not registered
     if (!existingRegistration) {
       return NextResponse.json({
         success: true,
@@ -118,7 +83,7 @@ export async function GET(
       });
     }
 
-    // User registered and paid
+    // If user is registered and has paid (complete case)
     if (existingRegistration && existingPurchase) {
       return NextResponse.json({
         success: true,
@@ -134,15 +99,17 @@ export async function GET(
       });
     }
 
-    // Registration not approved
+    // User is registered, check approval status and payment
     if (existingRegistration.isApproved === false) {
+      const canProceedValue = isPaidEvent ? hasPaid : false;
+
       return NextResponse.json({
         success: true,
         data: {
           isRegistered: true,
           isApproved: false,
           isPaid: hasPaid,
-          canProceed: isPaidEvent ? hasPaid : false,
+          canProceed: canProceedValue,
           message:
             "আপনার নিবন্ধন অনুমোদনের অপেক্ষায় রয়েছে। সহায়তার জন্য সাপোর্ট টিমের সাথে যোগাযোগ করুন।",
           registrationDetails: existingRegistration,
@@ -150,15 +117,16 @@ export async function GET(
       });
     }
 
-    // Registration approved
     if (existingRegistration.isApproved === true) {
+      const canProceedValue = isPaidEvent ? !hasPaid : false;
+
       return NextResponse.json({
         success: true,
         data: {
           isRegistered: true,
           isApproved: true,
           isPaid: hasPaid,
-          canProceed: isPaidEvent ? !hasPaid : false,
+          canProceed: canProceedValue,
           message: hasPaid
             ? "আপনি ইতিমধ্যে এই ইভেন্টে নিবন্ধিত এবং পেমেন্ট সম্পন্ন করেছেন।"
             : "আপনি ইতিমধ্যে এই ইভেন্টে নিবন্ধিত এবং অনুমোদিত হয়েছেন।",
@@ -167,7 +135,7 @@ export async function GET(
       });
     }
 
-    // Registration pending (isApproved is null)
+    // If isApproved is null/undefined (pending)
     return NextResponse.json({
       success: true,
       data: {
@@ -181,7 +149,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("[EVENT_REGISTRATION_CHECK_ERROR]", error);
+    console.error("Error checking event registration:", error);
     return NextResponse.json(
       {
         success: false,

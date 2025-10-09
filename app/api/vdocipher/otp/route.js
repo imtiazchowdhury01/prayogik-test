@@ -1,5 +1,5 @@
-// api/vdocipher/otp/route.ts
 import { getServerUserSession } from "@/lib/getServerUserSession";
+import { getServerSession } from "next-auth";
 
 const vdocipherApiKey = process.env.VDOCIPHER_API_SECRET;
 

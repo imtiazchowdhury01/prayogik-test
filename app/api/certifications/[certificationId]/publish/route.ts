@@ -1,57 +1,40 @@
-// api/certifications/[certificationId]/publish/route.ts
+
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 import { isTeacher } from "@/lib/teacher";
-import { NextRequest, NextResponse } from "next/server";
-
-interface RouteParams {
-  params: {
-    certificationId: string;
-  };
-}
+import { NextResponse } from "next/server";
 
 export async function PATCH(
-  req: NextRequest,
-  { params }: RouteParams
-): Promise<NextResponse> {
+  req: Request,
+  { params }: { params: { certificationId: string } }
+) {
   try {
-    const { certificationId } = params;
-
-    if (!certificationId) {
-      return new NextResponse("Missing certificationId", { status: 400 });
-    }
-
-    const { userId, isAdmin } = await getServerUserSession();
+    const { userId, isAdmin } = await getServerUserSession(req);
 
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const userIsTeacher = await isTeacher(userId);
-
-    if (!isAdmin && !userIsTeacher) {
+    // Check if user is admin or teacher
+    if (!isAdmin && !isTeacher(userId)) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+
     const certification = await db.certification.findUnique({
-      where: { id: certificationId },
-      select: {
-        title: true,
-        slug: true,
-        courseIds: true,
+      where: {
+        id: params.certificationId,
       },
     });
 
     if (!certification) {
-      return new NextResponse("Certification not found", { status: 404 });
+      return new NextResponse("Course not found", { status: 404 });
     }
 
-    const hasRequiredFields =
-      certification.title &&
-      certification.slug &&
-      certification.courseIds &&
-      certification.courseIds.length > 0;
+    // Check required fields for publishing
+    const hasRequiredFields = certification.title  && certification.slug && certification.courseIds;
 
+    // if (!hasRequiredFields || !hasPublishedLesson) {
     if (!hasRequiredFields) {
       return new NextResponse("Missing required fields for publishing", {
         status: 400,
@@ -59,8 +42,12 @@ export async function PATCH(
     }
 
     const publishedCertification = await db.certification.update({
-      where: { id: certificationId },
-      data: { isPublished: true },
+      where: {
+        id: params.certificationId,
+      },
+      data: {
+        isPublished: true,
+      },
     });
 
     return NextResponse.json(publishedCertification);

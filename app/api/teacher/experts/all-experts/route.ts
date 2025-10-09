@@ -1,12 +1,12 @@
-// api/teacher/experts/all-experts/route.ts
 import { db } from "@/lib/db";
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const skip = parseInt(searchParams.get("skip") || "0");
-  const limit = parseInt(searchParams.get("limit") || "12");
+export async function GET(request: any) {
+  const { searchParams }: any = new URL(request.url);
+  const skip = parseInt(searchParams.get("skip")) || 0;
+  const limit = parseInt(searchParams.get("limit")) || 12;
 
   try {
+    // Get total count and teachers data in parallel
     const [totalCount, teachers] = await Promise.all([
       db.user.count({
         where: {
@@ -56,15 +56,17 @@ export async function GET(request: Request) {
         skip: skip,
         take: limit,
         orderBy: {
-          updatedAt: "desc",
+          updatedAt: "asc",
         },
       }),
     ]);
 
+    // Calculate pagination info
     const hasMore = skip + limit < totalCount;
     const totalPages = Math.ceil(totalCount / limit);
     const currentPage = Math.floor(skip / limit) + 1;
 
+    // Prepare response data
     const responseData = {
       data: teachers,
       pagination: {

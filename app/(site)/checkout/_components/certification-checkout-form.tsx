@@ -462,8 +462,15 @@ const CertificationCheckoutForm = ({
     setIsEmailProcessing(true);
     setErrorMessage("");
     try {
-      const subscriptionData = await getUserCurrentSubscriptionDBCall(email);
+      // Get subscription data and check access
+      const [subscriptionData, accessStatus] = await Promise.all([
+        getUserCurrentSubscriptionDBCall(email),
+        checkUserAccessToContent(email, certification?.id, "certification"),
+      ]);
+
       setUserSubscription(subscriptionData);
+      setHasAccess(accessStatus.hasAccess);
+      setPurchaseStatus(accessStatus);
 
       CheckoutStorage.saveEmail(email);
       setStoredEmail(email);

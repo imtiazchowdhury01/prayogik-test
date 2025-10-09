@@ -1,9 +1,13 @@
-// api/teacher/apply-for-teacher/route.ts
+// @ts-nocheck
 import { NextResponse } from "next/server";
+// import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { db } from "@/lib/db";
 
-export async function POST(request: Request) {
+export async function POST(request) {
   try {
+    // const session = await getServerSession(authOptions);
+
     const data = await request.json();
     const {
       email,
@@ -36,12 +40,14 @@ export async function POST(request: Request) {
       );
     }
 
+    // Fetch and sort teacher ranks
     const unsortedRanks = await db.teacherRank.findMany();
     const ranks = unsortedRanks.sort(
       (a, b) => a.numberOfSales - b.numberOfSales
     );
 
-    const updateData: any = {};
+    // Construct the update data object dynamically
+    const updateData = {};
     if (bio !== undefined) updateData.bio = bio;
     if (dateOfBirth !== undefined)
       updateData.dateOfBirth = new Date(dateOfBirth);
@@ -67,31 +73,27 @@ export async function POST(request: Request) {
       },
     });
 
-    if (!user) {
-      return NextResponse.json(
-        { success: false, message: "User not found!" },
-        { status: 404 }
-      );
-    }
-
-    const existingTeacherProfile = await db.teacherProfile.findFirst({
+    // Find teacher if exist
+    const exisitingTeacherProfile = await db.teacherProfile.findFirst({
       where: {
         userId: user.id,
       },
     });
 
+    // Update user information
     const updatedUser = await db.user.update({
       where: { id: user.id },
       data: updateData,
     });
 
-    if (existingTeacherProfile) {
+    if (exisitingTeacherProfile) {
       return NextResponse.json(
         { success: false, message: "Teacher already exist!" },
         { status: 400 }
       );
     }
 
+    // Create a teacher profile
     const teacherProfile = await db.teacherProfile.create({
       data: {
         userId: user.id,

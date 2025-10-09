@@ -1,30 +1,12 @@
-// api/courses/[courseId]/lessons/[lessonId]/update/route.ts
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 import { useCourseByTeacherOrCoTeacher } from "@/hooks/useTeacherProfile";
 import { isTeacher } from "@/lib/teacher";
 
-// ========== TYPE DEFINITIONS ==========
-
-interface RouteParams {
-  params: {
-    courseId: string;
-    lessonId: string;
-  };
-}
-
-interface UpdateRequest {
-  videoUrl?: string;
-  duration?: number;
-  textContent?: string;
-}
-
-// ========== HELPER FUNCTION ==========
-
-async function updateCourseTotalDuration(courseId: string): Promise<void> {
+async function updateCourseTotalDuration(courseId: string) {
   const lessons = await db.lesson.findMany({
-    where: { courseId, isPublished: true },
+    where: { courseId },
     select: { duration: true },
   });
 
@@ -39,33 +21,25 @@ async function updateCourseTotalDuration(courseId: string): Promise<void> {
   });
 }
 
-// ========== PATCH HANDLER (Video Update) ==========
-
 export async function PATCH(
-  request: NextRequest,
-  { params }: RouteParams
-): Promise<NextResponse> {
+  request: Request,
+  { params }: { params: { courseId: string; lessonId: string } }
+) {
   const { courseId, lessonId } = params;
 
-  if (!courseId || !lessonId) {
-    return NextResponse.json(
-      { error: "Missing courseId or lessonId" },
-      { status: 400 }
-    );
-  }
-
   try {
-    const body: UpdateRequest = await request.json();
-    const { videoUrl, duration } = body;
+    const { videoUrl, duration } = await request.json(); // Capture duration from request body
 
+    // Update the lesson in the database
     await db.lesson.update({
       where: { id: lessonId },
       data: {
-        ...(videoUrl !== undefined && { videoUrl }),
-        ...(duration !== undefined && { duration }),
+        videoUrl,
+        duration,
       },
     });
 
+    // Update the total duration for the course
     await updateCourseTotalDuration(courseId);
 
     return NextResponse.json(
@@ -73,7 +47,7 @@ export async function PATCH(
       { status: 200 }
     );
   } catch (error) {
-    console.error("[UPDATE_LESSON_VIDEO_ERROR]", error);
+    console.error("Error updating lesson:", error);
     return NextResponse.json(
       { error: "Failed to update lesson." },
       { status: 500 }
@@ -81,15 +55,13 @@ export async function PATCH(
   }
 }
 
-// ========== PUT HANDLER (Text Content Update) ==========
-
-export async function PUT(
-  req: NextRequest,
-  { params }: RouteParams
-): Promise<NextResponse> {
+// api to upload text lesson by teacher/admin
+export async function PUT(req: Request) {
   try {
-    const { userId, isAdmin } = await getServerUserSession();
+    const { userId, isAdmin } = await getServerUserSession(req);
+    const { id, textContent, videoUrl } = await req.json();
 
+    // Check if the user is authenticated
     if (!userId) {
       return NextResponse.json(
         { message: "Unauthorized Access" },
@@ -97,24 +69,22 @@ export async function PUT(
       );
     }
 
-    const body: UpdateRequest & { id: string } = await req.json();
-    const { id, textContent } = body;
-
+    // Validate input
     if (!id) {
       return NextResponse.json({ message: "ID is required." }, { status: 400 });
     }
 
-    const userIsTeacher = await isTeacher(userId);
-
-    if (!isAdmin && !userIsTeacher) {
+    // Check if user is admin or teacher
+    if (!isAdmin && !isTeacher(userId)) {
       return NextResponse.json(
         { message: "Unauthorized Access" },
         { status: 401 }
       );
     }
 
-    // Verify ownership if not admin
+    // If not admin, check if user has permission to update this lesson
     if (!isAdmin) {
+      // First, get the lesson to find its courseId
       const lesson = await db.lesson.findUnique({
         where: { id },
         select: { courseId: true },
@@ -127,6 +97,7 @@ export async function PUT(
         );
       }
 
+      // Check if user is owner or co-teacher of the course
       const courseOwner = await useCourseByTeacherOrCoTeacher(
         userId,
         lesson.courseId
@@ -140,17 +111,19 @@ export async function PUT(
       }
     }
 
+    // Update the lesson in the database
     const updatedLesson = await db.lesson.update({
       where: { id },
       data: {
         textContent: textContent || null,
+        // videoUrl: videoUrl || null,
         updatedAt: new Date(),
       },
     });
 
     return NextResponse.json(updatedLesson, { status: 200 });
   } catch (error) {
-    console.error("[UPDATE_TEXT_CONTENT_ERROR]", error);
+    console.error("Error updating lesson:", error);
     return NextResponse.json(
       { message: "Error updating lesson." },
       { status: 500 }

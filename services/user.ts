@@ -1,4 +1,3 @@
-// services/user.ts
 "use server";
 import { Urls } from "@/constants/urls";
 import { db } from "@/lib/db";
@@ -11,47 +10,13 @@ import { cache } from "react";
 import bcrypt from "bcrypt";
 import { UserWithProfile } from "@/types/user";
 
-// ========== TYPE DEFINITIONS ==========
-
-interface AccessResult {
-  access: boolean;
-  reason:
-    | "admin_override"
-    | "purchased_course"
-    | "enrolled_course"
-    | "enrolled_certification_included_course"
-    | "trial_selected_course"
-    | "subscription_course"
-    | "purchased_certification"
-    | "enrolled_certification"
-    | "no_access";
-}
-
-type CourseWithCount = {
-  id: string;
-  isUnderSubscription: boolean;
-  _count: {
-    lessons: number;
-  };
-};
-
-// Use Awaited and ReturnType to extract the actual return type
-type CertificationWithCourses = Awaited<
-  ReturnType<typeof getCertificationById>
->;
-type CertificationWithDetails = Awaited<
-  ReturnType<typeof getCertificationBySlug>
->;
-
-// ========== CACHE & REVALIDATION ==========
-
 export const fetchUserProfile = cache(async (userId: string) => {
   const response = await fetch(Urls.user.profile(userId));
   if (!response.ok) throw new Error("Failed to fetch user profile");
   return response.json();
 });
 
-export async function revalidateCategories(): Promise<void> {
+export async function revalidateCategories() {
   revalidateTag("userProfile");
 }
 
@@ -69,11 +34,10 @@ export const fetchUserSubscription = cache(async () => {
 /**
  * ============ get or create user by email address ==========
  */
-export async function getOrCreateUser(email: string, password: string | null = null): Promise<UserWithProfile> {
+export async function getOrCreateUser(email: string): Promise<UserWithProfile> {
   let isNewUser: boolean = false;
   let temporaryPassword: string | null = null;
   let username: string | null = null;
-  
   let user = await db.user.findUnique({
     where: { email },
     include: {
@@ -87,13 +51,12 @@ export async function getOrCreateUser(email: string, password: string | null = n
       eventRegistrations: true,
     },
   });
-  
+
   if (!user) {
     const generatedUsername = generateUsernameFromEmail(email);
-    // Use provided password or generate a new one
-    const finalPassword = password || generateRandomPassword();
-    const hashedPassword = await bcrypt.hash(finalPassword, 12);
-    
+    const password = generateRandomPassword();
+    const hashedPassword = await bcrypt.hash(password, 12);
+
     user = await db.user.create({
       data: {
         name: generatedUsername,
@@ -118,20 +81,19 @@ export async function getOrCreateUser(email: string, password: string | null = n
       },
     });
     isNewUser = true;
-    // Only set temporaryPassword if we generated it (not provided by user)
-    temporaryPassword = password ? null : finalPassword;
+    temporaryPassword = password;
     username = generatedUsername;
   }
   const processedUser = { ...user, isNewUser, temporaryPassword, username };
+
   return processedUser as UserWithProfile;
 }
 
-// ========== ACCESS CONTROL ==========
-
-export const canAccessCourse = async (
-  userId: string,
-  courseId: string
-): Promise<AccessResult> => {
+/**
+ * ========== ACCESS CONTROL ==========
+ */
+export const canAccessCourse = async (userId: string, courseId: string) => {
+  // Priority order: user -> admin > purchase > enrolled > subscription
   if (await hasAdminAccess()) return allow("admin_override");
   if (await hasPurchasedCourse(userId, courseId))
     return allow("purchased_course");
@@ -150,7 +112,8 @@ export const canAccessCourse = async (
 export const canAccessCertification = async (
   userId: string,
   certificationId: string
-): Promise<AccessResult> => {
+) => {
+  // Priority order: user -> admin > purchase > enrolled > subscription
   if (await hasAdminAccess()) return allow("admin_override");
   if (await hasPurchasedCertification(userId, certificationId))
     return allow("purchased_certification");
@@ -160,27 +123,24 @@ export const canAccessCertification = async (
   return deny("no_access");
 };
 
-// ========== COURSE & CERTIFICATION QUERIES ==========
+/**
+ * ========== INDIVIDUAL CHECKS ==========
+ */
 
-export const retrieveUserIdFromEmail = async (
-  email: string
-): Promise<string | null> => {
+export const retrieveUserIdFromEmail = async (email: string) => {
   try {
     const user = await db.user.findUnique({
       where: { email },
-      select: { id: true },
     });
 
-    return user?.id ?? null;
+    if (!user) return null;
+    return user.id;
   } catch (error) {
-    console.error("Error retrieving user ID:", error);
-    return null;
+    console.error(error);
   }
 };
 
-export const getCourseBySlug = async (
-  courseSlug: string
-): Promise<CourseWithCount | null> => {
+export const getCourseBySlug = async (courseSlug: string) => {
   try {
     const course = await db.course.findUnique({
       where: { slug: courseSlug },
@@ -198,14 +158,13 @@ export const getCourseBySlug = async (
     });
     return course;
   } catch (error) {
-    console.error("Error fetching course by slug:", error);
-    return null;
+    console.error(error);
   }
 };
 
 export const getNextCertificationCourseSlug = async (
   certificationSlug: string
-): Promise<{ id: string } | null> => {
+) => {
   try {
     const certification = await db.certification.findUnique({
       where: { slug: certificationSlug },
@@ -215,8 +174,7 @@ export const getNextCertificationCourseSlug = async (
     });
     return certification;
   } catch (error) {
-    console.error("Error fetching certification:", error);
-    return null;
+    console.error(error);
   }
 };
 
@@ -230,11 +188,7 @@ export const getCertificationById = async (certificationId: string) => {
           select: {
             slug: true,
             lessons: {
-              where: { isPublished: true },
               take: 1,
-              select: {
-                slug: true,
-              },
             },
           },
           take: 1,
@@ -243,8 +197,7 @@ export const getCertificationById = async (certificationId: string) => {
     });
     return certification;
   } catch (error) {
-    console.error("Error fetching certification by ID:", error);
-    return null;
+    console.error(error);
   }
 };
 
@@ -264,14 +217,11 @@ export const getCertificationBySlug = async (certificationSlug: string) => {
     });
     return certification;
   } catch (error) {
-    console.error("Error fetching certification by slug:", error);
-    return null;
+    console.error(error);
   }
 };
 
-// ========== INDIVIDUAL ACCESS CHECKS ==========
-
-const hasAdminAccess = async (): Promise<boolean> => {
+const hasAdminAccess = async () => {
   try {
     const { isAdmin } = await getServerUserSession();
     return isAdmin || false;
@@ -281,16 +231,12 @@ const hasAdminAccess = async (): Promise<boolean> => {
   }
 };
 
-const hasPurchasedCourse = async (
-  userId: string,
-  courseId: string
-): Promise<boolean> => {
+const hasPurchasedCourse = async (userId: string, courseId: string) => {
   try {
     const purchase = await db.purchase.findFirst({
       where: {
         studentProfile: { userId },
         courseId,
-        paymentStatus: "COMPLETED",
       },
     });
     return !!purchase;
@@ -303,13 +249,12 @@ const hasPurchasedCourse = async (
 const hasPurchasedCertification = async (
   userId: string,
   certificationId: string
-): Promise<boolean> => {
+) => {
   try {
     const purchase = await db.purchase.findFirst({
       where: {
         studentProfile: { userId },
         certificationId,
-        paymentStatus: "COMPLETED",
       },
     });
     return !!purchase;
@@ -319,10 +264,7 @@ const hasPurchasedCertification = async (
   }
 };
 
-const hasEnrolledCourse = async (
-  userId: string,
-  courseId: string
-): Promise<boolean> => {
+const hasEnrolledCourse = async (userId: string, courseId: string) => {
   try {
     const enrolled = await db.enrolledStudents.findFirst({
       where: {
@@ -340,7 +282,7 @@ const hasEnrolledCourse = async (
 const hasCourseEnrolledWithCertification = async (
   userId: string,
   courseId: string
-): Promise<boolean> => {
+) => {
   try {
     const enrolled = await db.enrolledStudents.findFirst({
       where: {
@@ -365,7 +307,7 @@ const hasCourseEnrolledWithCertification = async (
 const hasEnrolledCertification = async (
   userId: string,
   certificationId: string
-): Promise<boolean> => {
+) => {
   try {
     const enrolled = await db.enrolledStudents.findFirst({
       where: {
@@ -375,42 +317,35 @@ const hasEnrolledCertification = async (
     });
     return !!enrolled;
   } catch (error) {
-    console.error("Error checking certification enrollment:", error);
+    console.error("Error checking course enrollment:", error);
     return false;
   }
 };
 
-const hasTrialSelectedCourses = async (
-  userId: string,
-  courseId: string
-): Promise<boolean> => {
+const hasTrialSelectedCourses = async (userId: string, courseId: string) => {
   try {
     const subscription = await db.subscription.findFirst({
       where: {
-        studentProfile: { userId },
-        trialSelectedCourseIds: { has: courseId },
-        subscriptionPlan: { isTrial: true },
-        status: "ACTIVE",
-      },
-      select: {
-        status: true,
-        expiresAt: true,
+        studentProfile: {
+          userId,
+        },
+        trialSelectedCourseIds: {
+          has: courseId,
+        },
+        subscriptionPlan: {
+          isTrial: true,
+        },
       },
     });
 
-    if (!subscription) return false;
-
-    return isSubscriptionActive(subscription.status, subscription.expiresAt);
+    return isSubscriptionActive(subscription?.status!, subscription?.expiresAt);
   } catch (error) {
     console.error("Error checking trial selected courses:", error);
     return false;
   }
 };
 
-const hasSubscriptionAccess = async (
-  userId: string,
-  courseId: string
-): Promise<boolean> => {
+const hasSubscriptionAccess = async (userId: string, courseId: string) => {
   try {
     const course = await db.course.findUnique({
       where: { id: courseId },
@@ -427,7 +362,9 @@ const hasSubscriptionAccess = async (
             status: true,
             expiresAt: true,
             subscriptionPlan: {
-              select: { isTrial: true },
+              select: {
+                isTrial: true,
+              },
             },
           },
         },
@@ -435,25 +372,18 @@ const hasSubscriptionAccess = async (
     });
 
     const subscription = studentProfile?.subscription;
-
     if (subscription?.subscriptionPlan?.isTrial) return false;
 
-    if (!subscription?.status || !subscription?.expiresAt) return false;
-
-    return isSubscriptionActive(subscription.status, subscription.expiresAt);
+    return isSubscriptionActive(subscription?.status!, subscription?.expiresAt);
   } catch (error) {
     console.error("Error checking subscription access:", error);
     return false;
   }
 };
 
-// ========== LESSON NAVIGATION ==========
-
-export const getNextLessonSlug = async (
-  userId: string,
-  courseId: string
-): Promise<string | null> => {
+export const getNextLessonSlug = async (userId: string, courseId: string) => {
   try {
+    // Get total lessons count
     const course = await db.course.findUnique({
       where: { id: courseId },
       select: {
@@ -473,13 +403,7 @@ export const getNextLessonSlug = async (
 
     const totalLessons = course._count.lessons;
 
-    const studentProfile = await db.studentProfile.findUnique({
-      where: { userId },
-      select: { id: true },
-    });
-
-    if (!studentProfile) return null;
-
+    // Count completed lessons
     const completedLessonsCount = await db.progress.count({
       where: {
         isCompleted: true,
@@ -487,18 +411,23 @@ export const getNextLessonSlug = async (
           courseId,
           isPublished: true,
         },
-        studentProfileId: studentProfile.id,
+        studentProfile: {
+          userId,
+        },
       },
     });
 
     if (completedLessonsCount < totalLessons) {
+      // Find next incomplete lesson
       const completedLessonIds = await db.progress.findMany({
         where: {
           lesson: {
             courseId,
             isPublished: true,
           },
-          studentProfileId: studentProfile.id,
+          studentProfile: {
+            userId,
+          },
           isCompleted: true,
         },
         select: {
@@ -524,8 +453,9 @@ export const getNextLessonSlug = async (
         },
       });
 
-      return nextLesson?.slug ?? null;
+      return nextLesson?.slug || null;
     } else {
+      // All lessons completed, return first lesson
       const firstLesson = await db.lesson.findFirst({
         where: {
           courseId,
@@ -539,7 +469,7 @@ export const getNextLessonSlug = async (
         },
       });
 
-      return firstLesson?.slug ?? null;
+      return firstLesson?.slug || null;
     }
   } catch (error) {
     console.error("Error getting next lesson:", error);
@@ -547,23 +477,15 @@ export const getNextLessonSlug = async (
   }
 };
 
-// ========== UTILITIES ==========
+/**
+ * ========== UTILITIES ==========
+ */
 
-const isSubscriptionActive = (
-  status: string | null,
-  expiresAt: Date | null
-): boolean => {
-  if (!status || status !== "ACTIVE") return false;
+const isSubscriptionActive = (status?: string, expiresAt?: Date | null) => {
+  if (status !== "ACTIVE") return false;
   if (!expiresAt) return false;
-  return new Date() <= new Date(expiresAt);
+  return new Date() <= expiresAt;
 };
 
-const allow = (reason: AccessResult["reason"]): AccessResult => ({
-  access: true,
-  reason,
-});
-
-const deny = (reason: AccessResult["reason"]): AccessResult => ({
-  access: false,
-  reason,
-});
+const allow = (reason: string) => ({ access: true, reason });
+const deny = (reason: string) => ({ access: false, reason });

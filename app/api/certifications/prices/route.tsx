@@ -1,53 +1,27 @@
 // api/certifications/prices/route.ts
 import { db } from "@/lib/db";
-import { NextRequest, NextResponse } from "next/server";
-import { Frequency } from "@prisma/client";
-import type { Prisma } from "@prisma/client";
+import { NextResponse } from "next/server";
 
-// ========== TYPE DEFINITIONS ==========
+// Handle POST requests to create or update prices
+export async function POST(request: Request) {
+  const pricesData = await request.json();
 
-interface PriceData {
-  id?: string;
-  certificationId: string;
-  isFree?: boolean;
-  isSubscriptionPrice?: boolean;
-  regularAmount?: number;
-  discountedAmount?: number | null;
-  discountExpiresOn?: string | null;
-  duration?: string | number;
-  frequency: Frequency;
-}
+  const missingData = pricesData.some(
+    (price: any) => !price.certificationId // Only check for certificationId as mandatory
+  );
 
-interface ErrorResponse {
-  message: string;
-  error?: string;
-}
+  if (missingData) {
+    return NextResponse.json(
+      { message: "Missing required data: certificationId!" },
+      { status: 400 }
+    );
+  }
 
-type Price = Prisma.PriceGetPayload<{}>;
-
-// ========== POST HANDLER ==========
-
-export async function POST(
-  request: NextRequest
-): Promise<NextResponse<Price[] | ErrorResponse>> {
   try {
-    const pricesData: PriceData[] = await request.json();
-
-    // Validate required data
-    const missingData = pricesData.some((price) => !price.certificationId);
-
-    if (missingData) {
-      return NextResponse.json(
-        { message: "Missing required data: certificationId!" },
-        { status: 400 }
-      );
-    }
-
-    // Check which prices already exist
     const existingPrices = await Promise.all(
-      pricesData.map(async (priceData) => {
+      pricesData.map(async (priceData: any) => {
         if (priceData.id) {
-          return await db.price.findUnique({
+          return db.price.findUnique({
             where: { id: priceData.id },
           });
         }
@@ -56,43 +30,24 @@ export async function POST(
     );
 
     // Upsert prices
-    const upsertPromises = pricesData.map((priceData, index) => {
+    const upsertPromises = pricesData.map((priceData: any, index: number) => {
       const existingPrice = existingPrices[index];
 
-      // Parse duration
-      let parsedDuration: number | null = null;
-      if (priceData.duration) {
-        if (priceData.duration === "NA" || priceData.duration === 0) {
-          parsedDuration = null;
-        } else {
-          parsedDuration =
-            typeof priceData.duration === "string"
-              ? parseInt(priceData.duration, 10)
-              : priceData.duration;
-        }
-      }
-
-      // Parse discountExpiresOn
-      let parsedDiscountExpiry: Date | null = null;
-      if (priceData.discountExpiresOn) {
-        parsedDiscountExpiry = new Date(priceData.discountExpiresOn);
-      }
-
-      const priceDataToSave: Prisma.PriceUpdateInput | Prisma.PriceCreateInput =
-        {
-          isFree: priceData.isFree ?? false,
-          isSubscriptionPrice: priceData.isSubscriptionPrice ?? false,
-          regularAmount: priceData.regularAmount ?? 0,
-          discountedAmount: priceData.discountedAmount ?? null,
-          discountExpiresOn: parsedDiscountExpiry,
-          duration: parsedDuration,
-          frequency: priceData.frequency,
-          certification: {
-            connect: {
-              id: priceData.certificationId,
-            },
+      const priceDataToSave = {
+        isFree: priceData.isFree ?? false, // Default to false if undefined
+        isSubscriptionPrice: priceData.isSubscriptionPrice ?? false,
+        regularAmount: priceData.regularAmount ?? 0, // Allow null
+        discountedAmount: priceData.discountedAmount ?? null, // Allow null
+        discountExpiresOn: priceData.discountExpiresOn ?? null, // Allow null
+        duration:
+          priceData.duration === "NA" ? 0 : parseInt(priceData.duration),
+        frequency: priceData.frequency,
+        certification: {
+          connect: {
+            id: priceData.certificationId,
           },
-        };
+        },
+      };
 
       if (existingPrice) {
         // Update existing price
@@ -103,16 +58,17 @@ export async function POST(
       } else {
         // Create new price
         return db.price.create({
-          data: priceDataToSave as Prisma.PriceCreateInput,
+          data: priceDataToSave,
         });
       }
     });
 
+    // Execute all promises in parallel
     const prices = await Promise.all(upsertPromises);
 
     return NextResponse.json(prices, { status: 201 });
   } catch (error) {
-    console.error("[UPSERT_PRICES_ERROR]", error);
+    console.error("Failed to upsert prices", error);
     return NextResponse.json(
       { message: "Failed to upsert prices" },
       { status: 500 }
@@ -120,38 +76,36 @@ export async function POST(
   }
 }
 
-// ========== DELETE HANDLER ==========
+export async function DELETE(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const certificationId = searchParams.get("certificationId");
 
-export async function DELETE(
-  request: NextRequest
-): Promise<NextResponse<null | ErrorResponse>> {
+  if (!certificationId) {
+    return NextResponse.json(
+      { message: "Course ID is required" },
+      { status: 400 }
+    );
+  }
+
   try {
-    const { searchParams } = new URL(request.url);
-    const certificationId = searchParams.get("certificationId");
-
-    if (!certificationId) {
-      return NextResponse.json(
-        { message: "Certification ID is required" },
-        { status: 400 }
-      );
-    }
-
+    // Delete all prices associated with the course ID
     const deletedPrices = await db.price.deleteMany({
-      where: {
-        certificationId,
-      },
+      where: { 
+        certificationId
+       },
     });
 
     if (deletedPrices.count === 0) {
       return NextResponse.json(
-        { message: "No prices found for this certification" },
+        { message: "No prices found for this course" },
         { status: 404 }
       );
     }
 
+    // For 204 status, don't use json() method
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    console.error("[DELETE_PRICES_ERROR]", error);
+    console.error("Failed to delete prices:", error);
     return NextResponse.json(
       { message: "Failed to delete prices", error: String(error) },
       { status: 500 }
@@ -159,34 +113,31 @@ export async function DELETE(
   }
 }
 
-// ========== GET HANDLER ==========
+export async function GET(request: Request) {
+  // Extract the certificationId from the query parameters
+  const { searchParams } = new URL(request.url);
+  const certificationId = searchParams.get("certificationId");
 
-export async function GET(
-  request: NextRequest
-): Promise<NextResponse<Price[] | ErrorResponse>> {
+  // Validate the certificationId parameter
+  if (!certificationId) {
+    return NextResponse.json(
+      { message: "Missing certificationId parameter." },
+      { status: 400 }
+    );
+  }
+
   try {
-    const { searchParams } = new URL(request.url);
-    const certificationId = searchParams.get("certificationId");
-
-    if (!certificationId) {
-      return NextResponse.json(
-        { message: "Missing certificationId parameter." },
-        { status: 400 }
-      );
-    }
-
+    // Fetch prices associated with the provided certificationId
     const prices = await db.price.findMany({
       where: {
-        certificationId,
-      },
-      orderBy: {
-        createdAt: "desc",
+        certificationId: certificationId, // Filter prices by certificationId
       },
     });
 
+    // Return the fetched prices
     return NextResponse.json(prices, { status: 200 });
   } catch (error) {
-    console.error("[GET_PRICES_ERROR]", error);
+    console.error("Failed to fetch prices:", error);
     return NextResponse.json(
       { message: "Failed to fetch prices." },
       { status: 500 }

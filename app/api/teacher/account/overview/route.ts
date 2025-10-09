@@ -1,10 +1,12 @@
-// api/teacher/account/overview/route.ts
+// @ts-nocheck
 import { db } from "@/lib/db";
+import { PrismaClient } from "@db.ient";
 import { NextResponse } from "next/server";
 
-export async function GET(req: Request) {
+export async function GET(req, res) {
+  // Ensure it's a GET request and contains teacherProfileId
   const { searchParams } = new URL(req.url);
-  const teacherProfileId = searchParams.get("teacherProfileId");
+  const teacherProfileId = searchParams.get("teacherId");
 
   if (!teacherProfileId) {
     return NextResponse.json(
@@ -14,6 +16,7 @@ export async function GET(req: Request) {
   }
 
   try {
+    // Get the TeacherBalance for the given teacherProfileId
     const balance = await db.teacherBalance.findFirst({
       where: { teacherProfileId },
       select: {
@@ -28,6 +31,7 @@ export async function GET(req: Request) {
       },
     });
 
+    // Get the last payment date
     const lastTransaction = await db.teacherPayments.findFirst({
       where: { teacherProfileId },
       orderBy: {
@@ -38,11 +42,12 @@ export async function GET(req: Request) {
       },
     });
 
+    // Prepare response
     const response = {
       remaining_balance: balance ? balance.balance_remaining : 0,
       total_earned: balance ? balance.total_earned : 0,
-      month: balance ? balance.month : 0,
-      year: balance ? balance.year : 0,
+      month: balance ? balance.month : "N/A",
+      year: balance ? balance.year : "N/A",
       total_payments: balance ? balance.total_paid : 0,
       last_transaction_date: lastTransaction
         ? lastTransaction.payment_date

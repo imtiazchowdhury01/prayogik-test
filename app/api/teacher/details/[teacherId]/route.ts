@@ -1,15 +1,20 @@
-// api/teacher/details/[teacherId]/route.ts
+// @ts-nocheck
+
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
+// Update a specific teacher's details
 export async function PUT(
   request: Request,
   { params }: { params: { teacherId: string } }
 ) {
   const { teacherId } = params;
+
+  // Get the updated data from the request body
   const updatedData = await request.json();
 
   try {
+    // Fetch the existing teacher data
     const existingTeacher = await db.user.findUnique({
       where: { id: teacherId },
       include: {
@@ -17,6 +22,7 @@ export async function PUT(
       },
     });
 
+    // If the teacher doesn't exist, return a not found error
     if (!existingTeacher) {
       return NextResponse.json(
         { message: "Teacher not found." },
@@ -24,13 +30,16 @@ export async function PUT(
       );
     }
 
-    const dataToUpdateOnUserModel: any = {};
-    const dataToUpdateOnTeacherProfileModel: any = {};
+    // Create a new data object with only the fields that need to be updated
+    const dataToUpdateOnUserModel = {};
+    const dataToUpdateOnTeacherProfileModel = {};
 
+    // Dynamically add fields from updatedData if they exist
     for (const key of Object.keys(updatedData)) {
       if (key in existingTeacher) {
         dataToUpdateOnUserModel[key] = updatedData[key];
       }
+      // Check if key is for TeacherProfile
       if (
         existingTeacher.teacherProfile &&
         key in existingTeacher.teacherProfile
@@ -61,7 +70,8 @@ export async function PUT(
     });
 
     return NextResponse.json(updatedTeacher, { status: 200 });
-  } catch (error: any) {
+  } catch (error) {
+    // Return an error response
     return NextResponse.json(
       { message: "Failed to update teacher.", error: error.message },
       { status: 400 }

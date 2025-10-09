@@ -1,7 +1,16 @@
-// api/teacher/experts/search/route.ts
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 
+/**
+ * GET endpoint to search for verified teachers with published courses
+ * @param {Request} request - The incoming request object
+ * @returns {Promise<NextResponse>} - Returns filtered teachers or error response
+ * @description
+ * - Searches verified teachers by name (case-insensitive)
+ * - Only returns teachers with VERIFIED status AND at least one published course
+ * - Accepts optional 'search' query parameter
+ * - Returns 500 status on server errors
+ */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const searchTerm = searchParams.get("search") || "";
@@ -14,7 +23,7 @@ export async function GET(request: Request) {
           mode: "insensitive",
         },
         teacherProfile: {
-          teacherStatus: "VERIFIED",
+          teacherStatus: "VERIFIED", // Only verified teachers
         },
       },
       include: {
@@ -22,6 +31,7 @@ export async function GET(request: Request) {
           include: {
             teacherRank: true,
             createdCourses: {
+              // Include created courses in response
               where: {
                 isPublished: true,
               },

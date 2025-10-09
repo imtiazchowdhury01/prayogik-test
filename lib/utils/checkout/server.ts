@@ -1,13 +1,7 @@
-// @ts-nocheck
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { checkEventAccess, createEventRegistration } from "@/services/event";
-import {
-  calculateTotalInstallments,
-  isWithinReferralWindow,
-  processReferrerRewardsWithInstallment,
-} from "./subscription-purchase";
 
 // Helper function to get course and subscription details
 const getEmailResourceDetails = async (payload: any) => {
@@ -242,7 +236,7 @@ async function handleSingleCoursePurchase(
         teacherProfileId: course.teacherProfileId,
         courseId: payload.courseId,
         purchaseType: "SINGLE_COURSE",
-        // bkashData: JSON.parse(JSON.stringify(executePaymentResult)),
+        bkashData: JSON.parse(JSON.stringify(executePaymentResult)),
       },
     });
 
@@ -299,7 +293,7 @@ async function handleCertificationCoursePurchase(
         teacherProfileId: certification.teacherProfileId,
         certificationId: payload.certificationId,
         purchaseType: "CERTIFICATION",
-        // bkashData: JSON.parse(JSON.stringify(executePaymentResult)),
+        bkashData: JSON.parse(JSON.stringify(executePaymentResult)),
       },
     });
 
@@ -325,7 +319,6 @@ async function handleCertificationCoursePurchase(
 }
 
 // Purchase handler for MEMBERSHIP/SUBSCRIPTION
-// Updated main function
 async function handleMembershipPurchase(
   payload: any,
   studentProfile: any,
@@ -347,74 +340,32 @@ async function handleMembershipPurchase(
       return createErrorResponse("Subscription plan not found");
     }
 
-    // Get user with referral information
-    const user = await db.user.findUnique({
-      where: { id: studentProfile.userId },
-      select: {
-        id: true,
-        referredByUserId: true,
-        primeUpgradedAt: true,
-        currentPlan: true,
-        createdAt: true,
-      },
-    });
-
     // Check existing subscription for upgrade calculation
     const existingSubscription = await db.subscription.findUnique({
       where: { studentProfileId: studentProfile.id },
     });
 
-    // Determine if this is an upgrade from trial to prime
-    const isUpgradingFromTrial =
-      existingSubscription?.isTrial === true &&
-      subscriptionPlan.isTrial === false &&
-      !user?.primeUpgradedAt;
-
-    // Check if installment is applicable
-    const REFERRAL_WINDOW_DAYS = parseInt(
-      process.env.REFERRAL_WINDOW_DAYS || "45"
-    );
-    const INSTALLMENT_AMOUNT = parseFloat(
-      process.env.INSTALLMENT_AMOUNT || "9999"
-    );
-
-    const isEligibleForInstallment =
-      isUpgradingFromTrial &&
-      user?.referredByUserId &&
-      isWithinReferralWindow(user?.createdAt!, REFERRAL_WINDOW_DAYS) &&
-      payload.paymentMethod === "INSTALLMENT"; // Assuming this is passed in payload
-
-    const totalAmount = payload.amount || 0;
-    const isInstallmentPayment =
-      isEligibleForInstallment && totalAmount > INSTALLMENT_AMOUNT;
-
-    let installmentInfo = null;
-    let actualPaymentAmount = totalAmount;
-
-    if (isInstallmentPayment) {
-      const totalInstallments = calculateTotalInstallments(
-        totalAmount,
-        INSTALLMENT_AMOUNT
-      );
-      installmentInfo = {
-        totalInstallments,
-        completedInstallments: 1,
-        installmentAmount: INSTALLMENT_AMOUNT,
-        remainingAmount: totalAmount - INSTALLMENT_AMOUNT,
-      };
-      actualPaymentAmount = INSTALLMENT_AMOUNT; // First installment
-    }
-
     // Calculate expiry date with upgrade logic
     const now = new Date();
     let expiresAt = new Date(now);
 
+    // UPGRADE LOGIC: Add remaining time from current subscription
     if (
       existingSubscription &&
       existingSubscription.status === "ACTIVE" &&
       new Date(existingSubscription.expiresAt) > now
     ) {
+      // Calculate remaining time from current subscription
+      const remainingTime =
+        new Date(existingSubscription.expiresAt).getTime() - now.getTime();
+      const remainingDays = Math.ceil(remainingTime / (1000 * 60 * 60 * 24));
+
+      // Start from current expiry date instead of now
       expiresAt = new Date(existingSubscription.expiresAt);
+
+      // console.log(
+      //   `Upgrade detected: Adding ${remainingDays} days from current subscription`
+      // );
     }
 
     // Add new subscription duration
@@ -432,117 +383,72 @@ async function handleMembershipPurchase(
       );
     }
 
-    // Start transaction with timeout
-    const result = await db.$transaction(
-      async (tx) => {
-        // Create purchase record
-        const purchase = await tx.purchase.create({
-          data: {
-            studentProfileId: studentProfile.id,
-            subscriptionPlanId: payload.subscriptionPlanId,
-            purchaseType: payload.purchaseType,
-            purchaseDuration:
-              subscriptionPlan.type === "MONTHLY"
-                ? subscriptionPlan.durationInMonths
-                : subscriptionPlan.durationInYears,
-            expiresAt,
-            totalAmountTk: totalAmount,
-            totalPaidTk: actualPaymentAmount,
-            remainingAmountTk: isInstallmentPayment
-              ? installmentInfo?.remainingAmount
-              : 0,
-            paymentStatus: isInstallmentPayment ? "PENDING" : "COMPLETED",
-            fullyPaidAt: isInstallmentPayment ? null : now,
-          },
-        });
-
-        // Handle trial subscription
-        const isSubscriptionHasTrial =
-          subscriptionPlan.isTrial && !existingSubscription;
-        let trialEndsAt = null;
-        let trialStartedAt = null;
-        if (isSubscriptionHasTrial) {
-          trialStartedAt = new Date();
-          trialEndsAt = new Date();
-          trialEndsAt.setDate(
-            trialEndsAt.getDate() + (subscriptionPlan.trialDurationInDays || 30)
-          );
-        }
-
-        // Create or update subscription
-        let subscription;
-        if (existingSubscription) {
-          if (
-            existingSubscription.subscriptionPlanId ===
-              payload.subscriptionPlanId &&
-            existingSubscription.isTrial === false
-          ) {
-            throw new Error(
-              "You already have an active subscription with this plan."
-            );
-          }
-          subscription = await tx.subscription.update({
-            where: { studentProfileId: studentProfile.id },
-            data: {
-              subscriptionPlanId: payload.subscriptionPlanId,
-              expiresAt,
-              status: "ACTIVE",
-              isTrial: subscriptionPlan.isTrial,
-              trialStartedAt: null,
-              trialEndsAt: null,
-            },
-          });
-        } else {
-          subscription = await tx.subscription.create({
-            data: {
-              studentProfileId: studentProfile.id,
-              subscriptionPlanId: payload.subscriptionPlanId,
-              expiresAt,
-              status: "ACTIVE",
-              isTrial: payload.purchaseType === "TRIAL" ? true : false,
-              trialStartedAt:
-                payload.purchaseType === "TRIAL" ? trialStartedAt : null,
-              trialEndsAt:
-                payload.purchaseType === "TRIAL" ? trialEndsAt : null,
-            },
-          });
-        }
-
-        // Update user plan status
-        if (isUpgradingFromTrial) {
-          await tx.user.update({
-            where: { id: user?.id },
-            data: {
-              currentPlan: "PRIME",
-              primeUpgradedAt: now,
-            },
-          });
-        }
-
-        // Process referrer rewards based on payment type
-        await processReferrerRewardsWithInstallment(
-          tx,
-          user,
-          purchase.id,
-          isUpgradingFromTrial,
-          !!isInstallmentPayment,
-          installmentInfo
-        );
-
-        return { purchase, subscription };
+    // Create purchase record
+    const purchase = await db.purchase.create({
+      data: {
+        studentProfileId: studentProfile.id,
+        subscriptionPlanId: payload.subscriptionPlanId,
+        purchaseType: payload.purchaseType, // MEMBERSHIP or SUBSCRIPTION
+        purchaseDuration:
+          subscriptionPlan.type === "MONTHLY"
+            ? subscriptionPlan.durationInMonths
+            : subscriptionPlan.durationInYears,
+        expiresAt,
+        bkashData: JSON.parse(JSON.stringify(executePaymentResult)),
       },
-      {
-        maxWait: 10000, // 10 seconds max wait
-        timeout: 30000, // 30 seconds timeout
-      }
-    );
+    });
 
-    return result;
+    // Handle trial subscription (NO TRIAL for upgrades/renewals)
+    const isSubscriptionHasTrial =
+      subscriptionPlan.isTrial && !existingSubscription;
+    let trialEndsAt = null;
+    let trialStartedAt = null;
+    if (isSubscriptionHasTrial) {
+      trialStartedAt = new Date();
+      trialEndsAt = new Date();
+      trialEndsAt.setDate(
+        trialEndsAt.getDate() + (subscriptionPlan.trialDurationInDays || 30)
+      );
+    }
+
+    // Create or update subscription
+    let subscription;
+    if (existingSubscription) {
+      if (
+        existingSubscription.subscriptionPlanId === payload.subscriptionPlanId
+      ) {
+        return createErrorResponse(
+          "You already have an active subscription with a different plan. Please cancel it before purchasing a new one."
+        );
+      }
+      subscription = await db.subscription.update({
+        where: { studentProfileId: studentProfile.id },
+        data: {
+          subscriptionPlanId: payload.subscriptionPlanId,
+          expiresAt,
+          status: "ACTIVE",
+          trialStartedAt: null,
+          trialEndsAt: null,
+        },
+      });
+    } else {
+      subscription = await db.subscription.create({
+        data: {
+          studentProfileId: studentProfile.id,
+          subscriptionPlanId: payload.subscriptionPlanId,
+          expiresAt,
+          status: "ACTIVE",
+          isTrial: payload.purchaseType === "TRIAL" ? true : false,
+          trialStartedAt:
+            payload.purchaseType === "TRIAL" ? trialStartedAt : null,
+          trialEndsAt: payload.purchaseType === "TRIAL" ? trialEndsAt : null,
+        },
+      });
+    }
+
+    return { purchase, subscription };
   } catch (error) {
     console.error("Error in handleMembershipPurchase:", error);
-    if (error instanceof Error) {
-      return createErrorResponse(error.message);
-    }
     return createErrorResponse("Failed to process membership purchase");
   }
 }
@@ -638,7 +544,7 @@ async function handleOfferPurchase(
               ? subscriptionPlan.durationInMonths
               : subscriptionPlan.durationInYears,
           expiresAt,
-          // bkashData: JSON.parse(JSON.stringify(executePaymentResult)),
+          bkashData: JSON.parse(JSON.stringify(executePaymentResult)),
         },
       });
 

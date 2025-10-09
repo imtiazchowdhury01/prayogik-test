@@ -1,4 +1,3 @@
-// api/admin/event/[id]/route.ts
 import { db } from "@/lib/db";
 import {
   checkSlugUniqueness,
@@ -15,7 +14,7 @@ interface RouteContext {
     id: string;
   };
 }
-
+// GET /api/events/[id] - Get a single event by ID
 export async function GET(request: NextRequest, { params }: RouteContext) {
   try {
     const { id } = params;
@@ -24,11 +23,10 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       where: { id },
       include: {
         attendees: {
+          // Include relevant fields from EventRegistration
           select: {
             id: true,
-            userId: true,
-            isApproved: true,
-            registeredAt: true,
+            // Add other fields you want to include
           },
         },
       },
@@ -71,6 +69,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
 
     const body = await request.json();
 
+    // Check if event exists
     const existingEvent = await db.event.findUnique({
       where: { id },
     });
@@ -79,17 +78,19 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
       return createEventErrorResponse("Event not found", 404);
     }
 
+    // Validate request body
     const validationResult = UpdateEventSchema.safeParse(body);
     if (!validationResult.success) {
       const errorMessages = validationResult.error.errors
         .map((err) => `${err.path.join(".")}: ${err.message}`)
         .join(", ");
-
+      
       return createEventErrorResponse("Validation error", 400, errorMessages);
     }
 
     const validatedData = validationResult.data;
 
+    // Check slug uniqueness if slug is being updated
     if (validatedData.slug && validatedData.slug !== existingEvent.slug) {
       const isSlugUnique = await checkSlugUniqueness(validatedData.slug, id);
       if (!isSlugUnique) {
@@ -101,13 +102,18 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
       }
     }
 
+    // Handle location/zoomLink cleanup when switching modes
     if (validatedData.isOnline !== undefined) {
+      // Switching to online - clear location and mapLocation
       if (validatedData.isOnline === true) {
         validatedData.location = "";
         validatedData.mapLocation = "";
-      } else if (validatedData.isOnline === false) {
+      }
+      // Switching to offline - clear zoomLink
+      else if (validatedData.isOnline === false) {
         validatedData.zoomLink = "";
 
+        // Validate that location is provided for offline events
         if (!validatedData.location && !existingEvent.location) {
           return createEventErrorResponse(
             "Location is required for offline events",
@@ -117,13 +123,14 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
       }
     }
 
+        // Handle price cleanup based on event type
     if (validatedData.type !== undefined) {
-      if (
-        validatedData.type === EventType.EOI ||
-        validatedData.type === EventType.FREE
-      ) {
+      // Clear price for EOI or FREE events
+      if (validatedData.type === EventType.EOI || validatedData.type === EventType.FREE) {
         validatedData.price = 0;
-      } else if (validatedData.type === "PAID") {
+      }
+      // Validate price for PAID events
+      else if (validatedData.type === "PAID") {
         if (!validatedData.price && !existingEvent.price) {
           return createEventErrorResponse(
             "Price is required for paid events",
@@ -133,12 +140,15 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
       }
     }
 
+    // Process the validated data
     const processedData = processEventData(validatedData);
 
+    // Remove undefined values to avoid overwriting with undefined
     const updateData = Object.fromEntries(
       Object.entries(processedData).filter(([_, value]) => value !== undefined)
     );
 
+    // Update the event
     const updatedEvent = await db.event.update({
       where: { id },
       data: updateData,
@@ -151,6 +161,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
   } catch (error) {
     console.error("Error updating event:", error);
 
+    // Handle specific Prisma errors
     if (error instanceof Error) {
       if (error.message.includes("Unique constraint")) {
         return createEventErrorResponse(
@@ -159,7 +170,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
           "Please choose a different slug"
         );
       }
-
+      
       if (error.message.includes("Record to update not found")) {
         return createEventErrorResponse("Event not found", 404);
       }
@@ -173,10 +184,13 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
   }
 }
 
+
+// DELETE /api/admin/events/[id] - Delete an event
 export async function DELETE(request: NextRequest, { params }: RouteContext) {
   try {
     const { id } = params;
 
+    // Check if event exists
     const existingEvent = await db.event.findUnique({
       where: { id },
       include: {
@@ -194,6 +208,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
       );
     }
 
+    // Check if event has attendees (optional - you might want to prevent deletion)
     if (existingEvent.attendees.length > 0) {
       return NextResponse.json(
         {

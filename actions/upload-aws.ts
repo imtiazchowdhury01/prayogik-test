@@ -1,4 +1,3 @@
-// actions/upload-aws.ts
 // @ts-nocheck
 "use server";
 import { CachedUrl } from "@/app/(course)/courses/[slug]/_components/Attachement";
@@ -147,10 +146,8 @@ export async function uploadCourseElementToS3(formData, courseId) {
   }
 }
 
-export async function uploadCertificationElementToS3(
-  formData,
-  certificationId
-) {
+export async function uploadCertificationElementToS3(formData, certificationId) {
+
   const { userId } = await getServerUserSession();
 
   try {
@@ -193,83 +190,74 @@ export async function uploadCertificationElementToS3(
 }
 
 // Upload an event image to S3
-export async function uploadEventImageToS3(
-  formData: FormData,
-  eventId: string
-) {
+export async function uploadEventImageToS3(formData: FormData, eventId: string) {
   // console.log("Event image uploading...")
 
-  const { userId } = await getServerUserSession();
+  const { userId } = await getServerUserSession()
 
   try {
-    const file = formData.get("eventSrc");
-    const previousUrl = formData.get("previousUrl");
+    const file = formData.get("eventSrc")
+    const previousUrl = formData.get("previousUrl")
 
     if (!file) {
-      throw new Error("No file provided");
+      throw new Error("No file provided")
     }
 
     // If a previous image exists, delete it from S3
     if (previousUrl) {
-      const previousKey = previousUrl.split(".amazonaws.com/")[1];
-      if (previousKey) await deleteImageFromS3(previousKey);
+      const previousKey = previousUrl.split(".amazonaws.com/")[1]
+      if (previousKey) await deleteImageFromS3(previousKey)
     }
 
-    const uniqueFilename = `events/${eventId}/${Date.now()}-${file.name}`;
+    const uniqueFilename = `events/${eventId}/${Date.now()}-${file.name}`
 
     // Upload the new image to S3 under /events/{eventId}/{uniqueFileName}
-    const { fileUrl } = await uploadToAwsS3(file, userId, uniqueFilename);
+    const { fileUrl } = await uploadToAwsS3(file, userId, uniqueFilename)
 
     return {
       success: true,
       key: uniqueFilename,
       url: fileUrl,
-    };
+    }
   } catch (error) {
-    console.error("Error uploading event image to S3:", error);
-    throw new Error("Failed to upload event image");
+    console.error("Error uploading event image to S3:", error)
+    throw new Error("Failed to upload event image")
   }
 }
 
 // Upload a speaker image to S3
-export async function uploadSpeakerImageToS3(
-  formData: FormData,
-  eventId: string,
-  speakerId: string
-) {
+export async function uploadSpeakerImageToS3(formData: FormData, eventId: string, speakerId: string) {
   // console.log("Speaker image uploading...")
 
-  const { userId } = await getServerUserSession();
+  const { userId } = await getServerUserSession()
 
   try {
-    const file = formData.get("speakerSrc");
-    const previousUrl = formData.get("previousUrl");
+    const file = formData.get("speakerSrc")
+    const previousUrl = formData.get("previousUrl")
 
     if (!file) {
-      throw new Error("No file provided");
+      throw new Error("No file provided")
     }
 
     // If a previous image exists, delete it from S3
     if (previousUrl) {
-      const previousKey = previousUrl.split(".amazonaws.com/")[1];
-      if (previousKey) await deleteImageFromS3(previousKey);
+      const previousKey = previousUrl.split(".amazonaws.com/")[1]
+      if (previousKey) await deleteImageFromS3(previousKey)
     }
 
-    const uniqueFilename = `events/${eventId}/speakers/${speakerId}/${Date.now()}-${
-      file.name
-    }`;
+    const uniqueFilename = `events/${eventId}/speakers/${speakerId}/${Date.now()}-${file.name}`
 
     // Upload the new image to S3 under /events/{eventId}/speakers/{speakerId}/{uniqueFileName}
-    const { fileUrl } = await uploadToAwsS3(file, userId, uniqueFilename);
+    const { fileUrl } = await uploadToAwsS3(file, userId, uniqueFilename)
 
     return {
       success: true,
       key: uniqueFilename,
       url: fileUrl,
-    };
+    }
   } catch (error) {
-    console.error("Error uploading speaker image to S3:", error);
-    throw new Error("Failed to upload speaker image");
+    console.error("Error uploading speaker image to S3:", error)
+    throw new Error("Failed to upload speaker image")
   }
 }
 export async function generatePresignedUrl(key: string): Promise<CachedUrl> {
@@ -279,10 +267,10 @@ export async function generatePresignedUrl(key: string): Promise<CachedUrl> {
   });
 
   const url = await getSignedUrl(s3Client, command, { expiresIn: 360 }); // 6 minutes
-
+  
   return {
     url,
-    expiresAt: Date.now() + 330_000, // 5.5 minutes client-side
+    expiresAt: Date.now() + 330_000 // 5.5 minutes client-side
   };
 }
 
@@ -290,10 +278,12 @@ export async function getPresignedUrl(attachment: any): Promise<CachedUrl> {
   try {
     const key = attachment?.url?.split(".amazonaws.com/")[1]?.split("?")[0];
     if (!key) throw new Error("Invalid S3 key");
-
+    
     return await generatePresignedUrl(key);
   } catch (error) {
     console.error("Error generating presigned URL:", error);
     throw new Error("Failed to generate secure download link");
   }
 }
+
+

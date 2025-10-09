@@ -1,6 +1,5 @@
-// actions/get-user-details.ts
+// @ts-nocheck
 "use server";
-
 import { db } from "@/lib/db";
 
 export async function getUserDetails(userId: string) {
@@ -9,45 +8,10 @@ export async function getUserDetails(userId: string) {
       return { access: false, error: "Unauthorized" };
     }
 
-    // Find the user with the given ID
-    const userProfile = await db.user.findUnique({
+    // Find the student profile associated with the user
+    const userProfile: any = await db.user.findUnique({
       where: {
         id: userId,
-      },
-      select: {
-        id: true,
-        name: true,
-        username: true,
-        email: true,
-        avatarUrl: true,
-        emailVerified: true,
-        isAdmin: true,
-        isSuperAdmin: true,
-        role: true,
-        accountStatus: true,
-        bio: true,
-        dateOfBirth: true,
-        gender: true,
-        education: true,
-        nationality: true,
-        phoneNumber: true,
-        profession: true,
-        city: true,
-        state: true,
-        country: true,
-        zipCode: true,
-        facebook: true,
-        linkedin: true,
-        twitter: true,
-        youtube: true,
-        website: true,
-        others: true,
-        currentPlan: true,
-        referralCode: true,
-        upgradeOfferExpiresAt: true,
-        primeUpgradedAt: true,
-        createdAt: true,
-        updatedAt: true,
       },
     });
 
@@ -56,11 +20,10 @@ export async function getUserDetails(userId: string) {
     }
 
     return {
-      access: true,
       info: userProfile,
     };
   } catch (error) {
     console.error("Error fetching user details", error);
-    return { access: false, error: "Internal Server Error" };
+    return { data: null, error: "Internal Server Error" };
   }
 }

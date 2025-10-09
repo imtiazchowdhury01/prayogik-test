@@ -48,8 +48,6 @@ import RequiredFieldStar from "@/components/common/requiredFieldStar";
 import CheckMarkIcon from "@/components/common/CheckMarkIcon";
 import { cn } from "@/lib/utils";
 import { checkUserAccessToContent } from "@/lib/check-user-course-access";
-import ApplyCredit from "@/components/ApplyCredit/ApplyCredit";
-import { CREDIT_VALUE } from "@/lib/utils/wallet/walletUtils";
 
 // Skeleton component
 const Skeleton = ({ className = "", ...props }) => (
@@ -189,9 +187,6 @@ const CourseCheckoutForm = ({
     () => session?.user?.email || storedEmail,
     [session?.user?.email, storedEmail]
   );
-
-  // Redeem credit state
-  const [selectedCredits, setSelectedCredits] = useState(0);
 
   // Calculate subscription status effect
   useEffect(() => {
@@ -469,8 +464,15 @@ const CourseCheckoutForm = ({
     setIsEmailProcessing(true);
     setErrorMessage("");
     try {
-      const subscriptionData = await getUserCurrentSubscriptionDBCall(email);
+      // Get subscription data and check access
+      const [subscriptionData, accessStatus] = await Promise.all([
+        getUserCurrentSubscriptionDBCall(email),
+        checkUserAccessToContent(email, course?.id, "course"),
+      ]);
+
       setUserSubscription(subscriptionData);
+      setHasAccess(accessStatus.hasAccess);
+      setPurchaseStatus(accessStatus);
 
       CheckoutStorage.saveEmail(email);
       setStoredEmail(email);
@@ -520,12 +522,7 @@ const CourseCheckoutForm = ({
     const formData = new FormData();
     formData.append("courseId", course?.id || "");
     formData.append("type", values.type);
-    formData.append(
-      "amount",
-      selectedCredits
-        ? (selectedAmount - selectedCredits * CREDIT_VALUE).toString()
-        : selectedAmount.toString()
-    );
+    formData.append("amount", selectedAmount.toString());
     formData.append("isFreeCourse", isFreeCourse);
 
     if (values.planId) {
@@ -1065,7 +1062,6 @@ const CourseCheckoutForm = ({
                         if (!isFormDisabled) {
                           setSelectedType(value);
                           field.onChange(value);
-                          setSelectedCredits(0); // Reset credits on type change
                         }
                       }}
                       disabled={isFormDisabled}
@@ -1267,17 +1263,6 @@ const CourseCheckoutForm = ({
                 </FormItem>
               )}
             />
-            {/* Apply Credit Section */}
-            {!isFreeCourse &&
-              emailContinued &&
-              subscriptionStatus?.isActive && (
-                <ApplyCredit
-                  originalPrice={selectedAmount || 0}
-                  selectedCredits={selectedCredits}
-                  setSelectedCredits={setSelectedCredits}
-                  userId={userSubscription?.userId}
-                />
-              )}
 
             {/* Error Message */}
             {errorMessage && (
@@ -1301,9 +1286,7 @@ const CourseCheckoutForm = ({
                     <p className="pt-2">
                       {selectedAmount === 0
                         ? "ফ্রি"
-                        : `৳${convertNumberToBangla(
-                            selectedAmount - selectedCredits * CREDIT_VALUE
-                          )}`}
+                        : `৳${convertNumberToBangla(selectedAmount)}`}
                     </p>
                   </>
                 )}

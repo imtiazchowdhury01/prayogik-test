@@ -764,10 +764,10 @@
 
 // export default SubscriptionCheckoutForm;
 
+
 //@ts-nocheck
 "use client";
-import ApplyCredit from "@/components/ApplyCredit/ApplyCredit";
-import RequiredFieldStar from "@/components/common/requiredFieldStar";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -787,18 +787,32 @@ import {
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { handleCheckout } from "@/lib/actions/checkout";
-import { convertNumberToBangla } from "@/lib/convertNumberToBangla";
-import { getUserCurrentSubscriptionDBCall } from "@/lib/data-access-layer/getUserCurrentSubscription";
-import { CheckoutStorage } from "@/lib/utils/storage/checkoutEmailStorage";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { PurchaseType } from "@prisma/client";
-import { ArrowRight, CheckCircle, Loader, Mail } from "lucide-react";
+import {
+  ArrowRight,
+  Clock,
+  CreditCard,
+  CheckCircle,
+  AlertCircle,
+  Loader,
+  Mail,
+  ArrowLeft,
+} from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
+import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useEffect, useState } from "react";
+import { CheckoutStorage } from "@/lib/utils/storage/checkoutEmailStorage";
+import { PurchaseType } from "@prisma/client";
+import {
+  checkUserTrialHistory,
+  getSubscriptionDBCall,
+} from "@/lib/data-access-layer/subscriptions";
+import { getUserCurrentSubscriptionDBCall } from "@/lib/data-access-layer/getUserCurrentSubscription";
+import toast from "react-hot-toast";
+import { convertNumberToBangla } from "@/lib/convertNumberToBangla";
+import RequiredFieldStar from "@/components/common/requiredFieldStar";
+import Link from "next/link";
 
 const formSchema = z.object({
   planId: z.string(),
@@ -819,18 +833,16 @@ const SubscriptionCheckoutForm = ({
   const [isCheckingSubscription, setIsCheckingSubscription] = useState(false);
   const [currentSubscription, setCurrentSubscription] = useState(null);
   const [showSubscriptionMessage, setShowSubscriptionMessage] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
+
   const [hasCheckedSubscription, setHasCheckedSubscription] = useState(
     !!session?.user?.email
   );
   // States for email confirmation bar
   const [emailContinued, setEmailContinued] = useState(false);
-  const [storedEmail, setStoredEmail] = useState("");
+  const [storedEmail, setStoredEmail] = useState(
+    CheckoutStorage.getEmail() || ""
+  );
 
-  // Redeem credit state
-  const [selectedCredits, setSelectedCredits] = useState(0);
-  const [walletId, setWalletId] = useState(null);
-  console.log("wallet id:", walletId);
   // Check subscription automatically if email exists in local storage
   useEffect(() => {
     if (!session?.user?.email && storedEmail) {
@@ -859,7 +871,7 @@ const SubscriptionCheckoutForm = ({
       };
       checkStoredEmailSubscription();
     }
-  }, [isMounted, storedEmail, session?.user?.email]);
+  }, [storedEmail, session?.user?.email]);
 
   const isExpiredSubscription =
     currentSubscription && new Date(currentSubscription.expiresAt) < new Date();
@@ -878,22 +890,9 @@ const SubscriptionCheckoutForm = ({
       planId: plan.id,
       amount: plan?.offerPrice !== 0 ? plan?.offerPrice : plan.regularPrice,
       type: plan.isTrial ? PurchaseType.TRIAL : PurchaseType.SUBSCRIPTION,
-      email: session?.user?.email || "",
+      email: session?.user?.email || CheckoutStorage.getEmail() || "",
     },
   });
-
-  useEffect(() => {
-    setIsMounted(true);
-
-    // Now it's safe to access localStorage
-    const savedEmail = CheckoutStorage.getEmail() || "";
-    setStoredEmail(savedEmail);
-
-    // Update form if there's a saved email and no session
-    if (savedEmail && !session?.user?.email) {
-      form.setValue("email", savedEmail);
-    }
-  }, [session?.user?.email]);
 
   // For logged in users, auto-set subscription
   useEffect(() => {
@@ -1010,7 +1009,6 @@ const SubscriptionCheckoutForm = ({
   const isEmillEmtpy = !session?.user?.email && !storedEmail;
   const isActivePrimeSubscription =
     plan?.isTrial && new Date(currentSubscription?.expiresAt) > new Date();
-  console.log("current subscription:", currentSubscription);
   return (
     <Card className="sm:p-1 p-0 rounded-lg h-fit">
       <CardHeader className="sm:space-y-1.5 space-y-0 sm:pb-6 pb-2.5">
@@ -1072,6 +1070,7 @@ const SubscriptionCheckoutForm = ({
             </div>
           </div>
         )}
+
         {/* Only show the form if not the same plan */}
         {!isSamePlan && (
           <Form {...form}>
@@ -1116,6 +1115,7 @@ const SubscriptionCheckoutForm = ({
                   )}
                 </div>
               )}
+
               {/* Email Input for Guest Users */}
               {!session?.user?.email && !emailContinued && (
                 <FormField
@@ -1140,6 +1140,7 @@ const SubscriptionCheckoutForm = ({
                   )}
                 />
               )}
+
               {/* Continue Button */}
               {!session?.user?.email &&
                 !hasCheckedSubscription &&
@@ -1161,6 +1162,7 @@ const SubscriptionCheckoutForm = ({
                     )}
                   </Button>
                 )}
+
               {/* Active Subscription Message */}
               {storedEmail &&
                 showSubscriptionMessage &&
@@ -1191,6 +1193,7 @@ const SubscriptionCheckoutForm = ({
                     </div>
                   </div>
                 )}
+
               {/* Root form error (for checkout errors) */}
               {form.formState.errors.root && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -1199,6 +1202,7 @@ const SubscriptionCheckoutForm = ({
                   </p>
                 </div>
               )}
+
               {/* Pricing Options */}
               <div
                 className={`space-y-4 ${
@@ -1318,19 +1322,6 @@ const SubscriptionCheckoutForm = ({
                   )}
                 />
               </div>
-              {console.log("currentSubscription", currentSubscription)}
-              {/* Apply Credit Section */}
-              {!isEmillEmtpy && hasActiveSubscription && !isSamePlan && (
-                <ApplyCredit
-                  originalPrice={plan?.regularPrice}
-                  form={form}
-                  formFieldName="amount"
-                  selectedCredits={selectedCredits}
-                  setSelectedCredits={setSelectedCredits}
-                  userId={currentSubscription?.userId}
-                  setWalletId={setWalletId}
-                />
-              )}
 
               {!isEmillEmtpy && (
                 <div className="flex justify-between items-center mt-4 text-xl font-bold border-t pr-2.5">
@@ -1340,6 +1331,7 @@ const SubscriptionCheckoutForm = ({
                   </p>
                 </div>
               )}
+
               {hasCheckedSubscription && !isEmillEmtpy && (
                 <>
                   <Button

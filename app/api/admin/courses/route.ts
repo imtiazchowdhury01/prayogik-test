@@ -1,12 +1,11 @@
-// api/admin/courses/route.ts
+// @ts-nocheck
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 import { NextResponse } from "next/server";
 
-interface CreateCourseBody {
-  title: string;
-  slug: string;
-}
+import { isTeacher } from "@/lib/teacher";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../auth/[...nextauth]/options";
 
 export async function POST(req: Request) {
   try {
@@ -16,22 +15,24 @@ export async function POST(req: Request) {
       throw new Error("Unauthorised Access");
     }
 
-    if (!userId) {
-      throw new Error("User ID is required");
-    }
-
-    const body = (await req.json()) as CreateCourseBody;
-    const { title, slug } = body;
+    const { title, slug } = await req.json();
 
     let teacherProfile = await db.teacherProfile.findUnique({
       where: {
-        userId: userId,
+        userId: userId, // Getting the teacher profile using userId
       },
     });
 
+    // if not teacher profile create one
     if (!teacherProfile) {
-      teacherProfile = await db.teacherProfile.create({
+      await db.teacherProfile.create({
         data: {
+          userId: userId,
+        },
+      });
+
+      teacherProfile = await db.teacherProfile.findUnique({
+        where: {
           userId: userId,
         },
       });
@@ -47,12 +48,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json(course);
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json(
+    return new NextResponse(
       {
         error: true,
-        message: errorMessage,
+        message: error.message,
       },
       { status: 500 }
     );
@@ -66,6 +65,7 @@ export async function GET(req: Request) {
       throw new Error("Unauthorised Access");
     }
 
+    // Extract and validate query parameters
     const url = new URL(req.url);
 
     let page = parseInt(url.searchParams.get("page") || "1", 10);
@@ -78,10 +78,12 @@ export async function GET(req: Request) {
     const category = url.searchParams.get("category") || undefined;
     const sort = url.searchParams.get("sort") === "asc" ? "asc" : "desc";
 
+    // Calculate skip value for pagination
     const skip = (page - 1) * limit;
 
     const userIds = (await db.user.findMany()).map((user) => user.id);
 
+    // Build filters
     const filters: any = {
       teacherProfile: {
         userId: {
@@ -103,6 +105,7 @@ export async function GET(req: Request) {
       };
     }
 
+    // Get paginated courses for admin
     const courses = await db.course.findMany({
       where: filters,
       orderBy: {
@@ -128,6 +131,7 @@ export async function GET(req: Request) {
       take: limit,
     });
 
+    // Get total count for pagination metadata
     const totalCourses = await db.course.count({
       where: filters,
     });
@@ -147,11 +151,9 @@ export async function GET(req: Request) {
         hasPrevPage,
       },
     });
-  } catch (error: unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Failed to fetch courses.";
+  } catch (error: any) {
     return NextResponse.json(
-      { error: true, message: errorMessage },
+      { error: true, message: error?.message || "Failed to fetch courses." },
       { status: 500 }
     );
   }

@@ -1,8 +1,7 @@
-// actions/get-chapter.ts
-"use server";
-
+// @ts-nocheck
+import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { db } from "@/lib/db";
-import type { Prisma } from "@prisma/client";
+import { Attachment, Lesson } from "@prisma/client";
 
 interface GetLessonProps {
   userId: string;
@@ -10,125 +9,35 @@ interface GetLessonProps {
   lessonId: string;
 }
 
-type LessonResult = Prisma.LessonGetPayload<{
-  select: {
-    id: true;
-    title: true;
-    slug: true;
-    description: true;
-    textContent: true;
-    videoUrl: true;
-    videoStatus: true;
-    position: true;
-    isPublished: true;
-    isFree: true;
-    duration: true;
-    courseId: true;
-  };
-}>;
-
-type CourseResult = {
-  prices: Prisma.PriceGetPayload<true>[];
-};
-
-type AttachmentResult = Prisma.AttachmentGetPayload<{
-  select: {
-    id: true;
-    name: true;
-    url: true;
-    courseId: true;
-  };
-}>;
-
-type ProgressResult = Prisma.ProgressGetPayload<{
-  select: {
-    id: true;
-    studentProfileId: true;
-    lessonId: true;
-    isCompleted: true;
-    createdAt: true;
-    updatedAt: true;
-  };
-}>;
-
-type EnrollmentResult = {
-  id: string;
-  studentProfileId: string;
-  courseId: string | null;
-};
-
-type GetLessonResponse = {
-  lesson: LessonResult | null;
-  course: CourseResult | null;
-  attachments: AttachmentResult[];
-  nextLesson: LessonResult | null;
-  progress: ProgressResult | null;
-  purchase: EnrollmentResult | null;
-};
-
 export const getLesson = async ({
   userId,
   courseId,
   lessonId,
-}: GetLessonProps): Promise<GetLessonResponse> => {
+}: GetLessonProps) => {
   try {
-    // Get student profile
-    const studentProfile = await db.studentProfile.findUnique({
-      where: {
-        userId: userId,
-      },
-      select: {
-        id: true,
-      },
-    });
+    const studentProfileId = await useStudentProfile(userId);
 
-    if (!studentProfile) {
-      throw new Error("Student profile not found");
-    }
-
-    // Check if student is enrolled in the course
-    const enrollment = await db.enrolledStudents.findFirst({
+    const purchase = await db.purchase.findFirst({
       where: {
-        studentProfileId: studentProfile.id,
+        studentProfileId,
         courseId: courseId,
       },
-      select: {
-        id: true,
-        studentProfileId: true,
-        courseId: true,
-      },
     });
 
-    // Get course details
     const course = await db.course.findUnique({
       where: {
         isPublished: true,
         id: courseId,
       },
       select: {
-        prices: true,
+        prices: true, // Changed from price to prices (array)
       },
     });
 
-    // Get lesson details
     const lesson = await db.lesson.findUnique({
       where: {
         id: lessonId,
         isPublished: true,
-      },
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-        description: true,
-        textContent: true,
-        videoUrl: true,
-        videoStatus: true,
-        position: true,
-        isPublished: true,
-        isFree: true,
-        duration: true,
-        courseId: true,
       },
     });
 
@@ -136,26 +45,18 @@ export const getLesson = async ({
       throw new Error("Lesson or course not found");
     }
 
-    let attachments: AttachmentResult[] = [];
-    let nextLesson: LessonResult | null = null;
+    let attachments: Attachment[] = [];
+    let nextLesson: Lesson | null = null;
 
-    // Get attachments if enrolled
-    if (enrollment) {
+    if (purchase) {
       attachments = await db.attachment.findMany({
         where: {
           courseId: courseId,
         },
-        select: {
-          id: true,
-          name: true,
-          url: true,
-          courseId: true,
-        },
       });
     }
 
-    // Get next lesson if lesson is free or user is enrolled
-    if (lesson.isFree || enrollment) {
+    if (lesson.isFree || purchase) {
       nextLesson = await db.lesson.findFirst({
         where: {
           courseId: courseId,
@@ -167,56 +68,34 @@ export const getLesson = async ({
         orderBy: {
           position: "asc",
         },
-        select: {
-          id: true,
-          title: true,
-          slug: true,
-          description: true,
-          textContent: true,
-          videoUrl: true,
-          videoStatus: true,
-          position: true,
-          isPublished: true,
-          isFree: true,
-          duration: true,
-          courseId: true,
-        },
       });
     }
 
-    // Get progress
     const progress = await db.progress.findUnique({
       where: {
         studentProfileId_lessonId: {
-          studentProfileId: studentProfile.id,
+          // Changed from userId_chapterId
+          studentProfileId,
           lessonId,
         },
-      },
-      select: {
-        id: true,
-        studentProfileId: true,
-        lessonId: true,
-        isCompleted: true,
-        createdAt: true,
-        updatedAt: true,
       },
     });
 
     return {
-      lesson,
+      lesson, // Changed from chapter
       course,
       attachments,
-      nextLesson,
+      nextLesson, // Changed from nextChapter
       progress,
-      purchase: enrollment,
+      purchase,
     };
   } catch (error) {
-    console.error("[GET_LESSON]", error);
+    console.log("[GET_LESSON]", error); // Changed from GET_CHAPTER
     return {
-      lesson: null,
+      lesson: null, // Changed from chapter
       course: null,
       attachments: [],
-      nextLesson: null,
+      nextLesson: null, // Changed from nextChapter
       progress: null,
       purchase: null,
     };

@@ -1,4 +1,4 @@
-// api/user/[userId]/chapters/[chapterId]/progress/route.ts
+// @ts-nocheck
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
@@ -9,25 +9,22 @@ export async function PUT(
   { params }: { params: { courseId: string; chapterId: string } }
 ) {
   try {
-    const { userId } = await getServerUserSession();
+    const { userId } = await getServerUserSession(req);
+      const studentProfileId = await useStudentProfile(userId);
+    
+            
+
+    const { isCompleted } = await req.json();
 
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const studentProfileId = await useStudentProfile(userId);
-
-    if (!studentProfileId) {
-      return new NextResponse("Student profile not found", { status: 404 });
-    }
-
-    const { isCompleted } = await req.json();
-
     const progress = await db.progress.upsert({
       where: {
-        studentProfileId_lessonId: {
+        studentProfileId_chapterId: {
           studentProfileId,
-          lessonId: params.chapterId,
+          chapterId: params.chapterId,
         },
       },
       update: {
@@ -35,7 +32,7 @@ export async function PUT(
       },
       create: {
         studentProfileId,
-        lessonId: params.chapterId,
+        chapterId: params.chapterId,
         isCompleted,
       },
     });

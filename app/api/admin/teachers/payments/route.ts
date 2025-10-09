@@ -1,4 +1,3 @@
-// api/admin/teachers/payments/route.ts
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 import { NextResponse } from "next/server";
@@ -11,14 +10,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { teacherProfileId } = body as { teacherProfileId: string };
+    const { teacherProfileId } = await req.json();
 
     if (!teacherProfileId) {
-      return NextResponse.json(
-        { message: "Teacher Profile ID is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ message: "Unauthorized" }, { status: 400 });
     }
 
     const payments = await db.teacherPayments.findMany({

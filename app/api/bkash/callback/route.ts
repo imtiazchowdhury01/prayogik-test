@@ -1,7 +1,7 @@
-// api/bkash/callback/route.ts
 import { db } from "@/lib/db";
 import { executePayment } from "@/services/bkash";
 import { NextResponse, NextRequest } from "next/server";
+import nodemailer from "nodemailer";
 import bcrypt from "bcrypt";
 import PurchaseEmailService from "@/lib/utils/checkout/mailer";
 import {
@@ -9,6 +9,7 @@ import {
   generateRandomPassword,
   generateUsernameFromEmail,
   getAuthenticatedUser,
+  getEmailResourceDetails,
   handleCertificationCoursePurchase,
   handleEventPurchase,
   handleMembershipPurchase,
@@ -16,8 +17,6 @@ import {
   handleSingleCoursePurchase,
   handleTrialPurchase,
 } from "@/lib/utils/checkout/server";
-import { generateReferralCode } from "@/lib/utils/stringUtils";
-import type { Prisma } from "@prisma/client";
 
 const bkashConfig = {
   base_url: process.env.BKASH_BASE_URL!,
@@ -29,20 +28,6 @@ const bkashConfig = {
 
 // Create email service instance
 const emailService = new PurchaseEmailService();
-
-type UserWithProfile = Prisma.UserGetPayload<{
-  include: {
-    studentProfile: {
-      include: {
-        subscription: {
-          include: {
-            subscriptionPlan: true;
-          };
-        };
-      };
-    };
-  };
-}>;
 
 export async function GET(req: NextRequest) {
   try {
@@ -69,19 +54,11 @@ export async function GET(req: NextRequest) {
         if (payload) {
           // Get authenticated user (if any)
           const authenticatedUser = await getAuthenticatedUser(req);
-          let user: UserWithProfile | null = authenticatedUser;
-          let studentProfile: Prisma.StudentProfileGetPayload<{
-            include: {
-              subscription: {
-                include: {
-                  subscriptionPlan: true;
-                };
-              };
-            };
-          }> | null = authenticatedUser?.studentProfile || null;
+          let user: any = authenticatedUser;
+          let studentProfile: any = authenticatedUser?.studentProfile;
           let isNewUser = false;
-          let temporaryPassword: string | undefined = undefined;
-          let username: string | undefined = undefined;
+          let temporaryPassword = undefined;
+          let username = undefined;
 
           // Handle unauthenticated users, let them register in our site
           if (!authenticatedUser) {
@@ -114,48 +91,25 @@ export async function GET(req: NextRequest) {
                 payload.email
               );
 
-              // Generate unique referral code
-              let referralCode = await generateReferralCode();
-
-              // Ensure referral code is unique
-              let existingCode = await db.user.findUnique({
-                where: { referralCode },
-              });
-
-              while (existingCode) {
-                referralCode = await generateReferralCode();
-                existingCode = await db.user.findUnique({
-                  where: { referralCode },
-                });
-              }
-
               user = await db.user.create({
                 data: {
                   name: payload.name || payload.email.split("@")[0],
-                  username: generatedUsername,
+                  username: username || generatedUsername,
                   email: payload.email,
                   password: hashedPassword,
                   phoneNumber:
                     payload.phoneNumber ||
                     executePaymentResult?.payerAccount ||
-                    null,
-                  profession: payload.profession || null,
+                    "",
+                  profession: payload.profession || "",
                   role: "STUDENT",
                   emailVerified: true,
                   accountStatus: "ACTIVE",
-                  currentPlan: "NONE",
-                  referralCode: referralCode,
                   studentProfile: {
                     create: {},
                   },
                 },
-                include: {
-                  studentProfile: {
-                    include: {
-                      subscription: { include: { subscriptionPlan: true } },
-                    },
-                  },
-                },
+                include: { studentProfile: true },
               });
               isNewUser = true;
               temporaryPassword = randomPassword;
@@ -187,9 +141,10 @@ export async function GET(req: NextRequest) {
                 studentProfile,
                 executePaymentResult
               );
-              if (result instanceof NextResponse) return result;
+              if (result instanceof NextResponse) return result; // Error response
               purchase = result.purchase;
               subscription = result.subscription;
+
               break;
             }
             case "CERTIFICATION": {
@@ -198,9 +153,10 @@ export async function GET(req: NextRequest) {
                 studentProfile,
                 executePaymentResult
               );
-              if (result instanceof NextResponse) return result;
+              if (result instanceof NextResponse) return result; // Error response
               purchase = result.purchase;
               subscription = result.subscription;
+
               break;
             }
             case "MEMBERSHIP":
@@ -210,7 +166,7 @@ export async function GET(req: NextRequest) {
                 studentProfile,
                 executePaymentResult
               );
-              if (result instanceof NextResponse) return result;
+              if (result instanceof NextResponse) return result; // Error response
               purchase = result.purchase;
               subscription = result.subscription;
               break;
@@ -221,14 +177,14 @@ export async function GET(req: NextRequest) {
                 studentProfile,
                 executePaymentResult
               );
-              if (result instanceof NextResponse) return result;
+              if (result instanceof NextResponse) return result; // Error response
               purchase = result.purchase;
               subscription = result.subscription;
               break;
             }
             case "TRIAL": {
               const result = await handleTrialPurchase(payload, studentProfile);
-              if (result instanceof NextResponse) return result;
+              if (result instanceof NextResponse) return result; // Error response
               purchase = result.purchase;
               subscription = result.subscription;
               break;
@@ -238,7 +194,7 @@ export async function GET(req: NextRequest) {
                 { ...payload, userId: user.id },
                 studentProfile
               );
-              if (result instanceof NextResponse) return result;
+              if (result instanceof NextResponse) return result; // Error response
               purchase = result.purchase;
               subscription = result.subscription;
               break;
@@ -296,3 +252,14 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   return GET(req);
 }
+
+// Create email transporter once (reusable)
+const createEmailTransporter = () => {
+  return nodemailer.createTransport({
+    service: "Gmail",
+    auth: {
+      user: process.env.SMTP_USERNAME,
+      pass: process.env.SMTP_APP_PASS,
+    },
+  });
+};

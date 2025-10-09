@@ -1,127 +1,70 @@
-// api/subscriptions/[id]/route.ts
+// @ts-nocheck
+
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
-import { NextRequest, NextResponse } from "next/server";
-import { SubscriptionType } from "@prisma/client";
+import { NextResponse } from "next/server";
 
-interface SubscriptionUpdateBody {
-  name?: string;
-  type?: SubscriptionType;
-  regularPrice?: number;
-  offerPrice?: number;
-  durationInMonths?: number;
-  durationInYears?: number;
-  isDefault?: boolean;
-  isTrial?: boolean;
-  trialDurationInDays?: number;
-  trialCourseLimit?: number;
-  subscriptionDiscountId?: string;
-}
+export async function PUT(req, { params }) {
+  const { id } = params; // Extracting the subscription ID from the request parameters
+  const body = await req.json(); // Extracting the request body
 
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
   try {
-    const { id } = params;
-    const body: SubscriptionUpdateBody = await req.json();
-
     const session = await getServerUserSession();
 
-    if (!session || !session.isAdmin) {
+    if (!session && !session.isAdmin) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
-
-    if (!id) {
-      return NextResponse.json(
-        { message: "Subscription plan ID is required" },
-        { status: 400 }
-      );
-    }
-
-    // Check if subscription plan exists
-    const existingPlan = await db.subscriptionPlan.findUnique({
-      where: { id },
+    const trialPlan = await db.subscriptionPlan.findFirst({
+      where: {
+        isTrial: true,
+      },
     });
-
-    if (!existingPlan) {
-      return NextResponse.json(
-        { message: "Subscription plan not found" },
-        { status: 404 }
-      );
-    }
-
-    // Update subscription plan
+    // if (body.isTrial && trialPlan) {
+    //   // Trial subscription plan exists
+    //   return NextResponse.json(
+    //     {
+    //       message: "A trial subscription plan is already available.",
+    //     },
+    //     { status: 409 }
+    //   );
+    // }
     const subscription = await db.subscriptionPlan.update({
-      where: { id },
-      data: body,
+      where: { id: id },
+      data: {
+        ...body, // Spread the body to update the subscription with the provided data
+      },
     });
 
     return NextResponse.json(subscription, { status: 200 });
   } catch (error) {
     console.error("Error updating subscription:", error);
     return NextResponse.json(
-      {
-        message:
-          error instanceof Error
-            ? error.message
-            : "Error updating subscription",
-      },
+      { message: "Error updating subscription", error },
       { status: 500 }
     );
   }
 }
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const { id } = params;
+export async function DELETE(req, { params }) {
+  const { id } = params;
 
+  try {
     const session = await getServerUserSession();
 
-    if (!session || !session.isAdmin) {
+    if (!session && !session.isAdmin) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
-    if (!id) {
-      return NextResponse.json(
-        { message: "Subscription plan ID is required" },
-        { status: 400 }
-      );
-    }
-
-    // Check if subscription plan exists
-    const existingPlan = await db.subscriptionPlan.findUnique({
-      where: { id },
-    });
-
-    if (!existingPlan) {
-      return NextResponse.json(
-        { message: "Subscription plan not found" },
-        { status: 404 }
-      );
-    }
-
-    // Delete subscription plan
     const subscription = await db.subscriptionPlan.delete({
-      where: { id },
+      where: {
+        id: id,
+      },
     });
 
-    return NextResponse.json(
-      { message: "Subscription plan deleted successfully", data: subscription },
-      { status: 200 }
-    );
+    return NextResponse.json(subscription, { status: 200 });
   } catch (error) {
-    console.error("Error deleting subscription:", error);
     return NextResponse.json(
-      {
-        message:
-          error instanceof Error
-            ? error.message
-            : "Error deleting subscription",
-      },
+      { message: "Error deleting subscription", error },
       { status: 500 }
     );
   }

@@ -1,5 +1,3 @@
-// api/callback/route.ts
-import { db } from "@/lib/db";
 import { executePayment } from "@/services/bkash";
 import { NextResponse, NextRequest } from "next/server";
 
@@ -11,20 +9,13 @@ const bkashConfig = {
   app_secret: process.env.BKASH_CHECKOUT_URL_APP_SECRET!,
 };
 
-interface ExecutePaymentResult {
-  statusCode: string;
-  paymentID: string;
-  trxID: string;
-  amount: string | number;
-  transactionStatus: string;
-  paymentExecuteTime: string;
-}
-
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const paymentID = searchParams.get("paymentID");
     const status = searchParams.get("status");
+
+    // console.log("Callback received:", { paymentID, status });
 
     if (!paymentID) {
       return NextResponse.redirect(
@@ -36,38 +27,26 @@ export async function GET(req: NextRequest) {
       // Execute the payment
       const executeResult = await executePayment(bkashConfig, paymentID);
 
-      if (executeResult && executeResult.statusCode === "0000") {
-        // Payment successful - Save to database if needed
-        try {
-          // Optional: Save payment record to your database
-          // Uncomment and modify based on your needs
-          /*
-          await db.bkashPurchaseHistory.update({
-            where: { bkashPaymentId: executeResult.paymentID },
-            data: {
-              // You can add additional fields here if needed
-              // Note: The payment details should already be in the database
-              // from the initial payment creation
-            },
-          });
-          */
+      // console.log("Execute payment result:", executeResult);
 
-          return NextResponse.redirect(
-            new URL(
-              `/checkout/success?trxID=${executeResult.trxID}&amount=${executeResult.amount}`,
-              req.url
-            )
-          );
-        } catch (dbError) {
-          console.error("Database update error:", dbError);
-          // Still redirect to success if payment executed successfully
-          return NextResponse.redirect(
-            new URL(
-              `/checkout/success?trxID=${executeResult.trxID}&amount=${executeResult.amount}`,
-              req.url
-            )
-          );
-        }
+      if (executeResult && executeResult.statusCode === "0000") {
+        // Payment successful
+        // Here you can save the payment details to your database
+        // const paymentRecord = {
+        //   paymentID: executeResult.paymentID,
+        //   trxID: executeResult.trxID,
+        //   amount: executeResult.amount,
+        //   transactionStatus: executeResult.transactionStatus,
+        //   paymentExecuteTime: executeResult.paymentExecuteTime,
+        // };
+        // await db.payment.create({ data: paymentRecord });
+
+        return NextResponse.redirect(
+          new URL(
+            `/checkout/success?trxID=${executeResult.trxID}&amount=${executeResult.amount}`,
+            req.url
+          )
+        );
       } else {
         return NextResponse.redirect(
           new URL("/checkout/failed?error=Payment execution failed", req.url)
@@ -85,7 +64,7 @@ export async function GET(req: NextRequest) {
       );
     }
   } catch (error) {
-    console.error("[CALLBACK_ERROR]", error);
+    console.error("Callback error:", error);
     return NextResponse.redirect(
       new URL("/checkout/failed?error=Callback processing failed", req.url)
     );

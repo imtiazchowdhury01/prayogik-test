@@ -1,78 +1,46 @@
-// api/certifications/[certificationId]/route.ts
+//@ts-nocheck
 export const dynamic = "force-dynamic";
 
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { deleteImageFromS3 } from "@/actions/upload-aws";
-import { useTeacherProfile } from "@/hooks/useTeacherProfile";
+import {
+  useCoTeacherProfileId,
+  useTeacherProfile,
+} from "@/hooks/useTeacherProfile";
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { updateCertificationCoursesBatch } from "@/lib/certifications";
-import type { Prisma } from "@prisma/client";
 
-// ========== TYPE DEFINITIONS ==========
-
-interface RouteParams {
-  params: {
-    certificationId: string;
-  };
-}
-
-interface ProgressRequest {
-  userId: string;
-}
-
-interface UpdateCertificationRequest {
-  coTeacherIds?: string[];
-  courseIds?: string[];
-  [key: string]: any;
-}
-
-interface ProgressResponse {
-  progress: number;
-  completedCourses: number;
-  totalCourses: number;
-}
-
-// ========== GET HANDLER ==========
-
-export async function GET(
-  req: NextRequest,
-  { params }: RouteParams
-): Promise<NextResponse> {
+export async function GET(req: any, { params }: any) {
   try {
     const { certificationId } = params;
-
     if (!certificationId) {
-      return NextResponse.json(
-        { error: true, message: "Missing certificationId" },
-        { status: 400 }
+      throw new Error(
+        "Failed to fetch the certification. Missing certificationId."
       );
     }
-
     const { userId } = await getServerUserSession();
 
     if (!userId) {
-      return NextResponse.json(
-        { error: true, message: "User not found" },
-        { status: 401 }
-      );
+      throw new Error("User not found");
     }
 
     const studentProfileId = await useStudentProfile(userId);
 
-    // Fetch certification with all data
+    // Fetch certification details with related data
     const certification = await db.certification.findUnique({
-      where: { id: certificationId },
+      where: {
+        id: certificationId,
+      },
       include: {
-        purchases: studentProfileId
+        purchases: userId
           ? {
               where: {
                 studentProfileId,
-                paymentStatus: "COMPLETED",
               },
             }
-          : true,
+          : false,
         courses: {
           where: {
             isPublished: true,
@@ -82,7 +50,7 @@ export async function GET(
               where: {
                 isPublished: true,
               },
-              include: studentProfileId
+              include: userId
                 ? {
                     Progress: {
                       where: {
@@ -90,7 +58,7 @@ export async function GET(
                       },
                     },
                   }
-                : {},
+                : null,
               orderBy: {
                 position: "asc",
               },
@@ -154,25 +122,14 @@ export async function GET(
       );
     }
 
-    // Calculate certification progress
-    let progress: number | null = null;
+    // Calculate certification progress if user has purchased it
+    let progress = null;
     let completedCoursesCount = 0;
+    const isPurchased =
+      certification.purchases && certification.purchases.length > 0;
 
-    // Filter purchases if not filtered by query
-    const relevantPurchases = studentProfileId
-      ? certification.purchases.filter(
-          (p) => p.studentProfileId === studentProfileId
-        )
-      : certification.purchases;
-
-    const isPurchased = relevantPurchases.length > 0;
-
-    if (
-      userId &&
-      studentProfileId &&
-      isPurchased &&
-      certification.courses.length > 0
-    ) {
+    if (userId && isPurchased && certification.courses.length > 0) {
+      // Get student's enrolled courses that are part of this certification
       const enrolledCertificationCourses = await db.enrolledStudents.findMany({
         where: {
           studentProfileId,
@@ -185,10 +142,11 @@ export async function GET(
         },
       });
 
-      const enrolledCourseIds = enrolledCertificationCourses
-        .map((e) => e.courseId)
-        .filter((id): id is string => id !== null);
+      const enrolledCourseIds: any = enrolledCertificationCourses.map(
+        (e) => e.courseId
+      );
 
+      // Count completed courses (100% progress)
       for (const courseId of enrolledCourseIds) {
         const totalLessons = await db.lesson.count({
           where: {
@@ -205,7 +163,9 @@ export async function GET(
                 courseId,
                 isPublished: true,
               },
-              studentProfile: { userId },
+              studentProfile: {
+                userId,
+              },
             },
           });
 
@@ -232,56 +192,42 @@ export async function GET(
 
     return NextResponse.json(certificationWithProgress);
   } catch (error: any) {
-    console.error("[GET_CERTIFICATION_ERROR]", error);
+    console.log("SINGLE_CERTIFICATION_ERROR:", error);
     return NextResponse.json(
       {
         error: true,
-        message: error?.message || "Internal Server Error",
+        message: error.message,
       },
       { status: 500 }
     );
   }
 }
 
-// ========== DELETE HANDLER ==========
-
 export async function DELETE(
-  req: NextRequest,
-  { params }: RouteParams
-): Promise<NextResponse> {
+  req: Request,
+  { params }: { params: { certificationId: string } }
+) {
   try {
-    const { certificationId } = params;
+    const { userId } = await getServerUserSession(req);
 
-    if (!certificationId) {
-      return new NextResponse("Missing certificationId", { status: 400 });
-    }
-
-    const { userId } = await getServerUserSession();
-
+    // Check if userId is available
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
     const teacherProfileId = await useTeacherProfile(userId);
 
-    if (!teacherProfileId) {
-      return new NextResponse("Teacher profile not found", { status: 404 });
-    }
-
+    // Fetch the certification associated with the user (teacher)
     const certification = await db.certification.findUnique({
       where: {
-        id: certificationId,
-        teacherProfileId,
+        id: params.certificationId,
+        teacherProfileId, // Ensure that the user (teacher) owns the certification
       },
       include: {
-        purchases: {
-          where: {
-            paymentStatus: "COMPLETED",
-          },
-        },
+        purchases: true, // Include purchases to check if anyone has bought it
         courses: {
           include: {
-            enrolledStudents: true,
+            enrolledStudents: true, // Check if courses have enrolled students
           },
         },
       },
@@ -291,24 +237,25 @@ export async function DELETE(
       return new NextResponse("Certification not found", { status: 404 });
     }
 
+    // Check if certification has been purchased
     if (certification.purchases.length > 0) {
-      return new NextResponse(
-        "Cannot delete certification that has been purchased by students.",
-        { status: 400 }
+      throw new Error(
+        "Cannot delete certification that has been purchased by students."
       );
     }
 
+    // Check if any associated courses have enrolled students
     const hasEnrolledStudents = certification.courses.some(
       (course) => course.enrolledStudents.length > 0
     );
 
     if (hasEnrolledStudents) {
-      return new NextResponse(
-        "Cannot delete certification with courses that have enrolled students.",
-        { status: 400 }
+      throw new Error(
+        "Cannot delete certification with courses that have enrolled students."
       );
     }
 
+    // Delete certification image from S3 if exists
     if (certification.imageUrl) {
       try {
         const imageKey = certification.imageUrl.split(".amazonaws.com/")[1];
@@ -320,51 +267,39 @@ export async function DELETE(
       }
     }
 
+    // Delete the certification
     const deletedCertification = await db.certification.delete({
-      where: { id: certificationId },
+      where: {
+        id: params.certificationId,
+      },
     });
 
     return NextResponse.json(deletedCertification);
   } catch (error: any) {
-    console.error("[DELETE_CERTIFICATION_ERROR]", error);
-    return new NextResponse(error?.message || "Internal Error", {
-      status: 500,
-    });
+    console.error("DELETE_CERTIFICATION_ERROR:", error.message);
+    return new NextResponse(error.message, { status: 400 });
   }
 }
 
-// ========== POST HANDLER (Get Progress) ==========
-
 export async function POST(
-  request: NextRequest,
-  { params }: RouteParams
-): Promise<NextResponse<ProgressResponse | { error: string }>> {
-  try {
-    const { certificationId } = params;
-    const body: ProgressRequest = await request.json();
-    const { userId } = body;
+  request: Request,
+  { params }: { params: { certificationId: string } }
+) {
+  const { userId } = await request.json();
+  const { certificationId } = params;
 
-    if (!userId || !certificationId) {
-      return NextResponse.json(
-        { error: "Missing userId or certificationId" },
-        { status: 400 }
-      );
+  try {
+    if (!userId) {
+      throw new Error("User ID is required");
     }
 
     const studentProfileId = await useStudentProfile(userId);
 
-    if (!studentProfileId) {
-      return NextResponse.json(
-        { error: "Student profile not found" },
-        { status: 404 }
-      );
-    }
-
+    // Check if user has purchased the certification
     const purchase = await db.purchase.findFirst({
       where: {
         studentProfileId,
         certificationId,
-        paymentStatus: "COMPLETED",
       },
     });
 
@@ -375,6 +310,7 @@ export async function POST(
       );
     }
 
+    // Get certification with courses
     const certification = await db.certification.findUnique({
       where: { id: certificationId },
       include: {
@@ -390,12 +326,10 @@ export async function POST(
     });
 
     if (!certification) {
-      return NextResponse.json(
-        { error: "Certification not found" },
-        { status: 404 }
-      );
+      throw new Error("Certification not found");
     }
 
+    // Get student's enrolled courses that are part of this certification
     const enrolledCertificationCourses = await db.enrolledStudents.findMany({
       where: {
         studentProfileId,
@@ -408,12 +342,12 @@ export async function POST(
       },
     });
 
-    const enrolledCourseIds = enrolledCertificationCourses
-      .map((e) => e.courseId)
-      .filter((id): id is string => id !== null);
-
+    const enrolledCourseIds: any = enrolledCertificationCourses.map(
+      (e) => e.courseId
+    );
     let completedCoursesCount = 0;
 
+    // Count completed courses (100% progress)
     for (const courseId of enrolledCourseIds) {
       const totalLessons = await db.lesson.count({
         where: {
@@ -430,7 +364,9 @@ export async function POST(
               courseId,
               isPublished: true,
             },
-            studentProfile: { userId },
+            studentProfile: {
+              userId,
+            },
           },
         });
 
@@ -453,7 +389,7 @@ export async function POST(
       totalCourses: certification.courses.length,
     });
   } catch (error: any) {
-    console.error("[CERTIFICATION_PROGRESS_ERROR]", error);
+    console.error("CERTIFICATION_PROGRESS_ERROR:", error);
     return NextResponse.json(
       { error: "Error fetching certification progress" },
       { status: 500 }
@@ -461,27 +397,23 @@ export async function POST(
   }
 }
 
-// ========== PATCH HANDLER ==========
-
 export async function PATCH(
-  req: NextRequest,
-  { params }: RouteParams
-): Promise<NextResponse> {
+  req: Request,
+  { params }: { params: { certificationId: string } }
+) {
   try {
+    const { userId, isAdmin } = await getServerUserSession(req);
     const { certificationId } = params;
 
-    if (!certificationId) {
-      return new NextResponse("Missing certificationId", { status: 400 });
-    }
+    // Parse the request body
+    const values = await req.json();
 
-    const { userId, isAdmin } = await getServerUserSession();
-
+    // Check if the user is authenticated
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const values: UpdateCertificationRequest = await req.json();
-
+    // Ensure at least one field is present to update
     if (!values || Object.keys(values).length === 0) {
       return new NextResponse("No fields to update", { status: 400 });
     }
@@ -492,76 +424,162 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const whereConditions: any[] = [{ id: certificationId }];
+    // Build where clause based on role
+    let whereClause: any = {
+      id: certificationId,
+    };
 
-    if (!isAdmin && teacherProfileId) {
-      whereConditions.push({ teacherProfileId });
+    // If user is not admin, add teacher/co-teacher restrictions
+    if (!isAdmin) {
+      whereClause.OR = [];
+
+      if (teacherProfileId) {
+        whereClause.OR.push({ teacherProfileId });
+      }
     }
 
-    const existingCertification = await db.certification.findFirst({
-      where: {
-        AND: whereConditions,
-      },
+    const existingCertification = await db.certification.findUnique({
+      where: whereClause,
       include: {
         skills: true,
         courses: true,
       },
     });
 
+    // If the certification is not found, return a 404 response
     if (!existingCertification) {
-      return new NextResponse("Certification not found", { status: 404 });
+      return new NextResponse("Not found", { status: 404 });
     }
 
-    if (values.courseIds) {
+    const certificationUpdateData = values;
+
+    if (values?.courseIds) {
       await updateCertificationCoursesBatch(
         certificationId,
-        values.courseIds,
-        existingCertification.courseIds
+        values?.courseIds,
+        existingCertification?.courseIds
       );
     }
 
+    // Get current coTeacherIds from the existing certification
     const currentCoTeachers = existingCertification.coTeacherIds || [];
 
+    // Handle co-teacher assignment/unassignment if coTeacherIds is being updated
     if (values.coTeacherIds !== undefined) {
       const newCoTeachers = values.coTeacherIds || [];
 
+      // Handle empty array case explicitly
       if (newCoTeachers.length === 0) {
-        for (const coTeacherId of currentCoTeachers) {
-          await updateCoTeacherCertificationIds(
-            coTeacherId,
-            certificationId,
-            "remove"
-          );
+        // Remove certificationId from all current co-teachers
+        if (currentCoTeachers.length > 0) {
+          for (const coTeacherId of currentCoTeachers) {
+            try {
+              const existingProfile = await db.teacherProfile.findUnique({
+                where: { id: coTeacherId },
+                select: { coTeachingCertificationIds: true },
+              });
+
+              if (existingProfile) {
+                const updatedCertificationIds = (
+                  existingProfile.coTeachingCertificationIds || []
+                ).filter((id: string) => id !== certificationId);
+
+                await db.teacherProfile.update({
+                  where: { id: coTeacherId },
+                  data: {
+                    coTeachingCertificationIds: updatedCertificationIds,
+                  },
+                });
+              }
+            } catch (error) {
+              console.error(
+                `Error removing certificationId from teacher ${coTeacherId}:`,
+                error
+              );
+            }
+          }
         }
       } else {
+        // Find teachers to add and remove
         const teachersToAdd = newCoTeachers.filter(
-          (id) => !currentCoTeachers.includes(id)
-        );
-        const teachersToRemove = currentCoTeachers.filter(
-          (id) => !newCoTeachers.includes(id)
+          (id: string) => !currentCoTeachers.includes(id)
         );
 
-        for (const coTeacherId of teachersToAdd) {
-          await updateCoTeacherCertificationIds(
-            coTeacherId,
-            certificationId,
-            "add"
-          );
+        const teachersToRemove = currentCoTeachers.filter(
+          (id: string) => !newCoTeachers.includes(id)
+        );
+
+        // Add certificationId to new co-teachers
+        if (teachersToAdd.length > 0) {
+          for (const coTeacherId of teachersToAdd) {
+            try {
+              const existingProfile = await db.teacherProfile.findUnique({
+                where: { id: coTeacherId },
+                select: { coTeachingCertificationIds: true },
+              });
+
+              if (existingProfile) {
+                const updatedCertificationIds = Array.from(
+                  new Set([
+                    ...(existingProfile.coTeachingCertificationIds || []),
+                    certificationId,
+                  ])
+                );
+
+                await db.teacherProfile.update({
+                  where: { id: coTeacherId },
+                  data: {
+                    coTeachingCertificationIds: updatedCertificationIds,
+                  },
+                });
+              }
+            } catch (error) {
+              console.error(
+                `Error adding certificationId to teacher ${coTeacherId}:`,
+                error
+              );
+            }
+          }
         }
 
-        for (const coTeacherId of teachersToRemove) {
-          await updateCoTeacherCertificationIds(
-            coTeacherId,
-            certificationId,
-            "remove"
-          );
+        // Remove certificationId from removed co-teachers
+        if (teachersToRemove.length > 0) {
+          for (const coTeacherId of teachersToRemove) {
+            try {
+              const existingProfile = await db.teacherProfile.findUnique({
+                where: { id: coTeacherId },
+                select: { coTeachingCertificationIds: true },
+              });
+
+              if (existingProfile) {
+                const updatedCertificationIds = (
+                  existingProfile.coTeachingCertificationIds || []
+                ).filter((id: string) => id !== certificationId);
+
+                await db.teacherProfile.update({
+                  where: { id: coTeacherId },
+                  data: {
+                    coTeachingCertificationIds: updatedCertificationIds,
+                  },
+                });
+              }
+            } catch (error) {
+              console.error(
+                `Error removing certificationId from teacher ${coTeacherId}:`,
+                error
+              );
+            }
+          }
         }
       }
     }
 
+    // Update the certification with the provided fields (excluding FAQs)
     const updatedCertification = await db.certification.update({
-      where: { id: certificationId },
-      data: values,
+      where: {
+        id: certificationId,
+      },
+      data: certificationUpdateData,
       include: {
         skills: true,
         courses: {
@@ -595,44 +613,7 @@ export async function PATCH(
 
     return NextResponse.json(updatedCertification);
   } catch (error) {
-    console.error("[UPDATE_CERTIFICATION_ERROR]", error);
+    console.error("[CERTIFICATION_ID_UPDATE_ERROR]", error);
     return new NextResponse("Internal Error", { status: 500 });
-  }
-}
-
-// ========== HELPER FUNCTIONS ==========
-
-async function updateCoTeacherCertificationIds(
-  coTeacherId: string,
-  certificationId: string,
-  action: "add" | "remove"
-): Promise<void> {
-  try {
-    const existingProfile = await db.teacherProfile.findUnique({
-      where: { id: coTeacherId },
-      select: { coTeachingCertificationIds: true },
-    });
-
-    if (!existingProfile) return;
-
-    const currentCertificationIds =
-      existingProfile.coTeachingCertificationIds || [];
-
-    const updatedCertificationIds =
-      action === "add"
-        ? Array.from(new Set([...currentCertificationIds, certificationId]))
-        : currentCertificationIds.filter((id) => id !== certificationId);
-
-    await db.teacherProfile.update({
-      where: { id: coTeacherId },
-      data: { coTeachingCertificationIds: updatedCertificationIds },
-    });
-  } catch (error) {
-    console.error(
-      `Error ${action}ing certificationId ${
-        action === "add" ? "to" : "from"
-      } teacher ${coTeacherId}:`,
-      error
-    );
   }
 }

@@ -1,4 +1,3 @@
-// api/admin/users/route.ts
 export const dynamic = "force-dynamic";
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
@@ -22,40 +21,22 @@ export async function GET(request: NextRequest) {
         isAdmin: true,
         gender: true,
         role: true,
-        createdAt: true,
         teacherProfile: {
           select: {
             teacherStatus: true,
-            createdCourses: {
-              select: {
-                id: true,
-              },
-            },
+            createdCourses: true,
           },
         },
         studentProfile: {
           select: {
-            enrolledCourseIds: {
-              select: {
-                id: true,
-              },
-            },
+            enrolledCourseIds: true,
             subscription: {
               select: {
-                subscriptionPlan: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
-                },
+                subscriptionPlan: true,
                 status: true,
               },
             },
-            purchases: {
-              select: {
-                id: true,
-              },
-            },
+            purchases: true,
           },
         },
       },
@@ -70,9 +51,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(users);
   } catch (error) {
     console.error("Error fetching users details:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.error();
   }
 }

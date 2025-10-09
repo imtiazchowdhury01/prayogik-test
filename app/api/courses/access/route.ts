@@ -1,4 +1,3 @@
-// api/courses/access/route.ts
 import {
   canAccessCourse,
   getCourseBySlug,
@@ -6,28 +5,15 @@ import {
 } from "@/services/user";
 import { NextRequest, NextResponse } from "next/server";
 
-// ========== TYPE DEFINITIONS ==========
-
 interface CourseAccessRequest {
   courseSlug: string;
   userId: string;
 }
 
-interface CourseAccessResponse {
-  access: boolean;
-  error?: string;
-  nextLessonSlug: string | null;
-  reason?: string;
-}
-
-type AccessDenialReason = "no_access";
-
-// ========== RESPONSE HELPERS ==========
-
 const createErrorResponse = (
   error: string,
   status: number = 400
-): NextResponse<CourseAccessResponse> => {
+): NextResponse => {
   return NextResponse.json(
     { access: false, error, nextLessonSlug: null },
     { status }
@@ -37,19 +23,11 @@ const createErrorResponse = (
 const createSuccessResponse = (
   nextLessonSlug: string | null = null,
   reason?: string
-): NextResponse<CourseAccessResponse> => {
-  return NextResponse.json({
-    access: true,
-    nextLessonSlug,
-    reason,
-  });
+): NextResponse => {
+  return NextResponse.json({ access: true, nextLessonSlug, reason });
 };
 
-// ========== API ROUTE HANDLER ==========
-
-export async function POST(
-  req: NextRequest
-): Promise<NextResponse<CourseAccessResponse>> {
+export async function POST(req: NextRequest) {
   try {
     const body: CourseAccessRequest = await req.json();
     const { courseSlug, userId } = body;
@@ -61,38 +39,32 @@ export async function POST(
 
     // Get course details by slug
     const course = await getCourseBySlug(courseSlug);
-
     if (!course) {
       return createErrorResponse("Course not found", 404);
     }
 
-    // Check course access
+    // Check course access using the refactored function
     const accessResult = await canAccessCourse(userId, course.id);
+    // console.log({ accessResult });
 
     if (!accessResult.access) {
-      // Map access denial reasons to error messages
-      const errorMessages: Record<
-        AccessDenialReason,
-        { message: string; status: number }
-      > = {
+      // Map access denial reasons to appropriate error messages and status codes
+      const errorMessages = {
         no_access: {
           message: "You don't have access to this course",
           status: 403,
         },
       };
 
-      // Type-safe access to error messages
-      const errorKey =
-        accessResult.reason === "no_access" ? accessResult.reason : "no_access";
-
-      const error = errorMessages[errorKey];
+      const error = errorMessages[
+        accessResult.reason as keyof typeof errorMessages
+      ] || { message: "Access denied", status: 403 };
 
       return createErrorResponse(error.message, error.status);
     }
 
     // Get next lesson slug for users with access
     let nextLessonSlug: string | null = null;
-
     if (course._count.lessons > 0) {
       nextLessonSlug = await getNextLessonSlug(userId, course.id);
     }
@@ -101,11 +73,7 @@ export async function POST(
   } catch (error) {
     console.error("Error checking course access:", error);
     return NextResponse.json(
-      {
-        access: false,
-        error: "Internal server error",
-        nextLessonSlug: null,
-      },
+      { access: false, error: "Internal server error", nextLessonSlug: null },
       { status: 500 }
     );
   }

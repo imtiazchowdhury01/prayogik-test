@@ -13,7 +13,7 @@ const AllEvents = async () => {
     (event) => event.status === "UPCOMING"
   );
 
-  if ((!events || events.length === 0)) return null;
+  if ((!events || events.length === 0) && !isLivePage) return null;
 
   return (
     <section

@@ -109,6 +109,7 @@ export async function GET(req: Request) {
 
     const teacherProfileId = teacherProfile.id;
 
+    // Fetch all courses along with enrolled students
     const courses = await db.course.findMany({
       where: { teacherProfileId },
       include: {
@@ -158,6 +159,7 @@ export async function GET(req: Request) {
       0
     );
 
+    // Calculate total sales count
     const totalSalesCount = courses.reduce(
       (total, course) => total + (course.enrolledStudents.length || 0),
       0

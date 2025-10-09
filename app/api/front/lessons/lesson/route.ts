@@ -1,77 +1,24 @@
-// api/front/lessons/lesson/route.ts
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 import { getUserSubscription } from "@/lib/getUserSubscription";
-import { NextRequest, NextResponse } from "next/server";
-import type { Prisma } from "@prisma/client";
+import { NextResponse } from "next/server";
 
-// ========== TYPE DEFINITIONS ==========
-
-interface LessonRequest {
-  courseSlug: string;
-  lessonSlug: string;
-}
-
-type LessonWithCourse = Prisma.LessonGetPayload<{
-  include: {
-    course: {
-      include: {
-        lessons: true;
-      };
-    };
-  };
-}>;
-
-type Attachment = Prisma.AttachmentGetPayload<{}>;
-type NextLesson = Prisma.LessonGetPayload<{}> | null;
-type Progress = Prisma.ProgressGetPayload<{}> | null;
-type EnrolledStudent = Prisma.EnrolledStudentsGetPayload<{}> | null;
-
-interface LessonResponse {
-  lesson: LessonWithCourse;
-  course: LessonWithCourse["course"];
-  attachments: Attachment[];
-  nextLesson: NextLesson;
-  progress: Progress;
-  purchase: EnrolledStudent;
-}
-
-interface ErrorResponse {
-  error: string;
-}
-
-// ========== POST HANDLER ==========
-
-export async function POST(
-  req: NextRequest
-): Promise<NextResponse<LessonResponse | ErrorResponse>> {
+export async function POST(req: Request) {
   try {
     const { userId } = await getServerUserSession();
 
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const body: LessonRequest = await req.json();
-    const { courseSlug, lessonSlug } = body;
-
-    if (!courseSlug || !lessonSlug) {
       return NextResponse.json(
-        { error: "Missing courseSlug or lessonSlug" },
-        { status: 400 }
+        {
+          error: "Unauthorized",
+        },
+        { status: 401 }
       );
     }
 
+    const { courseSlug, lessonSlug } = await req.json();
     const studentProfileId = await useStudentProfile(userId);
-
-    if (!studentProfileId) {
-      return NextResponse.json(
-        { error: "Student profile not found" },
-        { status: 404 }
-      );
-    }
-
     const userSubscription = await getUserSubscription();
 
     const lesson = await db.lesson.findFirst({
@@ -86,9 +33,7 @@ export async function POST(
       include: {
         course: {
           include: {
-            lessons: {
-              where: { isPublished: true },
-            },
+            lessons: true,
           },
         },
       },
@@ -96,7 +41,9 @@ export async function POST(
 
     if (!lesson) {
       return NextResponse.json(
-        { error: "Lesson not found or not published" },
+        {
+          error: "Lesson not found or not published",
+        },
         { status: 404 }
       );
     }
@@ -105,7 +52,9 @@ export async function POST(
 
     if (!course || !course.isPublished) {
       return NextResponse.json(
-        { error: "Course not found or not published" },
+        {
+          error: "Course not found or not published",
+        },
         { status: 404 }
       );
     }
@@ -117,8 +66,8 @@ export async function POST(
       },
     });
 
-    let attachments: Attachment[] = [];
-    let nextLesson: NextLesson = null;
+    let attachments: any[] = [];
+    let nextLesson = null;
 
     if (purchase) {
       attachments = await db.attachment.findMany({
@@ -128,12 +77,11 @@ export async function POST(
       });
     }
 
-    const hasAccess =
+    if (
       lesson.isFree ||
-      !!purchase ||
-      (userSubscription?.status === "ACTIVE" && course.isUnderSubscription);
-
-    if (hasAccess) {
+      purchase ||
+      (userSubscription?.status === "ACTIVE" && course.isUnderSubscription)
+    ) {
       nextLesson = await db.lesson.findFirst({
         where: {
           courseId: course.id,
@@ -164,9 +112,11 @@ export async function POST(
       purchase,
     });
   } catch (error) {
-    console.error("[GET_LESSON_ERROR]", error);
+    console.error("Error fetching lesson:", error);
     return NextResponse.json(
-      { error: "Something went wrong" },
+      {
+        error: "Something went wrong",
+      },
       { status: 500 }
     );
   }

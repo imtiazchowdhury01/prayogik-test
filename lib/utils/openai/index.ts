@@ -1340,29 +1340,7 @@ export const ApiContractV1 = c.router({
       }),
     },
   },
-  // bkash payment callback
-  postBkashPaymentCallback: {
-    method: "POST",
-    path: "/api/bkash/callback",
-    body: z.object({
-      email: z.string(),
-      amount: z.number(),
-    }),
-    responses: {
-      200: z.object({
-        msg: z.string(),
-        data: z.object({
-          success: z.boolean(),
-          message: z.string(),
-        }),
-      }),
-      500: z.object({
-        error: z.boolean(),
-        message: z.string(),
-      }),
-    },
-  },
-  
+
   // Access course for free
   createFreeCourseAccess: {
     method: "POST",
@@ -1635,5 +1613,4 @@ export const ApiContractV1 = c.router({
     },
     summary: "Fetch events with filtering, pagination and search",
   },
-
 });

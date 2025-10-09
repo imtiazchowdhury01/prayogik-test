@@ -1,5 +1,3 @@
-// api/user/courses/dashboard/route.ts
-
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
@@ -8,12 +6,14 @@ import { getServerUserSession } from "@/lib/getServerUserSession";
 
 export async function GET(req: NextRequest) {
   try {
+    // Get user session
     const { userId } = await getServerUserSession();
 
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Get query parameters
     const { searchParams } = new URL(req.url);
     const tab = searchParams.get("tab");
     const page = parseInt(searchParams.get("page") || "0");
@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
     const metadataOnly = searchParams.get("metadataOnly") === "true";
     const offset = page * limit;
 
+    // If only metadata is requested, return subscription and purchased course IDs
     if (metadataOnly) {
       const userData = await db.user.findUnique({
         where: { id: userId },
@@ -66,14 +67,13 @@ export async function GET(req: NextRequest) {
           new Date(subscription.expiresAt) > now
       );
 
+      // Get purchased course IDs using EnrolledStudents
       const enrolledCourses = await db.enrolledStudents.findMany({
         where: { studentProfileId: studentProfile.id },
         select: { courseId: true },
       });
 
-      const purchasedCourseIds = enrolledCourses
-        .map((item) => item.courseId)
-        .filter((id): id is string => id !== null);
+      const purchasedCourseIds = enrolledCourses.map((item) => item.courseId);
 
       const subscriptionResponse = subscription
         ? {
@@ -92,6 +92,7 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    // Handle specific tab requests with pagination
     switch (tab) {
       case "purchased":
         return handlePurchasedCourses(userId, offset, limit);
@@ -125,6 +126,9 @@ async function handlePurchasedCourses(
   offset: number,
   limit: number
 ) {
+  // console.log(`[API] Handling purchased courses - offset: ${offset}, limit: ${limit}`);
+
+  // First get student profile
   const studentProfile = await db.studentProfile.findUnique({
     where: { userId },
     select: { id: true },
@@ -137,12 +141,13 @@ async function handlePurchasedCourses(
     );
   }
 
+  // Get purchased courses with progress calculation
   const [purchasedCoursesData, totalCount, allProgressData] = await Promise.all(
     [
+      // Query 1: Get paginated purchased courses using EnrolledStudents
       db.enrolledStudents.findMany({
         where: {
           studentProfileId: studentProfile.id,
-          courseId: { not: null },
           course: { isPublished: true },
         },
         select: {
@@ -198,14 +203,15 @@ async function handlePurchasedCourses(
         take: limit,
       }),
 
+      // Query 2: Get total count of purchased courses
       db.enrolledStudents.count({
         where: {
           studentProfileId: studentProfile.id,
-          courseId: { not: null },
           course: { isPublished: true },
         },
       }),
 
+      // Query 3: Get all progress data for this user
       db.progress.findMany({
         where: {
           studentProfileId: studentProfile.id,
@@ -225,11 +231,10 @@ async function handlePurchasedCourses(
     ]
   );
 
-  const courses = purchasedCoursesData
-    .map((item) => item.course)
-    .filter((course): course is NonNullable<typeof course> => course !== null);
+  const courses = purchasedCoursesData.map((item) => item.course);
   const total = totalCount;
 
+  // Create progress lookup map
   const completedLessonsMap = new Map<string, Set<string>>();
   allProgressData.forEach((progress) => {
     const courseId = progress.lesson.courseId;
@@ -239,9 +244,10 @@ async function handlePurchasedCourses(
     completedLessonsMap.get(courseId)!.add(progress.lessonId);
   });
 
+  // Process courses with progress
   const processedCourses = courses.map((course) => {
-    const lessons = course.lessons || [];
-    const completedLessons = completedLessonsMap.get(course.id) || new Set();
+    const lessons = course?.lessons || [];
+    const completedLessons = completedLessonsMap.get(course?.id as string) || new Set();
 
     const totalLessons = lessons.length;
     const completedCount = completedLessons.size;
@@ -249,7 +255,7 @@ async function handlePurchasedCourses(
       totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
 
     const nextLesson = lessons.find(
-      (lesson) => !completedLessons.has(lesson.id)
+      (lesson: any) => !completedLessons.has(lesson.id)
     );
     const nextLessonSlug = nextLesson?.slug || lessons[0]?.slug || null;
 
@@ -277,6 +283,9 @@ async function handleSubscriptionCourses(
   offset: number,
   limit: number
 ) {
+  // console.log(`[API] Handling subscription courses - offset: ${offset}, limit: ${limit}`);
+
+  // First get student profile and subscription status
   const userData = await db.user.findUnique({
     where: { id: userId },
     select: {
@@ -309,7 +318,7 @@ async function handleSubscriptionCourses(
   }
 
   const { studentProfile } = userData;
-  const subscription = studentProfile.subscription;
+  const subscription: any = studentProfile.subscription;
   const now = new Date();
   const isSubscriber = Boolean(
     subscription?.status === "ACTIVE" &&
@@ -327,20 +336,34 @@ async function handleSubscriptionCourses(
     });
   }
 
-  const isTrial = subscription?.subscriptionPlan?.isTrial;
-  const trialSelectedCourseIds = subscription?.trialSelectedCourseIds || [];
+  // Get enrolled course IDs to exclude them
+  const enrolledCourseIds = await db.enrolledStudents.findMany({
+    where: { studentProfileId: studentProfile.id },
+    select: { courseId: true },
+  });
 
+  // const purchasedCourseIds = enrolledCourseIds.map((item) => item.courseId);
+
+  // Determine course filtering based on subscription type
+  const isTrial = subscription?.subscriptionPlan?.isTrial;
+  const trialSelectedCourseIds = subscription.trialSelectedCourseIds || [];
+
+  // Build course where condition based on subscription type
   let courseWhereCondition: any = {
     isUnderSubscription: true,
     isPublished: true,
+    // id: { notIn: purchasedCourseIds },
   };
 
+  // If it's a trial subscription, only show selected courses
   if (isTrial && trialSelectedCourseIds.length > 0) {
     courseWhereCondition.id = {
       in: trialSelectedCourseIds,
+      // notIn: purchasedCourseIds,
     };
   }
 
+  // Get paginated subscription courses
   const [courses, totalCount, allProgressData] = await Promise.all([
     db.course.findMany({
       where: courseWhereCondition,
@@ -386,10 +409,12 @@ async function handleSubscriptionCourses(
       orderBy: { createdAt: "desc" },
     }),
 
+    // Get total count
     db.course.count({
       where: courseWhereCondition,
     }),
 
+    // Get progress data
     db.progress.findMany({
       where: {
         studentProfileId: studentProfile.id,
@@ -408,6 +433,9 @@ async function handleSubscriptionCourses(
     }),
   ]);
 
+  // console.log(`[API] Found ${courses.length} subscription courses for this page, ${totalCount} total (Trial: ${isTrial})`);
+
+  // Create progress lookup map
   const completedLessonsMap = new Map<string, Set<string>>();
   allProgressData.forEach((progress) => {
     const courseId = progress.lesson.courseId;
@@ -417,6 +445,7 @@ async function handleSubscriptionCourses(
     completedLessonsMap.get(courseId)!.add(progress.lessonId);
   });
 
+  // Process courses with progress
   const processedCourses = courses.map((course) => {
     const lessons = course.lessons || [];
     const completedLessons = completedLessonsMap.get(course.id) || new Set();
@@ -427,7 +456,7 @@ async function handleSubscriptionCourses(
       totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
 
     const nextLesson = lessons.find(
-      (lesson) => !completedLessons.has(lesson.id)
+      (lesson: any) => !completedLessons.has(lesson.id)
     );
     const nextLessonSlug = nextLesson?.slug || lessons[0]?.slug || null;
 
@@ -442,6 +471,8 @@ async function handleSubscriptionCourses(
 
   const hasMore = offset + limit < totalCount;
 
+  // console.log(`[API] Returning subscription courses - hasMore: ${hasMore}, nextCursor: ${hasMore ? offset + limit : undefined}`);
+
   return NextResponse.json({
     courses: processedCourses,
     totalCount,
@@ -453,11 +484,33 @@ async function handleSubscriptionCourses(
   });
 }
 
+// async function handlePurchasedCoursesTest(
+//   userId: string,
+//   offset: number,
+//   limit: number
+// ) {
+//   // console.log(`[API] Handling certificate courses - offset: ${offset}, limit: ${limit}`);
+
+//   // TODO: Implement certificate courses logic
+
+//   await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate API delay
+
+//   return NextResponse.json({
+//     courses: [],
+//     totalCount: 0,
+//     hasMore: false,
+//     nextCursor: undefined,
+//   });
+// }
+
 async function handleCertificateCourses(
   userId: string,
   offset: number,
   limit: number
 ) {
+  // console.log(`[API] Handling purchased courses - offset: ${offset}, limit: ${limit}`);
+
+  // First get student profile
   const studentProfile = await db.studentProfile.findUnique({
     where: { userId },
     select: { id: true },
@@ -470,65 +523,119 @@ async function handleCertificateCourses(
     );
   }
 
-  const [purchasedCertificationCoursesData, totalCount] = await Promise.all([
-    db.enrolledStudents.findMany({
-      where: {
-        studentProfileId: studentProfile.id,
-        certificationId: { not: null },
-        certification: { isPublished: true },
-      },
-      select: {
-        certification: {
-          select: {
-            id: true,
-            title: true,
-            description: true,
-            slug: true,
-            teacherProfile: {
-              select: {
-                user: {
-                  select: { name: true },
+  // Get purchased certifications with progress calculation
+  const [purchasedCertificationCoursesData, totalCount, allProgressData] =
+    await Promise.all([
+      // Query 1: Get paginated purchased certifications using EnrolledStudents
+      db.enrolledStudents.findMany({
+        where: {
+          studentProfileId: studentProfile.id,
+          certification: { isPublished: true },
+        },
+        select: {
+          certification: {
+            select: {
+              id: true,
+              title: true,
+              description: true,
+              slug: true,
+              teacherProfile: {
+                select: {
+                  user: {
+                    select: { name: true },
+                  },
                 },
               },
-            },
-            imageUrl: true,
-            isPublished: true,
-            prices: {
-              select: {
-                regularAmount: true,
-                isFree: true,
+              imageUrl: true,
+              isPublished: true,
+              prices: {
+                select: {
+                  regularAmount: true,
+                  isFree: true,
+                },
               },
-            },
-            _count: {
-              select: { enrolledStudents: true },
-            },
-            courses: {
-              where: { isPublished: true },
-              select: {
-                id: true,
-                slug: true,
+              _count: {
+                select: { enrolledStudents: true },
+              },
+              courses: {
+                where: { isPublished: true },
+                select: {
+                  id: true,
+                  slug: true,
+                },
               },
             },
           },
         },
-      },
-      skip: offset,
-      take: limit,
-    }),
+        skip: offset,
+        take: limit,
+      }),
 
-    db.enrolledStudents.count({
-      where: {
-        studentProfileId: studentProfile.id,
-        certificationId: { not: null },
-        certification: { isPublished: true },
-      },
-    }),
-  ]);
+      // Query 2: Get total count of purchased certifications
+      db.enrolledStudents.count({
+        where: {
+          studentProfileId: studentProfile.id,
+          certification: { isPublished: true },
+        },
+      }),
 
-  const certifications = purchasedCertificationCoursesData
-    .map((item) => item.certification)
-    .filter((cert): cert is NonNullable<typeof cert> => cert !== null);
+      // Query 3: Get all progress data for this user
+      db.progress.findMany({
+        where: {
+          studentProfileId: studentProfile.id,
+          isCompleted: true,
+          lesson: { isPublished: true },
+        },
+        select: {
+          lessonId: true,
+          lesson: {
+            select: {
+              courseId: true,
+              position: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+  const certifications = purchasedCertificationCoursesData.map(
+    (item) => item.certification
+  );
   const total = totalCount;
+
+  // Create progress lookup map
+  // const completedLessonsMap = new Map<string, Set<string>>();
+  // allProgressData.forEach((progress) => {
+  //   const courseId = progress.lesson.courseId;
+  //   if (!completedLessonsMap.has(courseId)) {
+  //     completedLessonsMap.set(courseId, new Set());
+  //   }
+  //   completedLessonsMap.get(courseId)!.add(progress.lessonId);
+  // });
+
+  // Process certifications with progress
+  // const processedCertificationCourses = certifications.map((course: any) => {
+  //   const lessons = course.lessons || [];
+  //   const completedLessons = completedLessonsMap.get(course.id) || new Set();
+
+  //   const totalLessons = lessons.length;
+  //   const completedCount = completedLessons.size;
+  //   const progress =
+  //     totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
+
+  //   const nextLesson = lessons.find(
+  //     (lesson: any) => !completedLessons.has(lesson.id)
+  //   );
+  //   const nextLessonSlug = nextLesson?.slug || lessons[0]?.slug || null;
+
+  //   return {
+  //     ...course,
+  //     progress,
+  //     nextLessonSlug,
+  //     totalLessons,
+  //     completedLessons: completedCount,
+  //   };
+  // });
 
   const hasMore = offset + limit < total;
 
@@ -545,7 +652,10 @@ async function handleRegisteredEvents(
   offset: number,
   limit: number
 ) {
+  // console.log(`[API] Handling registered events - offset: ${offset}, limit: ${limit}`);
+
   try {
+    // Get paginated registered events using EventRegistration
     const [events, totalCount] = await Promise.all([
       db.eventRegistration.findMany({
         where: {
@@ -577,6 +687,7 @@ async function handleRegisteredEvents(
         orderBy: { registeredAt: "desc" },
       }),
 
+      // Get total count
       db.eventRegistration.count({
         where: {
           userId: userId,
@@ -584,7 +695,11 @@ async function handleRegisteredEvents(
       }),
     ]);
 
+    // console.log(`[API] Found ${events.length} registered events for this page, ${totalCount} total`);
+
     const hasMore = offset + limit < totalCount;
+
+    // console.log(`[API] Returning registered events - hasMore: ${hasMore}, nextCursor: ${hasMore ? offset + limit : undefined}`);
 
     return NextResponse.json({
       events,

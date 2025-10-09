@@ -1,4 +1,4 @@
-// api/user/subscription/courses/route.ts
+// @ts-nocheck
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
@@ -7,6 +7,7 @@ import { getServerUserSession } from "@/lib/getServerUserSession";
 
 export async function POST(request: NextRequest) {
   try {
+    // Get user session
     const { userId } = await getServerUserSession();
     if (!userId) {
       return NextResponse.json(
@@ -15,6 +16,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Parse request body
     const body = await request.json();
     const validatedData = tiralCourseAccessSchema.parse(body);
 
@@ -26,6 +28,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Find the user's student profile
     const user = await db.user.findUnique({
       where: { id: userId },
       include: { studentProfile: true },
@@ -38,6 +41,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Find the subscription and verify ownership
     const subscription = await db.subscription.findUnique({
       where: {
         id: subscriptionId,
@@ -55,6 +59,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if it's a trial subscription
     if (!subscription.subscriptionPlan?.isTrial) {
       return NextResponse.json(
         { success: false, message: "এটি একটি ট্রায়াল সাবস্ক্রিপশন নয়" },
@@ -62,36 +67,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get existing selected course IDs
     const existingCourseIds = subscription.trialSelectedCourseIds || [];
 
+    // Merge existing IDs with new ones (remove duplicates)
     const mergedCourseIds = Array.from(
       new Set([...existingCourseIds, ...validatedData.courseIds])
     );
 
-    const trialCourseLimit =
-      subscription.subscriptionPlan?.trialCourseLimit || 0;
-
-    if (mergedCourseIds.length > trialCourseLimit) {
+    // Check if the total number exceeds the trial limit
+    if (
+      mergedCourseIds.length > subscription.subscriptionPlan?.trialCourseLimit
+    ) {
       return NextResponse.json(
         {
           success: false,
-          message: `ট্রায়াল কোর্স লিমিট অতিক্রম করেছে। সর্বোচ্চ ${trialCourseLimit}টি কোর্স নির্বাচন করতে পারবেন। বর্তমানে ${existingCourseIds.length}টি নির্বাচিত আছে।`,
+          message: `ট্রায়াল কোর্স লিমিট অতিক্রম করেছে। সর্বোচ্চ ${subscription.subscriptionPlan?.trialCourseLimit}টি কোর্স নির্বাচন করতে পারবেন। বর্তমানে ${existingCourseIds.length}টি নির্বাচিত আছে।`,
           data: {
-            currentLimit: trialCourseLimit,
+            currentLimit: subscription.subscriptionPlan?.trialCourseLimit,
             currentlySelected: existingCourseIds.length,
             attemptingToAdd: validatedData.courseIds.length,
             totalWouldBe: mergedCourseIds.length,
             alreadySelectedCourses: existingCourseIds,
           },
         },
-        { status: 409 }
+        { status: 409 } // Conflict
       );
     }
 
+    // Filter out new course IDs that don't already exist
     const newCourseIds = validatedData.courseIds.filter(
       (id) => !existingCourseIds.includes(id)
     );
 
+    // If no new courses to add, return early
     if (newCourseIds.length === 0) {
       return NextResponse.json(
         {
@@ -105,6 +114,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate that the NEW course IDs exist and are published
     const courses = await db.course.findMany({
       where: {
         id: { in: newCourseIds },
@@ -131,6 +141,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if trial period is still active
     const now = new Date();
     if (subscription.trialEndsAt && subscription.trialEndsAt < now) {
       return NextResponse.json(
@@ -139,6 +150,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Update the subscription with merged course IDs
     const updatedSubscription = await db.subscription.update({
       where: { id: subscriptionId },
       data: {
@@ -187,12 +199,14 @@ export async function POST(request: NextRequest) {
         addedCourses: newCourseIds,
         totalSelected: updatedSubscription.trialSelectedCourseIds.length,
         remainingSlots:
-          trialCourseLimit - updatedSubscription.trialSelectedCourseIds.length,
+          subscription.subscriptionPlan?.trialCourseLimit -
+          updatedSubscription.trialSelectedCourseIds.length,
       },
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Trial courses update error:", error);
 
+    // Handle Zod validation errors
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         {
@@ -207,6 +221,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Handle Prisma unique constraint violations
     if (error.code === "P2002") {
       return NextResponse.json(
         { success: false, message: "আপনি ইতিমধ্যে এই কোর্সে নথিভুক্ত আছেন" },

@@ -1,66 +1,16 @@
-// api/events/payment-notification/route.ts
+// /api/events/event-notification/route.ts
 import { paymentReminderTemplate } from "@/lib/utils/emailTemplates/payment-reminder-template";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
-import type { EventType } from "@prisma/client";
 
-// ========== TYPE DEFINITIONS ==========
-
-interface EventDetails {
-  title: string;
-  type?: EventType;
-  slug?: string;
-  date?: Date;
-  location?: string;
-  isOnline?: boolean;
-  price?: number;
-  zoomLink?: string;
-}
-
-interface AttendeeUser {
-  name?: string;
-  email: string;
-}
-
-interface Attendee {
-  user: AttendeeUser;
-  event?: EventDetails;
-}
-
-interface NotificationRequest {
-  attendees: Attendee[];
-}
-
-interface SuccessResponse {
-  success: boolean;
-  message: string;
-}
-
-interface ErrorResponse {
-  message: string;
-}
-
-// ========== POST HANDLER ==========
-
-export async function POST(
-  req: NextRequest
-): Promise<NextResponse<SuccessResponse | ErrorResponse>> {
+export async function POST(req: Request) {
   try {
-    const body: NotificationRequest = await req.json();
-    const { attendees } = body;
+    const { attendees } = await req.json();
 
-    if (!attendees || !Array.isArray(attendees) || attendees.length === 0) {
+    if (!attendees || attendees.length === 0) {
       return NextResponse.json(
         { message: "কোনো প্রাপক পাওয়া যায়নি।" },
         { status: 400 }
-      );
-    }
-
-    // Validate email configuration
-    if (!process.env.SMTP_USERNAME || !process.env.SMTP_APP_PASS) {
-      return NextResponse.json(
-        { message: "SMTP configuration is missing" },
-        { status: 500 }
       );
     }
 
@@ -75,37 +25,30 @@ export async function POST(
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "";
 
     // Send emails to all attendees
-    const emailPromises = attendees.map(async (attendee) => {
-      if (!attendee.user?.email) {
-        console.error("Attendee missing email:", attendee);
-        return Promise.resolve();
-      }
-
-      // Skip if event or required fields are missing
-      if (!attendee.event?.slug) {
-        console.error("Attendee missing event slug:", attendee);
-        return Promise.resolve();
-      }
-
+    const emailPromises = attendees.map(async (attendee: any) => {
+      // Extract event details from the attendee object
       const eventDetails = {
-        title: attendee.event.title || "ইভেন্ট",
-        slug: attendee.event.slug, // Now guaranteed to be a string
-        type: attendee.event.type,
-        date: attendee.event.date?.toISOString(),
-        location: attendee.event.location,
-        isOnline: attendee.event.isOnline,
-        price: attendee.event.price,
-        zoomLink: attendee.event.zoomLink,
+        title: attendee.event?.title || "ইভেন্ট",
+        type: attendee.event?.type,
+        slug: attendee.event?.slug,
+        date: attendee.event?.date,
+        location: attendee.event?.location,
+        isOnline: attendee.event?.isOnline,
+        price: attendee.event?.price,
+        zoomLink: attendee.event?.zoomLink
       };
 
       const isFreeEvent = eventDetails.type === "FREE";
+      const isPaidEvent = eventDetails.type === "PAID";
 
+      // Generate appropriate email template based on event type
       const emailHtml = paymentReminderTemplate(
-        attendee.user.name || "অংশগ্রহণকারী",
+        attendee.user?.name || "অংশগ্রহণকারী",
         eventDetails,
         baseUrl
       );
 
+      // Customize subject based on event type
       const emailSubject = isFreeEvent
         ? `প্রায়োগিক - ইভেন্ট রেজিস্ট্রেশন নিশ্চিতকরণ: ${eventDetails.title}`
         : `প্রায়োগিক - ইভেন্ট পেমেন্ট রিমাইন্ডার: ${eventDetails.title}`;
@@ -122,12 +65,12 @@ export async function POST(
 
     await Promise.all(emailPromises);
 
-    // Determine success message
+    // Determine success message based on event type
     const hasAnyFreeEvent = attendees.some(
-      (attendee) => attendee.event?.type === "FREE"
+      (attendee: any) => attendee.event?.type === "FREE"
     );
     const hasAnyPaidEvent = attendees.some(
-      (attendee) => attendee.event?.type === "PAID"
+      (attendee: any) => attendee.event?.type === "PAID"
     );
 
     let successMessage = "";
@@ -144,7 +87,7 @@ export async function POST(
       message: successMessage,
     });
   } catch (error) {
-    console.error("[PAYMENT_NOTIFICATION_ERROR]", error);
+    console.error("Event notification email error:", error);
     return NextResponse.json(
       { message: "ইমেল পাঠাতে ব্যর্থ হয়েছে।" },
       { status: 500 }

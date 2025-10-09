@@ -1,6 +1,6 @@
-// api/admin/event/[id]/unpublish/route.ts
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
+import { isTeacher } from "@/lib/teacher";
 import { NextResponse } from "next/server";
 
 export async function PATCH(
@@ -10,7 +10,7 @@ export async function PATCH(
   try {
     const { userId, isAdmin } = await getServerUserSession(req);
 
-    if (!userId || !isAdmin) {
+    if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 

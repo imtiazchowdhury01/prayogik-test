@@ -1,24 +1,15 @@
-// api/courses/prices/[priceId]/route.tsx
+// @ts-nocheck
+
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 import { NextResponse } from "next/server";
 
-interface RouteParams {
-  params: {
-    priceId: string;
-  };
-}
-
-export async function DELETE(req: Request, { params }: RouteParams) {
+export async function DELETE(
+  req: Request,
+  { params }: { params: { priceId: string } }
+) {
   try {
     const { priceId } = params;
-
-    if (!priceId) {
-      return NextResponse.json(
-        { message: "Price ID is required" },
-        { status: 400 }
-      );
-    }
 
     const { userId } = await getServerUserSession(req);
 
@@ -31,33 +22,11 @@ export async function DELETE(req: Request, { params }: RouteParams) {
         id: priceId,
       },
       include: {
-        course: {
-          select: {
-            id: true,
-            teacherProfileId: true,
-          },
-        },
+        course: true,
       },
     });
 
-    if (!priceRecord || !priceRecord.course) {
-      return new NextResponse("Price not found", { status: 404 });
-    }
-
-    // Get teacher profile to verify ownership
-    const teacherProfile = await db.teacherProfile.findUnique({
-      where: {
-        userId: userId,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (
-      !teacherProfile ||
-      priceRecord.course.teacherProfileId !== teacherProfile.id
-    ) {
+    if (!priceRecord || priceRecord?.course?.teacherId !== userId) {
       return new NextResponse("Unauthorized", { status: 403 });
     }
 

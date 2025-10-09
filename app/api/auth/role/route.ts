@@ -1,87 +1,50 @@
-// api/auth/role/route.ts
-import { NextRequest, NextResponse } from "next/server";
+// @ts-nocheck
+import { NextResponse } from "next/server";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 import { db } from "@/lib/db";
-import { Role } from "@prisma/client";
+import { Role, User } from "@prisma/client";
 
-export async function POST(req: NextRequest) {
-  const session = await getServerUserSession();
-
-  if (!session || !session.userId) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-  }
-
-  const { userId, isAdmin } = session;
+export async function POST(req: Request) {
+  const { userId, isAdmin } = await getServerUserSession();
 
   try {
     const { role } = await req.json();
 
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      include: {
-        teacherProfile: true,
-        studentProfile: true,
-        affiliateProfile: true,
-      },
-    });
+    const user: User = await db.user.findUnique({ where: { id: userId } });
 
     if (!user) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    // Validate role enum
     const validRoles = Object.values(Role);
-    if (!validRoles.includes(role as Role)) {
+    if (!validRoles.includes(role)) {
       return NextResponse.json({ message: "Invalid role" }, { status: 400 });
     }
 
-    // Role-specific validation
-    if (role === Role.TEACHER) {
-      if (
-        !user.teacherProfile ||
-        user.teacherProfile.teacherStatus !== "VERIFIED"
-      ) {
-        return NextResponse.json(
-          {
-            message:
-              "You must have a verified teacher profile to switch to teacher role",
-          },
-          { status: 403 }
-        );
-      }
-    }
+    const isTeacher = await db.teacherProfile.findUnique({
+      where: { userId, teacherStatus: "VERIFIED" },
+    });
 
-    if (role === Role.AFFILIATE) {
-      if (
-        !user.affiliateProfile ||
-        user.affiliateProfile.affiliateStatus !== "ACTIVE"
-      ) {
-        return NextResponse.json(
-          {
-            message:
-              "You must have an active affiliate profile to switch to affiliate role",
-          },
-          { status: 403 }
-        );
-      }
-    }
-
-    if (role === Role.ADMIN && !isAdmin) {
+    if (
+      !isAdmin &&
+      role !== "ADMIN" &&
+      !isTeacher &&
+      role !== "TEACHER" &&
+      role !== "STUDENT"
+    ) {
       return NextResponse.json(
-        { message: "You do not have permission to switch to admin role" },
-        { status: 403 }
+        { message: "Do not have access!" },
+        { status: 400 }
       );
     }
 
-    // Update user role
     await db.user.update({
       where: { id: userId },
-      data: { role: role as Role },
+      data: { role },
     });
 
     return NextResponse.json({ role });
   } catch (error) {
-    console.error("Error switching role:", error);
     return NextResponse.json(
       { message: "Error switching role." },
       { status: 500 }

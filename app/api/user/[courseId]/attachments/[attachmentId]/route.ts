@@ -1,4 +1,3 @@
-// api/user/[courseId]/attachments/[attachmentId]/route.ts
 import { useTeacherProfile } from "@/hooks/useTeacherProfile";
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
@@ -9,13 +8,15 @@ export async function DELETE(
   { params }: { params: { courseId: string; attachmentId: string } }
 ) {
   try {
-    const { userId } = await getServerUserSession();
+    // Get the user's session and retrieve userId
+    const { userId } = await getServerUserSession(req);
 
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
-    const teacherProfileId = await useTeacherProfile(userId);
+       const teacherProfileId = await useTeacherProfile(userId);
 
+    // Find the course that the user owns to ensure they are authorized
     const courseOwner = await db.course.findFirst({
       where: {
         id: params.courseId,
@@ -27,6 +28,7 @@ export async function DELETE(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    // Find the attachment before deleting (optional, but recommended for logging or validation)
     const existingAttachment = await db.attachment.findUnique({
       where: {
         id: params.attachmentId,
@@ -40,12 +42,14 @@ export async function DELETE(
       return new NextResponse("Attachment not found", { status: 404 });
     }
 
+    // Proceed to delete the attachment
     const deletedAttachment = await db.attachment.delete({
       where: {
         id: params.attachmentId,
       },
     });
 
+    // Return the deleted attachment data
     return NextResponse.json(deletedAttachment);
   } catch (error) {
     console.error("ATTACHMENT_DELETE_ERROR", error);

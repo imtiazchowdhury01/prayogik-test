@@ -1,4 +1,4 @@
-// api/courses/[courseId]/lessons/[lessonId]/route.ts
+//@ts-nocheck
 import {
   useCoTeacherProfileId,
   useCourseByTeacherOrCoTeacher,
@@ -8,158 +8,133 @@ import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 import { isTeacher } from "@/lib/teacher";
 import updateCourseDuration from "@/lib/utils/updateCourseDuration";
-import { NextRequest, NextResponse } from "next/server";
-import type { Prisma } from "@prisma/client";
+import { duration } from "moment";
+import { NextResponse } from "next/server";
 
-// ========== TYPE DEFINITIONS ==========
-
-interface RouteParams {
-  params: {
-    courseId: string;
-    lessonId: string;
-  };
-}
-
-interface UpdateLessonRequest {
-  videoUrl?: string;
-  duration?: number;
-  slug?: string;
-  [key: string]: any;
-}
-
-interface ErrorResponse {
-  error: string;
-}
-
-type Lesson = Prisma.LessonGetPayload<{}>;
-
-// ========== GET HANDLER ==========
-
+// Get
 export async function GET(
-  req: NextRequest,
-  { params }: RouteParams
-): Promise<NextResponse<Lesson | ErrorResponse>> {
+  req: Request,
+  { params }: { params: { courseId: string; lessonId: string } }
+) {
   try {
-    const { courseId, lessonId } = params;
+    // Ensure user session is retrieved
+    const { userId, isAdmin } = await getServerUserSession(req);
 
-    if (!courseId || !lessonId) {
-      return NextResponse.json(
-        { error: "Missing courseId or lessonId" },
-        { status: 400 }
-      );
-    }
-
-    const { userId, isAdmin } = await getServerUserSession();
-
+    // Check if user is authenticated
     if (!userId) {
-      return NextResponse.json(
+      return new NextResponse(
         { error: "Unauthorized access. Please log in." },
-        { status: 401 }
+        { status: 401, headers: { "Content-Type": "application/json" } }
       );
     }
 
     const teacherProfile = await db.teacherProfile.findUnique({
-      where: { userId },
-      select: { id: true },
+      where: {
+        userId: userId, // Getting the teacher profile using userId
+      },
     });
+    let teacherProfileId = teacherProfile?.id;
+    const coTeacherProfileId = await useCoTeacherProfileId(
+      userId,
+      params.courseId
+    );
 
-    const teacherProfileId = teacherProfile?.id;
-    const coTeacherProfileId = await useCoTeacherProfileId(userId, courseId);
-
+    // Ensure user is authenticated (allow if admin, teacher, or co-teacher)
     if (!isAdmin && !teacherProfileId && !coTeacherProfileId) {
-      return NextResponse.json(
+      return new NextResponse(
         { error: "Unauthorized access." },
-        { status: 401 }
+        { status: 401, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    // Verify course ownership if not admin
+    // Check if the course belongs to the user (skip this check for admins)
     if (!isAdmin) {
-      const ownCourse = await useCourseByTeacherOrCoTeacher(userId, courseId);
+      const ownCourse = await useCourseByTeacherOrCoTeacher(
+        userId,
+        params.courseId
+      );
 
+      // If the user does not own the course
       if (!ownCourse) {
-        return NextResponse.json(
+        return new NextResponse(
           { error: "Unauthorized access. You do not own this course." },
-          { status: 403 }
+          { status: 403, headers: { "Content-Type": "application/json" } }
         );
       }
     }
 
+    // Retrieve the specific lesson data
     const lesson = await db.lesson.findUnique({
       where: {
-        id: lessonId,
-        courseId,
+        id: params.lessonId,
+        courseId: params.courseId, // Ensure the lesson belongs to the correct course
       },
     });
 
+    // If the lesson does not exist
     if (!lesson) {
-      return NextResponse.json({ error: "Lesson not found." }, { status: 404 });
+      return new NextResponse(
+        { error: "lesson not found." },
+        { status: 404, headers: { "Content-Type": "application/json" } }
+      );
     }
 
+    // Return the found lesson as a JSON response
     return NextResponse.json(lesson);
   } catch (error) {
-    console.error("[GET_LESSON_ERROR]", error);
-    return NextResponse.json(
+    console.error("[GET_lesson_ERROR]", error);
+    return new NextResponse(
       { error: "Internal Server Error. Please try again later." },
-      { status: 500 }
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 }
 
-// ========== PATCH HANDLER ==========
-
-export async function PATCH(
-  req: NextRequest,
-  { params }: RouteParams
-): Promise<NextResponse<Lesson | ErrorResponse>> {
+export async function PATCH(req, { params }) {
   try {
-    const { courseId, lessonId } = params;
-
-    if (!courseId || !lessonId) {
-      return NextResponse.json(
-        { error: "Missing courseId or lessonId" },
-        { status: 400 }
-      );
-    }
-
-    const { userId, isAdmin } = await getServerUserSession();
-
-    if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
+    const { userId, isAdmin } = await getServerUserSession(req);
 
     const teacherProfile = await db.teacherProfile.findUnique({
-      where: { userId },
-      select: { id: true },
+      where: {
+        userId: userId, // Getting the teacher profile using userId
+      },
     });
+    let teacherProfileId = teacherProfile?.id;
+    const coTeacherProfileId = await useCoTeacherProfileId(
+      userId,
+      params.courseId
+    );
 
-    const teacherProfileId = teacherProfile?.id;
-    const coTeacherProfileId = await useCoTeacherProfileId(userId, courseId);
-
+    // Ensure user is authenticated (allow if admin, teacher, or co-teacher)
     if (!isAdmin && !teacherProfileId && !coTeacherProfileId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const body: UpdateLessonRequest = await req.json();
-    const { videoUrl, duration, slug, ...values } = body;
+    // Parse the incoming request body
+    const { videoUrl, duration, ...values } = await req.json();
 
+    // Validate video URL if provided
     if (videoUrl && typeof videoUrl !== "string") {
       return new NextResponse("Invalid video URL", { status: 400 });
     }
 
-    // Verify ownership if not admin
+    // Check if the course belongs to the user (skip this check for admins)
     if (!isAdmin) {
-      const ownCourse = await useCourseByTeacherOrCoTeacher(userId, courseId);
+      const ownCourse = await useCourseByTeacherOrCoTeacher(
+        userId,
+        params.courseId
+      );
 
       if (!ownCourse) {
         return new NextResponse("Unauthorized", { status: 401 });
       }
     }
 
+    // Fetch the existing lesson to preserve current values
     const existingLesson = await db.lesson.findUnique({
       where: {
-        id: lessonId,
-        courseId,
+        id: params.lessonId,
+        courseId: params.courseId,
       },
     });
 
@@ -167,48 +142,47 @@ export async function PATCH(
       return new NextResponse("Lesson not found", { status: 404 });
     }
 
-    // Check slug uniqueness if provided
-    if (slug && slug !== existingLesson.slug) {
+    // Existing slug check
+    if (values?.slug) {
       const lessonWithSameSlug = await db.lesson.findFirst({
         where: {
-          slug,
-          courseId,
-          id: { not: lessonId },
+          slug: values?.slug,
+          courseId: params.courseId,
         },
       });
 
       if (lessonWithSameSlug) {
-        return new NextResponse("Slug already exists", { status: 400 });
+        return new NextResponse("Slug already exists", { status: 403 });
       }
     }
 
+    // Update the lesson with new values
     const updatedLesson = await db.lesson.update({
       where: {
-        id: lessonId,
-        courseId,
+        id: params.lessonId,
+        courseId: params.courseId, // Ensure the lesson belongs to the correct course
       },
       data: {
         ...values,
-        ...(slug && { slug }),
-        ...(videoUrl !== undefined && { videoUrl }),
-        ...(duration !== undefined && { duration }),
+        videoUrl: videoUrl ?? existingLesson.videoUrl, // Use the existing value if videoUrl is not provided
+        duration: duration ?? existingLesson.duration, // Update duration
       },
     });
 
-    // Check if all required fields are filled
+    // check if all the required fields are filled
     const requiredFields = [
       updatedLesson.title,
       updatedLesson.videoUrl || updatedLesson.textContent,
     ];
-
+    // check true or false
     const isComplete = requiredFields.every(Boolean);
 
-    // Unpublish if incomplete
+    // if false then unpublish the lesson
     if (!isComplete && updatedLesson.isPublished) {
       await db.lesson.update({
         where: {
-          id: lessonId,
-          courseId,
+          id: params.lessonId,
+          courseId: params.courseId,
         },
         data: {
           isPublished: false,
@@ -216,53 +190,80 @@ export async function PATCH(
       });
     }
 
-    await updateCourseDuration(courseId);
+    // await updateCourseTotalDuration(params.courseId);
+    // update total duration of the course by using the helper function
+    await updateCourseDuration(params.courseId);
 
     return NextResponse.json(updatedLesson);
   } catch (error) {
-    console.error("[UPDATE_LESSON_ERROR]", error);
+    console.error("[COURSES_LESSON_ID]", error);
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
 
-// ========== DELETE HANDLER ==========
+// async function updateCourseTotalDuration(courseId: string) {
+//   const lessons = await db.lesson.findMany({
+//     where: { courseId },
+//     select: { duration: true },
+//   });
 
+//   const totalDuration = lessons.reduce(
+//     (sum, lesson) => sum + (lesson.duration || 0),
+//     0
+//   );
+
+//   await db.course.update({
+//     where: { id: courseId },
+//     data: { totalDuration },
+//   });
+// }
+
+// Delete
 export async function DELETE(
-  req: NextRequest,
-  { params }: RouteParams
-): Promise<NextResponse> {
+  req: Request,
+  { params }: { params: { courseId: string; lessonId: string } }
+) {
   try {
-    const { courseId, lessonId } = params;
+    const { userId, isAdmin } = await getServerUserSession(req);
 
-    if (!courseId || !lessonId) {
-      return new NextResponse("Missing courseId or lessonId", { status: 400 });
-    }
-
-    const { userId, isAdmin } = await getServerUserSession();
-
+    // Check if the user is authenticated
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const userIsTeacher = await isTeacher(userId);
-
-    if (!isAdmin && !userIsTeacher) {
+    // Check if user is admin or teacher
+    if (!isAdmin && !isTeacher(userId)) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    // Verify ownership if not admin
+    // If not admin, check if user has permission to delete this lesson
     if (!isAdmin) {
-      const ownCourse = await useCourseByTeacherOrCoTeacher(userId, courseId);
+      const teacherProfileId = await useTeacherProfile(userId);
+      const coTeacherProfileId = await useCoTeacherProfileId(
+        userId,
+        params.courseId
+      );
+
+      if (!teacherProfileId && !coTeacherProfileId) {
+        return new NextResponse("Unauthorized", { status: 401 });
+      }
+
+      // Check if the user owns the course
+      const ownCourse = await useCourseByTeacherOrCoTeacher(
+        userId,
+        params.courseId
+      );
 
       if (!ownCourse) {
         return new NextResponse("Unauthorized", { status: 401 });
       }
     }
 
+    // Find the chapter to delete
     const lesson = await db.lesson.findUnique({
       where: {
-        id: lessonId,
-        courseId,
+        id: params.lessonId,
+        courseId: params.courseId,
       },
     });
 
@@ -270,17 +271,18 @@ export async function DELETE(
       return new NextResponse("Lesson Not Found", { status: 404 });
     }
 
-    // Delete video from VdoCipher if exists
-    const videoId = lesson.videoUrl;
+    const videoId = lesson.videoUrl; // Get the video ID from the chapter
     if (videoId) {
+      // Construct the URL for deleting the video
       const apiSecret = process.env.VDOCIPHER_API_SECRET;
-
       if (!apiSecret) {
-        return new NextResponse("API Secret is not defined", { status: 500 });
+        throw new Error("API Secret is not defined.");
       }
 
+      const url = `https://dev.vdocipher.com/api/videos?videos=${videoId}`;
+
+      // Attempt to delete the video from VdoCipher
       try {
-        const url = `https://dev.vdocipher.com/api/videos?videos=${videoId}`;
         const response = await fetch(url, {
           method: "DELETE",
           headers: {
@@ -290,46 +292,71 @@ export async function DELETE(
           },
         });
 
+        // Check if the response is OK (status in the range 200-299)
         if (!response.ok) {
           const errorText = await response.text();
-          console.error(`VdoCipher error: ${errorText}`);
+          console.error(`Response from VdoCipher: ${errorText}`);
+          throw new Error(
+            `Failed to delete video ${videoId}: ${response.status} - ${errorText}`
+          );
         }
+
+        // Get the response data
+        const data = await response.json();
       } catch (videoError) {
-        console.error(`Failed to delete video ${videoId}:`, videoError);
+        const videoErrorMessage =
+          videoError instanceof Error ? videoError.message : "Unknown error";
+        console.error(
+          `Failed to delete video ${videoId} from VdoCipher`,
+          videoErrorMessage
+        );
+        return new NextResponse(
+          `Failed to delete video from VdoCipher: ${videoErrorMessage}`,
+          { status: 500 }
+        );
       }
     }
 
-    // Delete associated progress
+    // Delete any user progress associated with the chapter
     await db.progress.deleteMany({
-      where: { lessonId: lesson.id },
+      where: {
+        lessonId: lesson.id,
+      },
     });
 
-    // Delete the lesson
+    // Delete the chapter
     const deletedLesson = await db.lesson.delete({
-      where: { id: lessonId },
+      where: {
+        id: params.lessonId,
+      },
     });
 
-    // Check remaining published lessons
+    // Check if there are any other published chapters in the course
     const remainingPublishedLessons = await db.lesson.count({
       where: {
-        courseId,
+        courseId: params.courseId,
         isPublished: true,
       },
     });
 
-    // Unpublish course if no published lessons remain
+    // If no published chapters remain, mark the course as unpublished
     if (remainingPublishedLessons === 0) {
       await db.course.update({
-        where: { id: courseId },
-        data: { isPublished: false },
+        where: {
+          id: params.courseId,
+        },
+        data: {
+          isPublished: false,
+        },
       });
     }
 
-    await updateCourseDuration(courseId);
+    // update total duration of the course by using the helper function
+    await updateCourseDuration(params.courseId);
 
     return NextResponse.json(deletedLesson);
   } catch (error) {
-    console.error("[DELETE_LESSON_ERROR]", error);
+    console.error("[LESSON_DELETE_ERROR]", error);
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

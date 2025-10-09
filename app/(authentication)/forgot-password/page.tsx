@@ -1,40 +1,42 @@
-// app/(authentication)/forgot-password/page.tsx
-// @ts-nocheck
+//@ts-nocheck
 "use client";
 
 import { z } from "zod";
-import { useSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import Link from "next/link";
-import { Loader } from "lucide-react";
+import Image from "next/image";
+// import Loading from "@/app/(site)/loading";
+import { ArrowLeft } from "lucide-react";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { convertNumberToBangla } from "@/lib/convertNumberToBangla";
 
 const forgotFormSchema = z.object({
-  email: z.string().email({ message: "সঠিক ইমেইল অ্যাড্রেস দিন" }),
+  email: z.string().email({ message: "Invalid email address" }),
 });
 
 export default function ForgotPassword() {
   const { data: session, status } = useSession();
   const [email, setEmail] = useState("");
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState({});
   const [isFormValid, setIsFormValid] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const router = useRouter();
 
-  // Redirect authenticated users
   useEffect(() => {
     if (status === "authenticated") {
       router.push("/dashboard");
     }
   }, [status, router]);
 
-  // Check cooldown on mount
   useEffect(() => {
-    const lastRequestTime = localStorage.getItem("lastPasswordResetRequest");
+    // Check cooldown
+    const lastRequestTime = localStorage.getItem("lastRequestTime");
     if (lastRequestTime) {
       const elapsed = Math.floor(
         (Date.now() - parseInt(lastRequestTime)) / 1000
@@ -45,50 +47,43 @@ export default function ForgotPassword() {
     }
   }, []);
 
-  // Countdown timer
   useEffect(() => {
+    // Countdown effect
     if (cooldown > 0) {
-      const timer = setInterval(() => setCooldown((prev) => prev - 1), 1000);
+      const timer = setInterval(() => setCooldown(cooldown - 1), 1000);
       return () => clearInterval(timer);
     }
   }, [cooldown]);
 
-  // Real-time form validation
   useEffect(() => {
     const validateForm = () => {
       try {
         forgotFormSchema.parse({ email });
         setIsFormValid(true);
-        if (hasSubmitted) {
-          setErrors({});
-        }
+        setErrors({});
       } catch (err) {
         if (err instanceof z.ZodError) {
           const fieldErrors = err.issues.reduce((acc, issue) => {
-            acc[issue.path[0] as string] = issue.message;
+            acc[issue.path[0]] = issue.message;
             return acc;
-          }, {} as Record<string, string>);
-          if (hasSubmitted) {
-            setErrors(fieldErrors);
-          }
+          }, {});
+          setErrors(fieldErrors);
           setIsFormValid(false);
         }
       }
     };
     validateForm();
-  }, [email, hasSubmitted]);
+  }, [email]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setHasSubmitted(true);
 
     try {
-      // Validate form
       forgotFormSchema.parse({ email });
       setErrors({});
 
-      // Send reset request
       const response = await fetch("/api/auth/reset-password", {
         method: "POST",
         headers: {
@@ -99,43 +94,41 @@ export default function ForgotPassword() {
 
       const result = await response.json();
 
-      if (response.ok) {
+      if (result.message) {
         toast.success(result.message);
+        // form.reset();
 
-        // Set cooldown
-        localStorage.setItem("lastPasswordResetRequest", Date.now().toString());
+        // Update cooldown and request count
+        localStorage.setItem("lastRequestTime", Date.now().toString());
+        localStorage.setItem(
+          "requestCount",
+          (parseInt(localStorage.getItem("requestCount") || "0") + 1).toString()
+        );
         setCooldown(60);
-
-        // Reset form
-        setEmail("");
-        setHasSubmitted(false);
       } else {
-        toast.error(result.error || "কিছু ভুল হয়েছে। আবার চেষ্টা করুন।");
+        toast.error(result.error);
       }
+
+      setEmail("");
+      setErrors({});
+      setHasSubmitted(false);
+      setIsSubmitting(false);
     } catch (err) {
+      setIsSubmitting(false);
       if (err instanceof z.ZodError) {
         const fieldErrors = err.issues.reduce((acc, issue) => {
-          acc[issue.path[0] as string] = issue.message;
+          acc[issue.path[0]] = issue.message;
           return acc;
-        }, {} as Record<string, string>);
+        }, {});
         setErrors(fieldErrors);
-        toast.error("অনুগ্রহ করে ফর্মের ত্রুটি সংশোধন করুন।");
+        toast.error("Please correct the error in the form.");
       } else {
-        console.error("Unexpected error:", err);
-        toast.error("একটি অপ্রত্যাশিত সমস্যা হয়েছে।");
+        toast.error("An unexpected error occurred.");
       }
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  if (status === "loading") {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader className="animate-spin" size={40} />
-      </div>
-    );
-  }
 
   if (status === "unauthenticated") {
     return (
@@ -149,16 +142,15 @@ export default function ForgotPassword() {
         </div>
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-fontcolor-title">
+            <label className="block text-sm font-medium text-fontcolor-title ">
               ইমেইল
             </label>
             <input
               type="email"
               value={email}
-              placeholder="example@mail.com"
+              placeholder="ইমেইল লিখুন"
               onChange={(e) => setEmail(e.target.value)}
-              disabled={isSubmitting || cooldown > 0}
-              className="mt-1 w-full h-12 px-3 outline-none focus-visible:ring-2 focus-visible:ring-primary-brand shadow-sm border border-gray-200 rounded-md bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+              className="mt-1 w-full h-12 outline-none focus-visible:ring-0 shadow-sm border border-gray-200  rounded-md bg-white"
             />
             {hasSubmitted && errors.email && (
               <p className="mt-1 text-sm text-red-500">{errors.email}</p>
@@ -167,20 +159,20 @@ export default function ForgotPassword() {
 
           <button
             type="submit"
-            disabled={!isFormValid || isSubmitting || cooldown > 0}
-            className={`w-full h-12 hover:bg-primary-700 mt-6 duration-300 text-white p-2 rounded-md bg-primary-brand transition shadow-customButton grid place-items-center ${
-              !isFormValid || isSubmitting || cooldown > 0
+            disabled={!isFormValid || isSubmitting || loading || cooldown > 0}
+            className={`w-full h-12 hover:bg-primary-700 mt-6 duration-300 text-white p-2 rounded-md bg-primary-brand transition ${
+              !isFormValid || isSubmitting || loading || cooldown > 0
                 ? "opacity-50 cursor-not-allowed"
                 : ""
             }`}
           >
-            {isSubmitting ? (
-              <Loader className="animate-spin" size={25} />
-            ) : cooldown > 0 ? (
-              `আবার চেষ্টা করুন - ${convertNumberToBangla(cooldown)} সেকেন্ড পর`
-            ) : (
-              "রিসেট লিঙ্ক পাঠান"
-            )}
+            {isSubmitting
+              ? "পাঠানো হচ্ছে..."
+              : cooldown > 0
+              ? `আবার চেষ্টা করুন - ${convertNumberToBangla(
+                  cooldown
+                )} সেকেন্ড পর`
+              : "রিসেট লিঙ্ক পাঠান"}
           </button>
         </form>
         <div className="flex items-center justify-center mt-5 text-sm">

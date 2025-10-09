@@ -1,4 +1,6 @@
-// api/vdocipher/[videoId]/route.ts
+// @ts-nocheck
+import axios from "axios";
+
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -45,6 +47,7 @@ export async function DELETE(
 ) {
   const { videoId } = params;
 
+  // Construct the URL for deleting the video
   const apiSecret = process.env.VDOCIPHER_API_SECRET;
   if (!apiSecret) {
     throw new Error("API Secret is not defined.");
@@ -52,6 +55,7 @@ export async function DELETE(
 
   const url = `https://dev.vdocipher.com/api/videos?videos=${videoId}`;
 
+  // Attempt to delete the video from VdoCipher
   try {
     const response = await fetch(url, {
       method: "DELETE",
@@ -62,6 +66,7 @@ export async function DELETE(
       },
     });
 
+    // Check if the response is OK (status in the range 200-299)
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`Response from VdoCipher: ${errorText}`);
@@ -70,8 +75,9 @@ export async function DELETE(
       );
     }
 
+    // Get the response data
     const data = await response.json();
-    return NextResponse.json(data, {
+    return new NextResponse(JSON.stringify(data), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
@@ -82,8 +88,8 @@ export async function DELETE(
       `Failed to delete video ${videoId} from VdoCipher`,
       videoErrorMessage
     );
-    return NextResponse.json(
-      { error: `Failed to delete video from VdoCipher: ${videoErrorMessage}` },
+    return new NextResponse(
+      `Failed to delete video from VdoCipher: ${videoErrorMessage}`,
       { status: 500 }
     );
   }

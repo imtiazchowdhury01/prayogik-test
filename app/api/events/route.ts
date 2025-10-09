@@ -1,117 +1,37 @@
-// api/events/route.ts
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
+import { db } from '@/lib/db';
+import { EventStatus } from '@prisma/client';
+import { NextRequest, NextResponse } from 'next/server';
 
-import { db } from "@/lib/db";
-import { EventStatus, EventType } from "@prisma/client";
-import { NextRequest, NextResponse } from "next/server";
-import type { Prisma } from "@prisma/client";
-
-// ========== TYPE DEFINITIONS ==========
-
-interface EventFilters {
-  status?: EventStatus;
-  isPublished: boolean;
-  title?: {
-    contains: string;
-    mode: "insensitive";
-  };
-  type?: EventType;
-  isOnline?: boolean;
-}
-
-interface PaginationParams {
-  page: number;
-  limit: number;
-  totalEvents: number;
-  totalPages: number;
-  hasNextPage: boolean;
-  hasPrevPage: boolean;
-}
-
-type EventWithDetails = Prisma.EventGetPayload<{
-  select: {
-    id: true;
-    title: true;
-    slug: true;
-    description: true;
-    price: true;
-    date: true;
-    isOnline: true;
-    location: true;
-    zoomLink: true;
-    imageUrl: true;
-    isPublished: true;
-    mapLocation: true;
-    type: true;
-    status: true;
-    faqs: true;
-    speakers: true;
-    createdAt: true;
-    updatedAt: true;
-  };
-}>;
-
-interface EventsResponse {
-  events: EventWithDetails[];
-  pagination: PaginationParams;
-}
-
-interface ErrorResponse {
-  error: boolean;
-  message: string;
-}
-
-// ========== GET HANDLER ==========
-
-export async function GET(
-  request: NextRequest
-): Promise<NextResponse<EventsResponse | ErrorResponse>> {
+export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-
+    
     // Parse query parameters
-    const pageParam = parseInt(searchParams.get("page") || "1", 10);
-    const limitParam = parseInt(searchParams.get("limit") || "12", 10);
-    const title = searchParams.get("title") || undefined;
-    const typeParam = searchParams.get("type");
-    const statusParam = searchParams.get("status");
-    const isOnlineParam = searchParams.get("isOnline");
-    const sortParam = searchParams.get("sort");
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '12');
+    const title = searchParams.get('title') || undefined;
+    const type = searchParams.get('type') as 'EOI' | 'PAID' | 'FREE' | undefined;
+    const status = searchParams.get('status') as EventStatus| undefined;
+    const isOnline = searchParams.get('isOnline') ? searchParams.get('isOnline') === 'true' : undefined;
+    const sort = (searchParams.get('sort') as 'asc' | 'desc') || 'asc';
 
-    // Validate and sanitize inputs
-    const validatedPage = Math.min(Math.max(pageParam, 1), 50);
-    const validatedLimit = Math.min(Math.max(limitParam, 1), 50);
+    // Validate pagination limits
+    const validatedPage = Math.min(Math.max(page, 1), 50);
+    const validatedLimit = Math.min(Math.max(limit, 1), 50);
     const skip = (validatedPage - 1) * validatedLimit;
 
-    // Validate type
-    const type: EventType | undefined =
-      typeParam && ["EOI", "PAID", "FREE"].includes(typeParam)
-        ? (typeParam as EventType)
-        : undefined;
-
-    // Validate status
-    const status: EventStatus | undefined =
-      statusParam && ["DRAFT", "UPCOMING", "CLOSED"].includes(statusParam)
-        ? (statusParam as EventStatus)
-        : "UPCOMING";
-
-    // Validate isOnline
-    const isOnline: boolean | undefined =
-      isOnlineParam !== null ? isOnlineParam === "true" : undefined;
-
-    // Validate sort
-    const sort: "asc" | "desc" = sortParam === "desc" ? "desc" : "asc";
-
     // Build where clause
-    const whereClause: Prisma.EventWhereInput = {
-      status,
+    const whereClause: any = {
+      status: status || 'UPCOMING',
       isPublished: true,
     };
 
+    // Add optional filters
     if (title) {
       whereClause.title = {
         contains: title,
-        mode: "insensitive",
+        mode: 'insensitive'
       };
     }
 
@@ -125,14 +45,14 @@ export async function GET(
 
     // Get total count for pagination
     const totalEvents = await db.event.count({
-      where: whereClause,
+      where: whereClause
     });
 
     // Fetch events with pagination and sorting
     const events = await db.event.findMany({
       where: whereClause,
       orderBy: {
-        date: sort,
+        date: sort // Sort by event date
       },
       skip,
       take: validatedLimit,
@@ -154,13 +74,13 @@ export async function GET(
         faqs: true,
         speakers: true,
         createdAt: true,
-        updatedAt: true,
-      },
+        updatedAt: true
+      }
     });
 
     const totalPages = Math.ceil(totalEvents / validatedLimit);
 
-    const response: EventsResponse = {
+    const response = {
       events,
       pagination: {
         page: validatedPage,
@@ -168,17 +88,17 @@ export async function GET(
         totalEvents,
         totalPages,
         hasNextPage: validatedPage < totalPages,
-        hasPrevPage: validatedPage > 1,
-      },
+        hasPrevPage: validatedPage > 1
+      }
     };
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error("[GET_EVENTS_ERROR]", error);
+    console.error('Error fetching events:', error);
     return NextResponse.json(
-      {
-        error: true,
-        message: "Internal server error",
+      { 
+        error: true, 
+        message: 'Internal server error' 
       },
       { status: 500 }
     );
