@@ -26,7 +26,7 @@ export function TeacherCourses({ courses }) {
         {/* Course card-- */}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {courses?.length === 0 ? (
-            <div className="flex items-center justify-center p-20 border-2 border-gray-300 border-dashed rounded-lg col-span-full">
+            <div className="flex items-center justify-center px-20 py-40 border-2 border-gray-300 border-dashed rounded-lg col-span-full">
               <div className="text-center text-gray-500">
                 দুঃখিত! কোনো কোর্স পাওয়া যায় নি।
               </div>

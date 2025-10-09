@@ -39,7 +39,7 @@ const EventIdPage = async ({ params }: { params: { eventId: string } }) => {
   if (!event) return notFound();
 
   // Define required fields for the event setup completion
-  const requiredFields = [event.title, event.slug, event?.description, event.type, event.date];
+  const requiredFields = [event.title, event.slug, event?.description, event.type];
 
   // Calculate course setup progress
   const totalFields = requiredFields.length;

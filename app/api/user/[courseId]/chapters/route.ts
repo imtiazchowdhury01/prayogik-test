@@ -1,5 +1,4 @@
-// @ts-nocheck
-import { useTeacherProfile } from "@/hooks/useTeacherProfile";
+// api/user/[courseId]/chapters/route.ts
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 import { NextResponse } from "next/server";
@@ -9,19 +8,26 @@ export async function POST(
   { params }: { params: { courseId: string } }
 ) {
   try {
-    const { userId } = await getServerUserSession(req);
+    const { userId } = await getServerUserSession();
     const { title } = await req.json();
 
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-       const teacherProfileId = await useTeacherProfile(userId);
+    const teacherProfile = await db.teacherProfile.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
 
-    const courseOwner = await db.course.findUnique({
+    if (!teacherProfile) {
+      return new NextResponse("Teacher profile not found", { status: 404 });
+    }
+
+    const courseOwner = await db.course.findFirst({
       where: {
         id: params.courseId,
-        teacherProfileId,
+        teacherProfileId: teacherProfile.id,
       },
     });
 
@@ -29,26 +35,27 @@ export async function POST(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const lastChapter = await db.lesson.findFirst({
+    const lastLesson = await db.lesson.findFirst({
       where: {
-        id: params.courseId,
+        courseId: params.courseId,
       },
       orderBy: {
         position: "desc",
       },
     });
 
-    const newPosition = lastChapter ? lastChapter.position + 1 : 1;
+    const newPosition = lastLesson ? lastLesson.position + 1 : 1;
 
-    const chapter = await db.lesson.create({
+    const lesson = await db.lesson.create({
       data: {
         title,
-        id: params.courseId,
+        slug: title.toLowerCase().replace(/\s+/g, "-"),
+        courseId: params.courseId,
         position: newPosition,
       },
     });
 
-    return NextResponse.json(chapter);
+    return NextResponse.json(lesson);
   } catch (error) {
     console.log("[CHAPTERS]", error);
     return new NextResponse("Internal Error", { status: 500 });

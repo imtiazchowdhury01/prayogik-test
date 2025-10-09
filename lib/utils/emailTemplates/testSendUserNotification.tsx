@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { EventStatus } from "@prisma/client";
+import { EventStatus, EventType } from "@prisma/client";
 
 
 export const sendUserNotification = (
@@ -26,7 +26,7 @@ export const sendUserNotification = (
     status: purchaseDetailsForEmail?.eventStatus,
   };
 
-  const isWaitingEvent = eventInfo?.status === EventStatus.WAITING;
+  const isWaitingEvent = eventInfo?.type === EventType.EOI;
   // Determine the main message based on what type of notification this is
   let mainMessage = "";
   let sectionTitle = "";

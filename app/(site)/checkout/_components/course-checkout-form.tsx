@@ -11,7 +11,6 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import {
-  CreditCard,
   AlertCircle,
   ArrowRight,
   CheckCircle,
@@ -48,6 +47,9 @@ import {
 import RequiredFieldStar from "@/components/common/requiredFieldStar";
 import CheckMarkIcon from "@/components/common/CheckMarkIcon";
 import { cn } from "@/lib/utils";
+import { checkUserAccessToContent } from "@/lib/check-user-course-access";
+import ApplyCredit from "@/components/ApplyCredit/ApplyCredit";
+import { CREDIT_VALUE } from "@/lib/utils/wallet/walletUtils";
 
 // Skeleton component
 const Skeleton = ({ className = "", ...props }) => (
@@ -132,7 +134,7 @@ const PRICING_LABELS = {
   REGULAR: "স্ট্যান্ডার্ড কোর্স",
   SUBSCRIPTION: "সাবস্ক্রিপশন প্ল্যান",
   REGULAR_DESC: "এককালীন পেমেন্টের মাধ্যমে কোর্সটি কিনুন",
-  SUBSCRIPTION_DESC: "৫০% সাশ্রয়ে কোর্স কিনুন ",
+  SUBSCRIPTION_DESC: "সাশ্রয়ে কোর্স কিনুন ",
   FREE_WITH_SUB: "সাবস্ক্রিপশনের সাথে ফ্রী",
   DISCOUNT_WITH_SUB: "সাবস্ক্রিপশনের সাথে ডিসকাউন্ট প্রাপ্ত",
 };
@@ -160,7 +162,7 @@ const CourseCheckoutForm = ({
   defaultSelectedPlan,
   userSubscription: initialUserSubscription,
   isPaymentSuccessful,
-}) => {
+}: any) => {
   // Hooks
   const router = useRouter();
   const { data: session } = useSession();
@@ -179,12 +181,17 @@ const CourseCheckoutForm = ({
   const [subscriptionStatus, setSubscriptionStatus] = useState(null);
   const [isLoadingSubscriptionStatus, setIsLoadingSubscriptionStatus] =
     useState(false);
+  const [hasAccess, setHasAccess] = useState(false);
+  const [purchaseStatus, setPurchaseStatus] = useState(null);
 
   // Computed values using useMemo for better performance
   const currentUserEmail = useMemo(
     () => session?.user?.email || storedEmail,
     [session?.user?.email, storedEmail]
   );
+
+  // Redeem credit state
+  const [selectedCredits, setSelectedCredits] = useState(0);
 
   // Calculate subscription status effect
   useEffect(() => {
@@ -300,6 +307,13 @@ const CourseCheckoutForm = ({
         return subscriptionPrice;
       }
 
+      if (selectedPlanData.isTrial) {
+        const discountedCoursePrice = hasDiscount
+          ? discountedAmount
+          : regularAmount;
+        return subscriptionPrice + discountedCoursePrice;
+      }
+
       const planDiscountPercentage =
         selectedPlanData.subscriptionDiscount?.discountPercentage || 0;
       const courseDiscount = regularAmount * (planDiscountPercentage / 100);
@@ -325,6 +339,8 @@ const CourseCheckoutForm = ({
     [calculateAmount]
   );
 
+  const isTrialPlanAndCourseExist =
+    userSubscription?.trialSelectedCourseIds.includes(course?.id);
   // User message with more meaningful content
   const getUserStatusMessage = useCallback(() => {
     if (!subscriptionStatus) return null;
@@ -408,6 +424,37 @@ const CourseCheckoutForm = ({
   }, []);
 
   // Handle email continue with better error handling
+  // const handleEmailContinue = async () => {
+  //   const email = form.getValues("email") || CheckoutStorage.getEmail();
+
+  //   if (!email || !email.includes("@")) {
+  //     form.setError("email", {
+  //       type: "manual",
+  //       message: "একটি বৈধ ইমেইল দিন",
+  //     });
+  //     return;
+  //   }
+
+  //   setIsEmailProcessing(true);
+  //   setErrorMessage("");
+  //   try {
+  //     const subscriptionData = await getUserCurrentSubscriptionDBCall(email);
+  //     setUserSubscription(subscriptionData);
+
+  //     CheckoutStorage.saveEmail(email);
+  //     setStoredEmail(email);
+  //     setEmailContinued(true);
+
+  //     form.clearErrors("email");
+  //   } catch (error) {
+  //     console.error("Email processing error:", error);
+  //     setErrorMessage("ইমেইল ভেরিফিকেশন ব্যর্থ হয়েছে। পুনরায় চেষ্টা করুন।");
+  //   } finally {
+  //     setIsEmailProcessing(false);
+  //   }
+  // };
+
+  // In handleEmailContinue function, replace the existing logic with:
   const handleEmailContinue = async () => {
     const email = form.getValues("email") || CheckoutStorage.getEmail();
 
@@ -446,9 +493,11 @@ const CourseCheckoutForm = ({
     form.setValue("email", "");
     setUserSubscription(null);
     setSubscriptionStatus(null);
+    setPurchaseStatus(null);
+    setHasAccess(false);
   }, [form]);
 
-  const handleFreeCourseEnrollment = async (values) => {
+  const handleFreeCourseEnrollment = async (values: any) => {
     const response = await fetch(`/api/courses/access/free`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -467,11 +516,16 @@ const CourseCheckoutForm = ({
     }
   };
 
-  const handlePaidCourseEnrollment = async (values) => {
+  const handlePaidCourseEnrollment = async (values: any) => {
     const formData = new FormData();
     formData.append("courseId", course?.id || "");
     formData.append("type", values.type);
-    formData.append("amount", selectedAmount.toString());
+    formData.append(
+      "amount",
+      selectedCredits
+        ? (selectedAmount - selectedCredits * CREDIT_VALUE).toString()
+        : selectedAmount.toString()
+    );
     formData.append("isFreeCourse", isFreeCourse);
 
     if (values.planId) {
@@ -507,7 +561,15 @@ const CourseCheckoutForm = ({
   };
 
   // Handle form submission with better error handling
-  const onSubmit = async (values) => {
+  const onSubmit = async (values: any) => {
+    // Check if user already has access and shouldn't be able to purchase
+    if (
+      hasAccess &&
+      ["direct_purchase", "enrolled"].includes(purchaseStatus?.accessType)
+    ) {
+      toast.error("আপনি ইতিমধ্যে এই কোর্সটি কিনেছেন");
+      return;
+    }
     setIsProcessing(true);
     setErrorMessage("");
 
@@ -602,9 +664,15 @@ const CourseCheckoutForm = ({
 
                       let coursePrice = 0;
                       if (!course?.isUnderSubscription) {
-                        const courseDiscount =
-                          regularAmount * (discountPercentage / 100);
-                        coursePrice = regularAmount - courseDiscount;
+                        if (plan?.isTrial && hasDiscount) {
+                          // For trial plans with discount, use discountedAmount
+                          coursePrice = discountedAmount;
+                        } else {
+                          // For other cases, apply subscription discount
+                          const courseDiscount =
+                            regularAmount * (discountPercentage / 100);
+                          coursePrice = regularAmount - courseDiscount;
+                        }
                       }
 
                       const totalPrice = subscriptionPrice + coursePrice;
@@ -644,10 +712,7 @@ const CourseCheckoutForm = ({
                               <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
                                 <div className="flex flex-wrap gap-1 mb-1 md:mb-0">
                                   <p className="text-lg font-semibold">
-                                    {convertNumberToBangla(
-                                      plan.durationInYears
-                                    )}{" "}
-                                    বছরের প্ল্যান
+                                    {plan?.name}
                                   </p>
                                   <div className="flex flex-wrap items-center gap-1">
                                     {plan.offerPrice !== 0 && (
@@ -655,15 +720,16 @@ const CourseCheckoutForm = ({
                                         স্পেশাল অফার
                                       </Badge>
                                     )}
-                                    {!course?.isUnderSubscription &&
-                                      discountPercentage > 0 && (
-                                        <Badge
-                                          variant="outline"
-                                          className="text-xs h-fit text-brand border-brand"
-                                        >
-                                          কোর্স অন্তর্ভুক্ত
-                                        </Badge>
-                                      )}
+                                    {/* !course?.isUnderSubscription &&
+                                      discountPercentage > 0 && */}
+                                    {course?.isUnderSubscription && (
+                                      <Badge
+                                        variant="outline"
+                                        className="text-xs h-fit text-brand border-brand"
+                                      >
+                                        কোর্স অন্তর্ভুক্ত
+                                      </Badge>
+                                    )}
                                   </div>
                                 </div>
 
@@ -687,6 +753,19 @@ const CourseCheckoutForm = ({
                                   <span className="font-medium text-green-600">
                                     কোর্স: ফ্রি
                                   </span>
+                                ) : plan?.isTrial && hasDiscount ? (
+                                  <div className="flex flex-wrap items-center gap-1">
+                                    <span>কোর্স:</span>
+                                    <span className="font-medium text-gray-700">
+                                      ৳
+                                      {convertNumberToBangla(
+                                        Math.round(discountedAmount)
+                                      )}
+                                    </span>
+                                    <span className="line-through text-gray-500">
+                                      ৳{convertNumberToBangla(regularAmount)}
+                                    </span>
+                                  </div>
                                 ) : discountPercentage > 0 ? (
                                   <div className="flex flex-wrap items-center gap-1">
                                     <span>কোর্স:</span>
@@ -711,10 +790,20 @@ const CourseCheckoutForm = ({
                               {/* Savings */}
                               {totalSavings > 0 && (
                                 <div className="text-sm text-gray-700 pt-1">
-                                  <span className="mr-2">সাশ্রয়:</span>৳
+                                  <span className="mr-1">সাশ্রয়:</span>৳
                                   {convertNumberToBangla(
                                     Math.round(totalSavings)
                                   )}
+                                  {discountPercentage > 0 &&
+                                    !course?.isUnderSubscription && (
+                                      <span className="text-gray-500 ml-1 text-xs">
+                                        (
+                                        {convertNumberToBangla(
+                                          discountPercentage
+                                        )}
+                                        % সাশ্রয়ে)
+                                      </span>
+                                    )}
                                 </div>
                               )}
                             </div>
@@ -809,19 +898,44 @@ const CourseCheckoutForm = ({
 
   const isFormDisabled = !emailContinued && !session?.user?.email;
 
-  // (subscriptionStatus?.isActive &&
-  //   !subscriptionStatus?.isTrial &&
-  //   course?.isUnderSubscription)
+  const isAlreadyPurchased =
+    hasAccess &&
+    ["direct_purchase", "enrolled"].includes(purchaseStatus?.accessType);
 
   const canPurchase =
-    (subscriptionStatus?.isActive &&
-      !subscriptionStatus?.isTrial &&
-      course?.isUnderSubscription) ||
-    (subscriptionStatus?.isTrial && course?.isUnderSubscription);
+    subscriptionStatus?.isActive &&
+    !subscriptionStatus?.isTrial &&
+    course?.isUnderSubscription;
+  // || (subscriptionStatus?.isTrial && course?.isUnderSubscription);
 
   const userStatusMessage = getUserStatusMessage();
   // check email is empty
   const isEmailEmtpy = !session?.user?.email && !storedEmail;
+
+  function getButtonLabel() {
+    if (isProcessing) {
+      return "প্রক্রিয়াধীন…";
+    }
+
+    if (
+      subscriptionStatus?.isActive &&
+      !subscriptionStatus?.isTrial &&
+      course?.isUnderSubscription
+    ) {
+      return "বিকাশে পেমেন্ট করুন";
+    }
+
+    // if (subscriptionStatus?.isTrial && course?.isUnderSubscription) {
+    //   return "ট্রায়াল প্ল্যানে অন্তর্ভুক্ত আছে";
+    // }
+
+    if (isFreeCourse) {
+      return "ফ্রি এক্সেস করুন";
+    }
+
+    return "বিকাশে পেমেন্ট করুন";
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -951,6 +1065,7 @@ const CourseCheckoutForm = ({
                         if (!isFormDisabled) {
                           setSelectedType(value);
                           field.onChange(value);
+                          setSelectedCredits(0); // Reset credits on type change
                         }
                       }}
                       disabled={isFormDisabled}
@@ -1100,15 +1215,9 @@ const CourseCheckoutForm = ({
 
                       {/* Trial User with Course Under Subscription - Show Message Only */}
                       {subscriptionStatus?.isTrial &&
-                        course?.isUnderSubscription &&
+                        isTrialPlanAndCourseExist &&
                         selectedType !== pricingOptions.subscription.type && (
                           <div className="p-4 bg-brand/5 border rounded-lg">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Clock className="h-4 w-4 " />
-                              <span className="text-sm font-medium ">
-                                ফ্রী ট্রায়াল ব্যবহার করা যাবে
-                              </span>
-                            </div>
                             <p className="text-sm t">
                               এই কোর্সটি আপনার ট্রায়াল সাবস্ক্রিপশনে
                               অন্তর্ভুক্ত – ট্রায়াল সময়কালে সম্পূর্ণ ফ্রি!
@@ -1123,12 +1232,52 @@ const CourseCheckoutForm = ({
                             </p>
                           </div>
                         )}
+
+                      {hasAccess && purchaseStatus && (
+                        <Alert className="border shadow-customInput bg-green-50">
+                          <CheckMarkIcon />
+                          <AlertDescription className="text-sm mt-1">
+                            {purchaseStatus.message}
+                            {purchaseStatus.accessType ===
+                              "direct_purchase" && (
+                              <div className="mt-2">
+                                {!session?.user?.email ? (
+                                  <Link
+                                    href="/signin"
+                                    className="font-semibold text-brand underline hover:text-brand"
+                                  >
+                                    সাইন ইন করে কোর্স অ্যাক্সেস করুন
+                                  </Link>
+                                ) : (
+                                  <Link
+                                    href={`/courses/${course?.slug}`}
+                                    className="font-semibold text-brand underline hover:text-brand"
+                                  >
+                                    কোর্স অ্যাক্সেস করুন
+                                  </Link>
+                                )}
+                              </div>
+                            )}
+                          </AlertDescription>
+                        </Alert>
+                      )}
                     </RadioGroup>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+            {/* Apply Credit Section */}
+            {!isFreeCourse &&
+              emailContinued &&
+              subscriptionStatus?.isActive && (
+                <ApplyCredit
+                  originalPrice={selectedAmount || 0}
+                  selectedCredits={selectedCredits}
+                  setSelectedCredits={setSelectedCredits}
+                  userId={userSubscription?.userId}
+                />
+              )}
 
             {/* Error Message */}
             {errorMessage && (
@@ -1152,7 +1301,9 @@ const CourseCheckoutForm = ({
                     <p className="pt-2">
                       {selectedAmount === 0
                         ? "ফ্রি"
-                        : `৳${convertNumberToBangla(selectedAmount)}`}
+                        : `৳${convertNumberToBangla(
+                            selectedAmount - selectedCredits * CREDIT_VALUE
+                          )}`}
                     </p>
                   </>
                 )}
@@ -1171,7 +1322,12 @@ const CourseCheckoutForm = ({
                       : "bg-brand"
                   )}
                   size="lg"
-                  disabled={isProcessing || isPaymentSuccessful || canPurchase}
+                  disabled={
+                    isProcessing ||
+                    isPaymentSuccessful ||
+                    canPurchase ||
+                    isAlreadyPurchased
+                  }
                 >
                   {!isFreeCourse ? (
                     <svg
@@ -1190,20 +1346,7 @@ const CourseCheckoutForm = ({
                     </svg>
                   ) : null}
 
-                  {isProcessing ? (
-                    <>প্রক্রিয়াধীন…</>
-                  ) : subscriptionStatus?.isActive &&
-                    !subscriptionStatus?.isTrial &&
-                    course?.isUnderSubscription ? (
-                    "বিকাশে পেমেন্ট করুন"
-                  ) : subscriptionStatus?.isTrial &&
-                    course?.isUnderSubscription ? (
-                    "ট্রায়াল প্ল্যানে অন্তর্ভুক্ত আছে"
-                  ) : isFreeCourse ? (
-                    "ফ্রি এক্সেস করুন"
-                  ) : (
-                    `বিকাশে পেমেন্ট করুন`
-                  )}
+                  {getButtonLabel()}
                 </Button>
 
                 {!isFreeCourse ? (

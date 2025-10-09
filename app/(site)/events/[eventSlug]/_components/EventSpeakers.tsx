@@ -3,9 +3,9 @@ import SpeakerCard from "./SpeakerCard";
 
 const EventSpeakers = ({ speakers }: any) => {
   return (
-    <div>
+    <div className="pt-10 pb-20 border-t">
       <h4 className="text-2xl font-bold text-fontcolor-title mb-6">
-        আমাদের ক্রিয়েটিভ স্পিকার
+        আমাদের সম্মানিত স্পিকার
       </h4>
       <div className="grid grid-cols-1 md:grid-cols-2  lg:grid-cols-3 gap-6">
         {speakers.map((speaker: any, index: number) => (

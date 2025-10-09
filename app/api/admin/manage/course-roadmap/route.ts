@@ -1,34 +1,22 @@
+// api/admin/manage/course-roadmap/route.ts
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
-import { courseRoadmapSchema } from "@/lib/utils/openai/types";
 import { NextResponse } from "next/server";
-import { z } from "zod";
+import { CourseRoadmapStatus, DifficultyLevel } from "@prisma/client";
 
-interface GetCourseRoadmapsBody {
-  isAdmin: boolean;
-}
-
-type CreateCourseRoadmapBody = z.infer<typeof courseRoadmapSchema>;
-
-interface UpdateCourseRoadmapBody {
-  isAdmin: boolean;
-  id: string;
-  title?: string;
-  description?: string;
-  status?: "PLANNED" | "IN_PROGRESS" | "COMPLETED";
-  category?: string;
-  estimatedDuration?: string;
-  targetDate?: Date;
-  difficulty?: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
+interface CreateCourseRoadmapBody {
+  title: string;
+  description: string;
+  status: CourseRoadmapStatus;
+  category: string;
+  estimatedDuration: string;
+  targetDate?: string;
+  difficulty: DifficultyLevel;
   prerequisites?: string;
   courseLink?: string;
+  teacherId?: string;
 }
 
-interface DeleteCourseRoadmapBody {
-  isAdmin: boolean;
-  id: string;
-}
-// GET - Fetch Course Roadmaps
 export async function GET(req: Request) {
   try {
     const courseRoadmaps = await db.courseRoadmap.findMany({
@@ -44,7 +32,6 @@ export async function GET(req: Request) {
             },
           },
         },
-        
       },
       orderBy: {
         updatedAt: "desc",
@@ -63,9 +50,9 @@ export async function GET(req: Request) {
   }
 }
 
-// POST - Create Course Roadmap
 export async function POST(req: Request) {
   try {
+    const body = (await req.json()) as CreateCourseRoadmapBody;
     const {
       title,
       description,
@@ -77,14 +64,13 @@ export async function POST(req: Request) {
       prerequisites,
       courseLink,
       teacherId,
-    }: CreateCourseRoadmapBody = await req.json();
+    } = body;
 
     const { isAdmin } = await getServerUserSession(req);
     if (!isAdmin) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
     }
 
-    // Validate required fields
     if (
       !title ||
       !description ||
@@ -110,7 +96,7 @@ export async function POST(req: Request) {
         difficulty,
         prerequisites: prerequisites || null,
         courseLink: courseLink || null,
-        teacherId,
+        teacherId: teacherId || null,
       },
     });
 

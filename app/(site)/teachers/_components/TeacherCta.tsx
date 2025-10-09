@@ -24,7 +24,7 @@ const TeacherCta = () => {
         </h1>
         <p className="text-sm sm:text-base md:text-lg font-light text-white max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl px-2 sm:px-4 leading-5 sm:leading-6 md:leading-7 mb-6 sm:mb-7 md:mb-8 mt-1 sm:mt-2">
           আপনার দক্ষতা শেয়ার করুন, আয় করুন নিজের নিয়মে, আর গড়ে তুলুন
-          শিক্ষার্থীদের শেখার নতুন সম্ভাবনা প্রয়োগিকে প্ল্যাটফর্মে।
+          শিক্ষার্থীদের শেখার নতুন সম্ভাবনা প্রায়োগিকে  প্ল্যাটফর্মে।
         </p>
         <Link
           href={"/become-a-teacher"}

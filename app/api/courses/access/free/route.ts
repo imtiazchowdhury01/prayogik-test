@@ -1,25 +1,23 @@
 // app/api/courses/access/free/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { useStudentProfile } from "@/hooks/useStudentProfile";
 import {
   updateTeacherBalance,
   updateTeacherMonthlyEarnings,
   enrollStudentToTheCourse,
 } from "@/lib/utils/purchase";
 import { checkCourseAccess } from "@/actions/get-course-access";
-import { generateUsernameFromEmail } from "@/lib/generateUserName";
-import { generateRandomPassword } from "@/lib/generatePassword";
-import bcrypt from "bcrypt";
 import { handleTrialPurchase } from "@/lib/utils/checkout/server";
 import PurchaseEmailService from "@/lib/utils/checkout/mailer";
-import { boolean } from "zod";
+import { getOrCreateUser } from "@/services/user";
+import type { UserWithProfile } from "@/types/user";
+import type { Prisma } from "@prisma/client";
 
-// Constants
-const PURCHASE_TYPE_SINGLE_COURSE = "SINGLE_COURSE";
+// ========== CONSTANTS ==========
+
+const PURCHASE_TYPE_SINGLE_COURSE = "SINGLE_COURSE" as const;
 const TEACHER_REVENUE_FREE_COURSE = 0;
 
-// Response messages in Bangla
 const MESSAGES = {
   MISSING_DATA: "কোর্স আইডি বা ইমেইল অনুপস্থিত",
   COURSE_NOT_FOUND: "ব্যবহারকারী বা কোর্স খুঁজে পাওয়া যায়নি",
@@ -29,28 +27,38 @@ const MESSAGES = {
   STUDENT_PROFILE_ERROR: "ছাত্র প্রোফাইল খুঁজে পাওয়া যায়নি!",
   ENROLLMENT_SUCCESS: "সফলভাবে কোর্সে তালিকাভুক্ত হয়েছেন",
   GENERAL_ERROR: "কোর্সে বিনামূল্যে প্রবেশে সমস্যা হয়েছে",
-};
+} as const;
+
+// ========== TYPE DEFINITIONS ==========
 
 interface CourseAccessRequest {
   courseId: string;
   email: string;
 }
 
-interface UserWithProfile {
-  id: string;
-  email: string;
-  studentProfile: {
-    id: string;
-    subscription?: {
-      subscriptionPlan: any;
-    } | null;
-  };
-  isNewUser: boolean;
-  temporaryPassword: string | undefined;
-  username: string | undefined;
+interface ApiResponse {
+  success?: string;
+  error?: string;
 }
 
-export async function POST(req: NextRequest): Promise<NextResponse> {
+type CourseWithDetails = Prisma.CourseGetPayload<{
+  include: {
+    lessons: true;
+    enrolledStudents: true;
+  };
+}>;
+
+type TeacherWithRank = Prisma.TeacherProfileGetPayload<{
+  include: {
+    teacherRank: true;
+  };
+}>;
+
+// ========== MAIN HANDLER ==========
+
+export async function POST(
+  req: NextRequest
+): Promise<NextResponse<ApiResponse>> {
   try {
     const requestBody: CourseAccessRequest = await req.json();
     const { courseId, email } = requestBody;
@@ -62,6 +70,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         { status: 400 }
       );
     }
+
     // Get or create user
     const user = await getOrCreateUser(email);
 
@@ -83,8 +92,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Ensure user has trial subscription
-    await ensureTrialSubscription(user, courseId);
+    // ==============
+    // Uncomment this if you are giving the trial access for free
+    // ==============
+    // await ensureTrialSubscription(user, courseId);
 
     // Get teacher details with rank
     const teacher = await getTeacherWithRank(course.teacherProfileId);
@@ -98,100 +109,86 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // Process free enrollment
     await processFreeEnrollment(user, course, teacher);
 
-    // send success message to user
+    // Send enrollment emails
+    const mailer = new PurchaseEmailService();
+    await mailer.handlePurchaseEmails(
+      {
+        email: user.email,
+        purchaseType: PURCHASE_TYPE_SINGLE_COURSE,
+        subscriptionPlanId: null,
+        courseId,
+        eventId: null,
+      },
+      null,
+      null,
+      user,
+      user.isNewUser,
+      user.temporaryPassword,
+      user.username
+    );
+
     return NextResponse.json(
       { success: MESSAGES.ENROLLMENT_SUCCESS },
       { status: 200 }
     );
   } catch (error) {
     console.error("[FREE_COURSE_ACCESS_ERROR]", error);
-    // send error message to user
     return NextResponse.json(
       { error: MESSAGES.GENERAL_ERROR },
-      { status: 400 }
+      { status: 500 }
     );
   }
 }
 
-// Helper functions
-async function getOrCreateUser(email: string): Promise<UserWithProfile> {
-  let isNewUser: boolean = false;
-  let temporaryPassword: string | null = null;
-  let username: string | null = null;
-  let user = await db.user.findUnique({
-    where: { email },
-    include: {
-      studentProfile: {
-        include: {
-          subscription: {
-            include: { subscriptionPlan: true },
-          },
-        },
-      },
-    },
-  });
-  if (!user) {
-    const generatedUsername = generateUsernameFromEmail(email);
-    const password = generateRandomPassword();
-    const hashedPassword = await bcrypt.hash(password, 12);
+// ========== HELPER FUNCTIONS ==========
 
-    user = await db.user.create({
-      data: {
-        name: generatedUsername,
-        email,
-        password: hashedPassword,
-        username: generatedUsername,
-        emailVerified: true,
-        accountStatus: "ACTIVE",
-        studentProfile: {
-          create: {},
-        },
+async function getCourseWithDetails(
+  courseId: string
+): Promise<CourseWithDetails | null> {
+  try {
+    return await db.course.findUnique({
+      where: {
+        id: courseId,
+        isPublished: true,
       },
       include: {
-        studentProfile: {
-          include: {
-            subscription: {
-              include: { subscriptionPlan: true },
-            },
-          },
+        lessons: {
+          where: { isPublished: true },
+          orderBy: { position: "asc" },
         },
+        enrolledStudents: true,
       },
     });
-    isNewUser = true;
-    temporaryPassword = password;
-    username = generatedUsername;
+  } catch (error) {
+    console.error("Error fetching course:", error);
+    return null;
   }
-  const processedUser = { ...user, isNewUser, temporaryPassword, username };
-
-  return processedUser as UserWithProfile;
-}
-
-async function getCourseWithDetails(courseId: string) {
-  return await db.course.findUnique({
-    where: { id: courseId, isPublished: true },
-    include: {
-      lessons: {
-        orderBy: { position: "asc" },
-      },
-      enrolledStudents: true,
-    },
-  });
 }
 
 async function checkExistingAccess(
   courseSlug: string,
   userId: string
 ): Promise<boolean> {
-  const courseAccess = await checkCourseAccess(courseSlug, userId);
-  return courseAccess.access;
+  try {
+    const courseAccess = await checkCourseAccess(courseSlug, userId);
+    return courseAccess.access;
+  } catch (error) {
+    console.error("Error checking course access:", error);
+    return false;
+  }
 }
 
 async function ensureTrialSubscription(
   user: UserWithProfile,
   courseId: string
 ): Promise<void> {
-  if (!user.studentProfile.subscription) {
+  if (!user.studentProfile?.subscription) {
+    if (!user.studentProfile) {
+      throw new Error(MESSAGES.STUDENT_PROFILE_ERROR);
+    }
+
     await handleTrialPurchase({}, user.studentProfile);
+
     const mailer = new PurchaseEmailService();
     await mailer.handlePurchaseEmails(
       {
@@ -211,21 +208,32 @@ async function ensureTrialSubscription(
   }
 }
 
-async function getTeacherWithRank(teacherProfileId: string) {
-  return await db.teacherProfile.findUnique({
-    where: { id: teacherProfileId },
-    include: { teacherRank: true },
-  });
+async function getTeacherWithRank(
+  teacherProfileId: string
+): Promise<TeacherWithRank | null> {
+  try {
+    return await db.teacherProfile.findUnique({
+      where: { id: teacherProfileId },
+      include: { teacherRank: true },
+    });
+  } catch (error) {
+    console.error("Error fetching teacher:", error);
+    return null;
+  }
 }
 
 async function processFreeEnrollment(
   user: UserWithProfile,
-  course: any,
-  teacher: any
+  course: CourseWithDetails,
+  teacher: TeacherWithRank
 ): Promise<void> {
-  const studentProfileId = await useStudentProfile(user.id);
+  // Get student profile
+  const studentProfile = await db.studentProfile.findUnique({
+    where: { userId: user.id },
+    select: { id: true },
+  });
 
-  if (!studentProfileId) {
+  if (!studentProfile) {
     throw new Error(MESSAGES.STUDENT_PROFILE_ERROR);
   }
 
@@ -234,30 +242,41 @@ async function processFreeEnrollment(
     orderBy: { numberOfSales: "asc" },
   });
 
+  // Get current date for revenue tracking
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth() + 1;
+  const currentYear = currentDate.getFullYear();
+
   // Create purchase record with revenue tracking
-  const newPurchase = await db.purchase.create({
+  await db.purchase.create({
     data: {
-      studentProfileId,
+      studentProfileId: studentProfile.id,
       teacherProfileId: course.teacherProfileId,
       courseId: course.id,
       purchaseType: PURCHASE_TYPE_SINGLE_COURSE,
-      TeacherRevenue: {
+      totalAmountTk: 0,
+      creditsUsedTk: 0,
+      totalPaidTk: 0,
+      remainingAmountTk: 0,
+      paymentStatus: "COMPLETED",
+      fullyPaidAt: currentDate,
+      teacherRevenue: {
         create: {
           teacherProfileId: course.teacherProfileId,
           amount: TEACHER_REVENUE_FREE_COURSE,
-          month: new Date().getMonth() + 1,
-          year: new Date().getFullYear(),
-          teacherRankId: teacher.teacherRank?.id || "",
+          month: currentMonth,
+          year: currentYear,
+          teacherRankId: teacher.teacherRank?.id,
         },
       },
     },
   });
 
-  // Process enrollment and update teacher data
+  // Process enrollment and update teacher data in parallel
   await Promise.all([
     enrollStudentToTheCourse(
       course,
-      studentProfileId,
+      studentProfile.id,
       course.teacherProfileId,
       ranks
     ),

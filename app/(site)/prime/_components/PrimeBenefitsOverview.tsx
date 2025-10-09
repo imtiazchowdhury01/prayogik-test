@@ -58,7 +58,7 @@ const PrimeBenefitsOverview = () => {
       <CommonGridLayout
         data={PrimeOverViewdata}
         gridClassName="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8"
-        containerClass="md:max-w-4xl max-w-7xl px-6 xl:px-0"
+        containerClass="md:max-w-6xl max-w-xl px-6 xl:px-0"
       />
     </div>
   );

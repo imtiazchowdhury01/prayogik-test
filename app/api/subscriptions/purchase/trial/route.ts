@@ -1,3 +1,4 @@
+// api/subscriptions/purchase/trial/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -6,7 +7,7 @@ import nodemailer from "nodemailer";
 import { sendSubscriptionCredential } from "@/lib/utils/emailTemplates/sendSubscriptionCredential";
 import preparePurchaseDetails from "@/lib/utils/preparePurchaseDetails";
 import { sendAdminNotification } from "@/lib/utils/emailTemplates/sendAdminNotification";
-import { PurchaseType } from "@prisma/client";
+import { PurchaseType, PaymentStatus } from "@prisma/client";
 
 // Types for the trial callback payload
 interface TrialCallbackPayload {
@@ -122,7 +123,7 @@ async function handleTrialPurchase(
     where: {
       studentProfileId: studentProfile.id,
       subscriptionPlanId: payload.subscriptionPlanId,
-      purchaseType: "TRIAL",
+      purchaseType: PurchaseType.TRIAL,
     },
   });
 
@@ -144,9 +145,14 @@ async function handleTrialPurchase(
     data: {
       studentProfileId: studentProfile.id,
       subscriptionPlanId: payload.subscriptionPlanId,
-      purchaseType: "TRIAL",
+      purchaseType: PurchaseType.TRIAL,
       purchaseDuration: subscriptionPlan.trialDurationInDays || 30,
       expiresAt: trialEndsAt,
+      totalAmountTk: 0,
+      creditsUsedTk: 0,
+      totalPaidTk: 0,
+      remainingAmountTk: 0,
+      paymentStatus: PaymentStatus.COMPLETED,
     },
   });
 
@@ -188,24 +194,26 @@ async function handleTrialPurchase(
 export async function POST(request: NextRequest) {
   try {
     const payload: TrialCallbackPayload = await request.json();
-    // Validate required fields
-    // if (!payload.subscriptionPlanId) {
-    //   return createErrorResponse("Subscription plan ID is required");
-    // }
+
     const trialSubscriptionPlan = await db.subscriptionPlan.findFirst({
       where: {
         isTrial: true,
       },
     });
 
-    payload.subscriptionPlanId = trialSubscriptionPlan?.id!;
+    if (!trialSubscriptionPlan) {
+      return createErrorResponse("No trial subscription plan found");
+    }
+
+    payload.subscriptionPlanId = trialSubscriptionPlan.id;
+
     // Get authenticated user (if any)
     const authenticatedUser = await getAuthenticatedUser(request);
     let user: any = authenticatedUser;
     let studentProfile = authenticatedUser?.studentProfile;
     let isNewUser = false;
-    let temporaryPassword = null;
-    let username = null;
+    let temporaryPassword: string | null = null;
+    let username: string | null = null;
 
     // Handle unauthenticated users
     if (!authenticatedUser) {
@@ -233,7 +241,7 @@ export async function POST(request: NextRequest) {
         user = await db.user.create({
           data: {
             name: payload.userInfo?.name || payload.email.split("@")[0],
-            username: username || generatedUsername,
+            username: generatedUsername,
             email: payload.email,
             password: hashedPassword,
             phoneNumber: payload.userInfo?.phoneNumber,
@@ -261,145 +269,74 @@ export async function POST(request: NextRequest) {
 
     // Handle trial purchase
     const result = await handleTrialPurchase(payload, studentProfile);
-    if (result instanceof NextResponse) return result; // Error response
+    if (result instanceof NextResponse) return result;
 
     const { purchase, subscription } = result;
 
-    //--------Send email for new users AFTER purchase----
-    if (isNewUser && temporaryPassword && username) {
-      try {
-        // Get course and subscription plan details for email
-        let courseForEmail = null;
-        let subscriptionPlanForEmail = null;
+    // Send emails
+    try {
+      let subscriptionPlanForEmail = null;
 
-        if (payload.subscriptionPlanId) {
-          subscriptionPlanForEmail = await db.subscriptionPlan.findUnique({
-            where: { id: payload.subscriptionPlanId },
-            select: { name: true },
-          });
-        }
-
-        // Prepare purchase details for email template
-        const purchaseDetailsForEmail = await preparePurchaseDetails(
-          { ...payload, purchaseType: PurchaseType.TRIAL },
-          purchase,
-          subscription,
-          courseForEmail,
-          subscriptionPlanForEmail
-        );
-        // console.log(`Purchase details for email:`, purchaseDetailsForEmail);
-        const transporter = nodemailer.createTransport({
-          service: "Gmail",
-          auth: {
-            user: process.env.SMTP_USERNAME,
-            pass: process.env.SMTP_APP_PASS,
-          },
+      if (payload.subscriptionPlanId) {
+        subscriptionPlanForEmail = await db.subscriptionPlan.findUnique({
+          where: { id: payload.subscriptionPlanId },
+          select: { name: true },
         });
-
-        const mailOptions = {
-          from: `"প্রায়োগিক" <${process.env.SMTP_USERNAME}>`,
-          to: payload?.email,
-          subject: "প্রয়োগিকে স্বাগতম! আপনার অ্যাকাউন্ট তৈরি হয়েছে।",
-          html: sendSubscriptionCredential(
-            payload.email,
-            username,
-            temporaryPassword,
-            purchaseDetailsForEmail
-          ),
-        };
-
-        await transporter.sendMail(mailOptions);
-
-        const adminMailOptions = {
-          from: `"প্রায়োগিক সিস্টেম" <${process.env.SMTP_USERNAME}>`,
-          // to: process.env.ADMIN_RECIPIENT_EMAIL,
-          to: process.env.ADMIN_RECIPIENT_EMAIL,
-          subject: `প্রায়োগিক - ${
-            isNewUser ? "নতুন নিবন্ধন" : "নতুন পেমেন্ট"
-          } নোটিফিকেশন`,
-          html: sendAdminNotification(
-            payload.email,
-            username,
-            isNewUser,
-            purchaseDetailsForEmail
-          ),
-        };
-        await transporter.sendMail(adminMailOptions);
-      } catch (emailError) {
-        console.error("Failed to send welcome email:", emailError);
       }
-    } else if (!isNewUser) {
-      // Send email to existing user without login credentials
-      try {
-        // Get course and subscription plan details for email
-        let courseForEmail = null;
-        let subscriptionPlanForEmail = null;
 
-        if (payload.subscriptionPlanId) {
-          subscriptionPlanForEmail = await db.subscriptionPlan.findUnique({
-            where: { id: payload.subscriptionPlanId },
-            select: { name: true },
-          });
-        }
+      const purchaseDetailsForEmail = await preparePurchaseDetails(
+        { ...payload, purchaseType: PurchaseType.TRIAL },
+        purchase,
+        subscription,
+        null,
+        subscriptionPlanForEmail
+      );
 
-        // Prepare purchase details for email template
-        const purchaseDetailsForEmail = await preparePurchaseDetails(
-          payload,
-          purchase,
-          subscription,
-          courseForEmail,
-          subscriptionPlanForEmail
-        );
-        // console.log("purchaseDetailsForEmail result:", purchaseDetailsForEmail);
-        // send email for both student and admin
-        const transporter = nodemailer.createTransport({
-          service: "Gmail",
-          auth: {
-            user: process.env.SMTP_USERNAME,
-            pass: process.env.SMTP_APP_PASS,
-          },
-        });
+      const transporter = nodemailer.createTransport({
+        service: "Gmail",
+        auth: {
+          user: process.env.SMTP_USERNAME,
+          pass: process.env.SMTP_APP_PASS,
+        },
+      });
 
-        const studentMailOptions = {
-          from: `"প্রায়োগিক" <${process.env.SMTP_USERNAME}>`,
-          to: payload?.email,
-          subject: "প্রয়োগিক - আপনার পেমেন্ট সফল হয়েছে!",
-          html: sendSubscriptionCredential(
-            payload.email,
-            null, // No username for existing users
-            null, // No password for existing users
-            purchaseDetailsForEmail
-          ),
-        };
+      const studentMailOptions = {
+        from: `"প্রায়োগিক" <${process.env.SMTP_USERNAME}>`,
+        to: payload.email,
+        subject: isNewUser
+          ? "প্রায়োগিকে স্বাগতম! আপনার অ্যাকাউন্ট তৈরি হয়েছে।"
+          : "প্রয়োগিক - আপনার পেমেন্ট সফল হয়েছে!",
+        html: sendSubscriptionCredential(
+          payload.email!,
+          isNewUser ? username : null,
+          isNewUser ? temporaryPassword : null,
+          purchaseDetailsForEmail
+        ),
+      };
 
-        await transporter.sendMail(studentMailOptions);
+      await transporter.sendMail(studentMailOptions);
 
-        const adminMailOptions = {
-          from: `"প্রায়োগিক সিস্টেম" <${process.env.SMTP_USERNAME}>`,
-          // to: process.env.ADMIN_RECIPIENT_EMAIL,
-          to: process.env.ADMIN_RECIPIENT_EMAIL,
-          subject: `প্রায়োগিক - ${
-            isNewUser ? "নতুন নিবন্ধন" : "নতুন পেমেন্ট"
-          } নোটিফিকেশন`,
-          html: sendAdminNotification(
-            payload.email,
-            username,
-            isNewUser,
-            purchaseDetailsForEmail
-          ),
-        };
-        await transporter.sendMail(adminMailOptions);
-      } catch (emailError) {
-        console.error(
-          "Failed to send purchase confirmation email:",
-          emailError
-        );
-      }
+      const adminMailOptions = {
+        from: `"প্রায়োগিক সিস্টেম" <${process.env.SMTP_USERNAME}>`,
+        to: process.env.ADMIN_RECIPIENT_EMAIL,
+        subject: `প্রায়োগিক - ${
+          isNewUser ? "নতুন নিবন্ধন" : "নতুন পেমেন্ট"
+        } নোটিফিকেশন`,
+        html: sendAdminNotification(
+          payload.email!,
+          username,
+          isNewUser,
+          purchaseDetailsForEmail
+        ),
+      };
+      await transporter.sendMail(adminMailOptions);
+    } catch (emailError) {
+      console.error("Failed to send email:", emailError);
     }
 
     // Prepare response data
     const responseData = {
-      purchaseType: "TRIAL",
+      purchaseType: PurchaseType.TRIAL,
       user: {
         id: user.id,
         email: user.email,

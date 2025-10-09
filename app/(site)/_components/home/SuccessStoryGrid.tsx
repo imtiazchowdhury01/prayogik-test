@@ -55,7 +55,7 @@ const SuccessStoryGrid = () => {
       title: "",
       name: "ইফতেখার আলম",
       avatar: "/reviews/iftekhar.webp",
-      text: "প্রফেশনাল ডিজিটাল মার্কেটারদের জন্য এটি ভালো একটি উদ্যোগ প্রফেশনাল ডিজিটাল মার্কেটারদের জন্য এটি ভালো একটি উদ্যোগ। আশা করছি গতানুগতিক কোর্সগুলোর মত হবেনা। আমি সাধারন্ত ছোট কোর্সের ধারণাটি পছন্দ করি, কারণ দীর্ঘ কোর্সগুলিতে মনোযোগ দেওয়া খুব কঠিন। সাইটের UX আরো ইউজার ফ্রেন্ডলি হবে আশা করছি। বিশেষ করে কোর্স ভিডিও চলাকালীন ইন্টারফেস আরেকটু ইউজার ফ্রেন্ডলি হলে ভালো হত। তবে সামগ্রিক অভিজ্ঞতার কথা বললে আমি স্যাটিস্ফাইড।",
+      text: "প্রফেশনাল ডিজিটাল মার্কেটারদের জন্য এটি ভালো একটি উদ্যোগ। আশা করছি গতানুগতিক কোর্সগুলোর মত হবেনা। আমি সাধারন্ত ছোট কোর্সের ধারণাটি পছন্দ করি, কারণ দীর্ঘ কোর্সগুলিতে মনোযোগ দেওয়া খুব কঠিন। সাইটের UX আরো ইউজার ফ্রেন্ডলি হবে আশা করছি। বিশেষ করে কোর্স ভিডিও চলাকালীন ইন্টারফেস আরেকটু ইউজার ফ্রেন্ডলি হলে ভালো হত। তবে সামগ্রিক অভিজ্ঞতার কথা বললে আমি স্যাটিস্ফাইড।",
       bgColor: bgColors[0],
       className: "lg:col-start-3 lg:col-end-3 lg:row-start-2 lg:row-end-4",
     },
@@ -116,7 +116,7 @@ const SuccessStoryGrid = () => {
       <div className="mb-8 flex justify-between items-start pt-24">
         <div>
           <h2 className="font-bold text-left text-2xl sm:text-4xl md:text-[40px]">
-            লার্নারদের মন্তব্য
+            শিক্ষার্থীদের মন্তব্য
           </h2>
           <p className="mt-2 md:mt-4 md:my-4 text-[14px] sm:text-base text-fontcolor-subtitle text-left">
             পূর্ববর্তী শিক্ষার্থীদের আমাদের কোর্স সম্পর্কে দেয়া অভিজ্ঞতা থেকে
@@ -132,7 +132,7 @@ const SuccessStoryGrid = () => {
           return (
             <Card
               key={testimonial.id}
-              className={`${testimonial.bgColor} ${testimonial.bgColor} border-0 shadow-sm break-inside-avoid mb-6`}
+              className={`${testimonial.bgColor} ${testimonial.bgColor} border-0 shadow-sm break-inside-avoid mb-4`}
             >
               <CardContent className="p-6">
                 {/* Quote Icon */}

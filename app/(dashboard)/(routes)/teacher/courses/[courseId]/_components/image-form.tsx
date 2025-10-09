@@ -69,10 +69,10 @@ export const ImageForm = ({ initialData, courseId }: ImageFormProps) => {
       if (previousImageUrl) {
         formData.append("previousUrl", previousImageUrl);
       }
-
+ 
       // Call the upload function
       const response = await uploadCourseElementToS3(formData, courseId);
-
+ 
       if (response.success) {
         await onSubmit({ imageUrl: response.url }); // Submit the new image URL
       } else {

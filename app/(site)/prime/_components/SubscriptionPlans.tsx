@@ -84,32 +84,64 @@ const features: string[] = [
   "সব স্ট্যান্ডার্ড কোর্সে ৫০% ডিসকাউন্ট",
   "সব প্রাইম কোর্স ফ্রি",
 ];
+const trailFeatures: string[] = [
+  "যে কোন তিনটা কোর্স",
+  "মেয়াদ তিন মাস",
+  // "ফ্রি গিফট (৳৪৯৯ ভ্যালু)",
+];
 
-export default async function SubscriptionPlans(): Promise<JSX.Element> {
-  const plans: SubscriptionPlan[] = await getSubscriptionDBCall();
+export default async function SubscriptionPlans({
+  plans,
+  courseLimit,
+}): Promise<JSX.Element> {
+  // const plans: SubscriptionPlan[] = await getSubscriptionDBCall();
   // Separate trial plan from regular plans
-  const trialPlan: SubscriptionPlan | undefined = plans.find(
-    (plan) => plan.isTrial
-  );
-  const regularPlans: SubscriptionPlan[] = plans.filter(
-    (plan) => !plan.isTrial
-  );
+  // const trialPlan: SubscriptionPlan | undefined = plans.find(
+  //   (plan) => plan.isTrial
+  // );
+  // const regularPlans: SubscriptionPlan[] = plans.filter(
+  //   (plan) => !plan.isTrial
+  // );
+  // Sort plans to ensure "NONE" type is always at index 1
+  const getSortedPlans = (plans) => {
+    if (!plans) return [];
+
+    const nonePlans = plans.filter((plan) => plan.type === "NONE");
+    const otherPlans = plans.filter((plan) => plan.type !== "NONE");
+
+    // Ensure NONE plan is at index 1 (second position)
+    const sortedPlans = [];
+
+    // Add first non-NONE plan at index 0
+    if (otherPlans[0]) sortedPlans.push(otherPlans[0]);
+
+    // Add NONE plan at index 1
+    if (nonePlans[0]) sortedPlans.push(nonePlans[0]);
+
+    // Add remaining plans
+    sortedPlans.push(...otherPlans.slice(1));
+    sortedPlans.push(...nonePlans.slice(1));
+
+    return sortedPlans;
+  };
 
   return (
-    <div className="md:max-w-4xl max-w-7xl px-6 xl:px-0 mx-auto">
+    <div className="container mx-auto px-6 sm:px-8 md:px-8 lg:px-8 xl:px-8 2xl:px-1 max-w-6xl">
       {/* Regular subscription plans */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        {regularPlans.map((plan: SubscriptionPlan, index) => (
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-12">
+        {getSortedPlans(plans)?.map((plan: SubscriptionPlan, index) => (
           <SubscriptionPlanCard
             key={plan.id}
             index={index}
             plan={plan}
             features={features}
+            trailFeatures={trailFeatures}
+            courseLimit={courseLimit}
           />
         ))}
       </div>
 
-      <UserTrialPlan trialPlan={trialPlan} />
+      {/* <UserTrialPlan trialPlan={trialPlan} /> */}
     </div>
   );
 }

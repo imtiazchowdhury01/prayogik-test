@@ -24,10 +24,13 @@ export const getUserCurrentSubscriptionDBCall = async (email: string) => {
     });
 
     if (!user || !user.studentProfile?.subscription) {
-      return null; // No subscription found
+      return null; 
     }
 
-    return user.studentProfile.subscription;
+    return {
+      ...user.studentProfile.subscription,
+      userId: user.id,
+    };
   } catch (error) {
     console.error("Error fetching user subscription:", error);
     throw new Error("Failed to fetch user subscription");

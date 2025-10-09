@@ -149,6 +149,7 @@ export const EventSpeakersForm = ({
       await updateEvent({
         eventId,
         values: { speakers: validSpeakers },
+        slug: initialData.slug,
         toggleEdit,
         setLoading,
         router,
@@ -215,24 +216,6 @@ export const EventSpeakersForm = ({
     }
   };
 
-  const clearSpeakerImage = async (speakerIndex: number) => {
-    const currentSpeaker = form.getValues(`speakers.${speakerIndex}`);
-
-    if (currentSpeaker?.avatarUrl) {
-      try {
-        const imageKey = currentSpeaker.avatarUrl.split(".amazonaws.com/")[1];
-        if (imageKey) {
-          await deleteImageFromS3(imageKey);
-          // console.log(`Successfully deleted speaker image: ${imageKey}`);
-        }
-      } catch (error) {
-        console.error("Error deleting speaker image:", error);
-      }
-    }
-
-    form.setValue(`speakers.${speakerIndex}.avatarUrl`, "");
-  };
-
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
@@ -271,14 +254,6 @@ export const EventSpeakersForm = ({
                         }}
                       />
                     ) : null}
-                    <div
-                      className={cn(
-                        "w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center",
-                        speaker.avatarUrl ? "hidden" : ""
-                      )}
-                    >
-                      <User className="h-6 w-6 text-gray-500" />
-                    </div>
                     <div className="flex-1">
                       <h4 className="font-medium text-gray-900">
                         {speaker.name}
@@ -374,15 +349,6 @@ export const EventSpeakersForm = ({
                           alt="Speaker preview"
                           className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
                         />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          className="absolute -top-2 -right-2 w-6 h-6 rounded-full p-0"
-                          onClick={() => clearSpeakerImage(index)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
                       </div>
                     )}
 

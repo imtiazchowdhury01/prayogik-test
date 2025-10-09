@@ -15,12 +15,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader } from "lucide-react"; 
+import { Loader } from "lucide-react";
 import { updateEvent } from "@/lib/event/event";
 
 interface TitleFormProps {
   initialData: {
     title: string;
+    slug: string;
   };
   eventId: string;
 }
@@ -63,6 +64,7 @@ export const EventTitleForm = ({ initialData, eventId }: TitleFormProps) => {
     await updateEvent({
       eventId,
       values,
+      slug: initialData.slug,
       toggleEdit,
       setLoading,
       router,

@@ -18,7 +18,7 @@ interface CategoryHeaderProps {
   pageType: "category" | "filter" | "category-filter";
   isCoursespage?: boolean;
   categoryName?: string;
-  categories: Category[];
+  categories: any;
 }
 
 const CategoryHeader = ({

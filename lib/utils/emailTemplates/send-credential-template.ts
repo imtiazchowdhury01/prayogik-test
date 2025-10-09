@@ -32,7 +32,7 @@ export const sendCredentialTemplate = (email, username, password) => {
                           হ্যালো,
                         </p>
                         <p style="font-size:16px;line-height:26px;margin:16px 0;font-family:'Open Sans', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;font-weight:300;color:#404040">
-                          অ্যাডমিন আপনার জন্য প্রয়োগিক-এ একটি অ্যাকাউন্ট তৈরি করেছেন। আপনার লগইন তথ্য নিচে দেওয়া হলো:
+                          অ্যাডমিন আপনার জন্য প্রায়োগিক-এ একটি অ্যাকাউন্ট তৈরি করেছেন। আপনার লগইন তথ্য নিচে দেওয়া হলো:
                         </p>
                         <p style="font-size:16px;color:#404040;font-family:'Open Sans', Arial,sans-serif;">
                           <strong>লগইন URL:</strong> <a href="${process.env.NEXT_PUBLIC_APP_URL}/signin" style="color:#067df7;text-decoration:underline;font-weight:600;">${process.env.NEXT_PUBLIC_APP_URL}/signin</a>

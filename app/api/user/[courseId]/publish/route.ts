@@ -1,6 +1,4 @@
-// @ts-nocheck
-
-import { useTeacherProfile } from "@/hooks/useTeacherProfile";
+// api/user/[courseId]/publish/route.ts
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 import { NextResponse } from "next/server";
@@ -10,20 +8,28 @@ export async function PATCH(
   { params }: { params: { courseId: string } }
 ) {
   try {
-    const { userId } = await getServerUserSession(req);
+    const { userId } = await getServerUserSession();
 
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
-       const teacherProfileId = await useTeacherProfile(userId);
 
-    const course = await db.course.findUnique({
+    const teacherProfile = await db.teacherProfile.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+
+    if (!teacherProfile) {
+      return new NextResponse("Teacher profile not found", { status: 404 });
+    }
+
+    const course = await db.course.findFirst({
       where: {
         id: params.courseId,
-        teacherProfileId,
+        teacherProfileId: teacherProfile.id,
       },
       include: {
-        chapters: true,
+        lessons: true,
       },
     });
 
@@ -33,18 +39,17 @@ export async function PATCH(
 
     const hasRequiredFields = course.title && course.categoryId;
 
-    const hasPublishedChapter = course.chapters.some(
-      (chapter) => chapter.isPublished
+    const hasPublishedLesson = course.lessons.some(
+      (lesson) => lesson.isPublished
     );
 
-    if (!hasRequiredFields || !hasPublishedChapter) {
+    if (!hasRequiredFields || !hasPublishedLesson) {
       return new NextResponse("Missing required fields", { status: 400 });
     }
 
     const publishedCourse = await db.course.update({
       where: {
         id: params.courseId,
-        teacherProfileId,
       },
       data: {
         isPublished: true,

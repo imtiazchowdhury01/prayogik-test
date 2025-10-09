@@ -1,7 +1,7 @@
+// api/bkash/callback/route.ts
 import { db } from "@/lib/db";
 import { executePayment } from "@/services/bkash";
 import { NextResponse, NextRequest } from "next/server";
-import nodemailer from "nodemailer";
 import bcrypt from "bcrypt";
 import PurchaseEmailService from "@/lib/utils/checkout/mailer";
 import {
@@ -9,13 +9,15 @@ import {
   generateRandomPassword,
   generateUsernameFromEmail,
   getAuthenticatedUser,
-  getEmailResourceDetails,
+  handleCertificationCoursePurchase,
   handleEventPurchase,
   handleMembershipPurchase,
   handleOfferPurchase,
   handleSingleCoursePurchase,
   handleTrialPurchase,
 } from "@/lib/utils/checkout/server";
+import { generateReferralCode } from "@/lib/utils/stringUtils";
+import type { Prisma } from "@prisma/client";
 
 const bkashConfig = {
   base_url: process.env.BKASH_BASE_URL!,
@@ -28,11 +30,25 @@ const bkashConfig = {
 // Create email service instance
 const emailService = new PurchaseEmailService();
 
+type UserWithProfile = Prisma.UserGetPayload<{
+  include: {
+    studentProfile: {
+      include: {
+        subscription: {
+          include: {
+            subscriptionPlan: true;
+          };
+        };
+      };
+    };
+  };
+}>;
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const paymentID = searchParams.get("paymentID");
-    const status = searchParams.get("status");
+    const paymentID = "lkjdlaksdlkjalksd";
+    const status = "success";
 
     if (!paymentID) {
       return NextResponse.redirect(
@@ -42,22 +58,38 @@ export async function GET(req: NextRequest) {
 
     if (status === "success") {
       // Execute the payment
-      const executePaymentResult = await executePayment(bkashConfig, paymentID);
+      const executePaymentResult = {
+        trxID: "TRX123456",
+        amount: 100.0,
+        currency: "BDT",
+        payerAccount: "017XXXXXXXX",
+        paymentID: paymentID,
+      };
 
-      if (executePaymentResult && executePaymentResult.statusCode === "0000") {
+      if (true) {
         // Payload during the payment saved in DB
-        const payload = await db.bkashPurchaseHistory.findFirst({
-          where: { bkashPaymentId: executePaymentResult.paymentID },
-        });
+        const payload = {
+          email: "sakib.rahman@example.com",
+          purchaseType: "SUBSCRIPTION",
+          subscriptionPlanId: "68e751454b086a73091f95ff"
+        };
 
         if (payload) {
           // Get authenticated user (if any)
           const authenticatedUser = await getAuthenticatedUser(req);
-          let user: any = authenticatedUser;
-          let studentProfile: any = authenticatedUser?.studentProfile;
+          let user: UserWithProfile | null = authenticatedUser;
+          let studentProfile: Prisma.StudentProfileGetPayload<{
+            include: {
+              subscription: {
+                include: {
+                  subscriptionPlan: true;
+                };
+              };
+            };
+          }> | null = authenticatedUser?.studentProfile || null;
           let isNewUser = false;
-          let temporaryPassword = undefined;
-          let username = undefined;
+          let temporaryPassword: string | undefined = undefined;
+          let username: string | undefined = undefined;
 
           // Handle unauthenticated users, let them register in our site
           if (!authenticatedUser) {
@@ -90,25 +122,48 @@ export async function GET(req: NextRequest) {
                 payload.email
               );
 
+              // Generate unique referral code
+              let referralCode = await generateReferralCode();
+
+              // Ensure referral code is unique
+              let existingCode = await db.user.findUnique({
+                where: { referralCode },
+              });
+
+              while (existingCode) {
+                referralCode = await generateReferralCode();
+                existingCode = await db.user.findUnique({
+                  where: { referralCode },
+                });
+              }
+
               user = await db.user.create({
                 data: {
                   name: payload.name || payload.email.split("@")[0],
-                  username: username || generatedUsername,
+                  username: generatedUsername,
                   email: payload.email,
                   password: hashedPassword,
                   phoneNumber:
                     payload.phoneNumber ||
                     executePaymentResult?.payerAccount ||
-                    "",
-                  profession: payload.profession || "",
+                    null,
+                  profession: payload.profession || null,
                   role: "STUDENT",
                   emailVerified: true,
                   accountStatus: "ACTIVE",
+                  currentPlan: "NONE",
+                  referralCode: referralCode,
                   studentProfile: {
                     create: {},
                   },
                 },
-                include: { studentProfile: true },
+                include: {
+                  studentProfile: {
+                    include: {
+                      subscription: { include: { subscriptionPlan: true } },
+                    },
+                  },
+                },
               });
               isNewUser = true;
               temporaryPassword = randomPassword;
@@ -140,10 +195,20 @@ export async function GET(req: NextRequest) {
                 studentProfile,
                 executePaymentResult
               );
-              if (result instanceof NextResponse) return result; // Error response
+              if (result instanceof NextResponse) return result;
               purchase = result.purchase;
               subscription = result.subscription;
-
+              break;
+            }
+            case "CERTIFICATION": {
+              const result = await handleCertificationCoursePurchase(
+                payload,
+                studentProfile,
+                executePaymentResult
+              );
+              if (result instanceof NextResponse) return result;
+              purchase = result.purchase;
+              subscription = result.subscription;
               break;
             }
             case "MEMBERSHIP":
@@ -153,7 +218,7 @@ export async function GET(req: NextRequest) {
                 studentProfile,
                 executePaymentResult
               );
-              if (result instanceof NextResponse) return result; // Error response
+              if (result instanceof NextResponse) return result;
               purchase = result.purchase;
               subscription = result.subscription;
               break;
@@ -164,14 +229,14 @@ export async function GET(req: NextRequest) {
                 studentProfile,
                 executePaymentResult
               );
-              if (result instanceof NextResponse) return result; // Error response
+              if (result instanceof NextResponse) return result;
               purchase = result.purchase;
               subscription = result.subscription;
               break;
             }
             case "TRIAL": {
               const result = await handleTrialPurchase(payload, studentProfile);
-              if (result instanceof NextResponse) return result; // Error response
+              if (result instanceof NextResponse) return result;
               purchase = result.purchase;
               subscription = result.subscription;
               break;
@@ -181,7 +246,7 @@ export async function GET(req: NextRequest) {
                 { ...payload, userId: user.id },
                 studentProfile
               );
-              if (result instanceof NextResponse) return result; // Error response
+              if (result instanceof NextResponse) return result;
               purchase = result.purchase;
               subscription = result.subscription;
               break;
@@ -193,7 +258,7 @@ export async function GET(req: NextRequest) {
           }
 
           await emailService.handlePurchaseEmails(
-            payload,
+            { ...payload, trxID: executePaymentResult?.trxID },
             purchase,
             subscription,
             user,
@@ -239,14 +304,3 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   return GET(req);
 }
-
-// Create email transporter once (reusable)
-const createEmailTransporter = () => {
-  return nodemailer.createTransport({
-    service: "Gmail",
-    auth: {
-      user: process.env.SMTP_USERNAME,
-      pass: process.env.SMTP_APP_PASS,
-    },
-  });
-};

@@ -1,37 +1,43 @@
-// @ts-nocheck
-import {
-  useCourseByTeacherOrCoTeacher,
-  useTeacherProfile,
-} from "@/hooks/useTeacherProfile";
+// api/courses/[courseId]/lessons/[lessonId]/publish/route.ts
+import { useCourseByTeacherOrCoTeacher } from "@/hooks/useTeacherProfile";
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 import { isTeacher } from "@/lib/teacher";
 import updateCourseDuration from "@/lib/utils/updateCourseDuration";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+
+interface RouteParams {
+  params: {
+    courseId: string;
+    lessonId: string;
+  };
+}
 
 export async function PATCH(
-  req: Request,
-  { params }: { params: { courseId: string; lessonId: string } }
-) {
+  req: NextRequest,
+  { params }: RouteParams
+): Promise<NextResponse> {
   try {
-    const { userId, isAdmin } = await getServerUserSession(req);
-    const teacherProfileId = await useTeacherProfile(userId);
+    const { courseId, lessonId } = params;
+
+    if (!courseId || !lessonId) {
+      return new NextResponse("Missing courseId or lessonId", { status: 400 });
+    }
+
+    const { userId, isAdmin } = await getServerUserSession();
 
     if (!userId) {
       return new NextResponse("Not Authenticated", { status: 401 });
     }
 
-    // Check if user is admin or teacher
-    if (!isAdmin && !isTeacher(userId)) {
+    const userIsTeacher = await isTeacher(userId);
+
+    if (!isAdmin && !userIsTeacher) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    // If not admin, check if user has permission to publish this lesson
-      if (!isAdmin) {
-      const ownCourse = await useCourseByTeacherOrCoTeacher(
-        userId,
-        params.courseId
-      );
+    if (!isAdmin) {
+      const ownCourse = await useCourseByTeacherOrCoTeacher(userId, courseId);
 
       if (!ownCourse) {
         return new NextResponse("Unauthorized", { status: 401 });
@@ -40,8 +46,8 @@ export async function PATCH(
 
     const lesson = await db.lesson.findUnique({
       where: {
-        id: params.lessonId,
-        courseId: params.courseId,
+        id: lessonId,
+        courseId,
       },
     });
 
@@ -56,17 +62,15 @@ export async function PATCH(
     }
 
     const publishedLesson = await db.lesson.update({
-      where: {
-        id: params.lessonId,
-      },
+      where: { id: lessonId },
       data: {
         isPublished: true,
         updatedAt: new Date(),
       },
     });
 
-    // update total duration of the course by using the helper function
-    await updateCourseDuration(params.courseId);
+    await updateCourseDuration(courseId);
+
     return NextResponse.json(publishedLesson);
   } catch (error) {
     console.error("[LESSON_PUBLISH_ERROR]", error);

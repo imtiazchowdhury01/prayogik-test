@@ -31,7 +31,7 @@ const TeachersPage = async () => {
       <AllTeachers initialTeachers={data} />
       <ActionBanner
         title="শিক্ষক হিসেবে যোগদান করতে চান?"
-        description="আপনার দক্ষতা শেয়ার করুন, আয় করুন নিজের নিয়মে, আর গড়ে তুলুন শিক্ষার্থীদের শেখার নতুন সম্ভাবনা প্রয়োগিকে প্ল্যাটফর্মে।"
+        description="আপনার দক্ষতা শেয়ার করুন, আয় করুন, আর গড়ে তুলুন শিক্ষার্থীদের শেখার নতুন সম্ভাবনা প্রায়োগিকে প্ল্যাটফর্মে।"
         buttonText="রেজিস্ট্রেশন করুন"
         buttonLink="/become-a-teacher"
         backgroundImage="/images/teacher/teacher-cta-bg.webp"

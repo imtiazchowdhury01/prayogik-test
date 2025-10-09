@@ -35,22 +35,7 @@ export default function SearchPage() {
   }
 
   if (error) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">
-            খোঁজার সময় সমস্যা হয়েছে
-          </h1>
-          <p className="text-gray-600">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            আবার চেষ্টা করুন
-          </button>
-        </div>
-      </div>
-    );
+    return <NoResultsMessage query={""} />;
   }
 
   if (!searchResult) {

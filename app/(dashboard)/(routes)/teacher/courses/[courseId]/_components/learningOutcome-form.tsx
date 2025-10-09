@@ -34,11 +34,15 @@ const formSchema = z.object({
 interface LearningOutcomesFormProps {
   initialData: Course;
   courseId: string;
+  successMessage?: string;
+  api?: string;
 }
 
 export const LearningOutcomesForm = ({
   initialData,
   courseId,
+  api,
+  successMessage,
 }: LearningOutcomesFormProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false); // State for loading
@@ -77,6 +81,8 @@ export const LearningOutcomesForm = ({
       toggleEdit,
       setLoading,
       router,
+      successMessage,
+      api,
     });
   };
 

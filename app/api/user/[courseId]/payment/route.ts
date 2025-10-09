@@ -1,4 +1,4 @@
-// @ts-nocheck
+// api/user/[userId]/payment/route.ts
 import { NextResponse } from "next/server";
 import { v4 as uuid } from "uuid";
 import { db } from "@/lib/db";
@@ -24,6 +24,16 @@ export async function POST(
         id: params.courseId,
         isPublished: true,
       },
+      select: {
+        id: true,
+        title: true,
+        prices: {
+          select: {
+            regularAmount: true,
+          },
+          take: 1,
+        },
+      },
     });
 
     if (!course) {
@@ -32,16 +42,7 @@ export async function POST(
       });
     }
 
-    // const existingPurchase = await db.purchase.findUnique({
-    //   where: {
-    //     userId_courseId: {
-    //       userId,
-    //       courseId: params.courseId,
-    //     },
-    //   },
-    // });
-
-    const existingPurchase = db.purchase.findFirst({
+    const existingPurchase = await db.purchase.findFirst({
       where: {
         studentProfileId,
         courseId: params.courseId,
@@ -60,11 +61,13 @@ export async function POST(
       return new NextResponse("User not found", { status: 404 });
     }
 
+    const price = course.prices[0]?.regularAmount ?? 0;
+
     const formData = {
       cus_name: user.name,
       cus_email: user.email,
       cus_phone: "Not available",
-      amount: course.price ?? 0,
+      amount: price,
       tran_id: uuid(),
       signature_key: process.env.AAMARPAY_SIGNATURE_KEY,
       store_id: process.env.AAMARPAY_STORE_ID,

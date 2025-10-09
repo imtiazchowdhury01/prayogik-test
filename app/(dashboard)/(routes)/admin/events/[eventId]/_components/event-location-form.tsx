@@ -33,13 +33,12 @@ const formSchema = z
       if (data.isOnline) {
         return data.zoomLink && data.zoomLink.trim().length > 0;
       }
-      // If it's not online, location is required
-      return data.location && data.location.trim().length > 0;
+      // For offline events, location is optional
+      return true;
     },
     {
-      message:
-        "Location is required for offline events, Meeting link is required for online events",
-      path: ["location"], // This will show error on location field, but we'll handle it dynamically
+      message: "Meeting link is required for online events",
+      path: ["zoomLink"],
     }
   );
 
@@ -101,6 +100,7 @@ export const EventLocationForm = ({
       await updateEvent({
         eventId,
         values: finalValues,
+        slug: initialData.slug,
         toggleEdit,
         setLoading,
         router,
@@ -116,8 +116,8 @@ export const EventLocationForm = ({
     <div className="mt-6 border bg-slate-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
         <div className="flex items-center">
-         Location
-          <span className="text-red-500">*</span>
+          Location
+          {/* <span className="text-red-500">*</span> */}
         </div>
         <Button onClick={toggleEdit} variant="ghost">
           {isEditing ? (
@@ -256,16 +256,18 @@ export const EventLocationForm = ({
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">
-                  Venue Location <span className="text-red-500">*</span>
+                  Venue Location
+                  {/* <span className="text-red-500">*</span> */}
                 </label>
                 <Input
                   placeholder="Enter event venue address"
                   className="h-12"
-                  {...register("location", {
-                    required: !watchIsOnline
-                      ? "Location is required for in-person events"
-                      : false,
-                  })}
+                  {...register("location")}
+                  // {...register("location", {
+                  //   required: !watchIsOnline
+                  //     ? "Location is required for in-person events"
+                  //     : false,
+                  // })}
                 />
                 {errors.location && (
                   <div className="text-red-500 text-sm">

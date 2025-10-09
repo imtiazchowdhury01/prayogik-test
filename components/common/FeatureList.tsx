@@ -15,12 +15,12 @@ export default function FeatureList({ features, FeatureTitle }) {
             </h3>
             <ul className="leading-6 text-gray-700 max-w-4xl">
               {feature.points.map((point, i) => (
-                <li
+                <p
                   key={i}
-                  className="text-base font-normal md:pr-20 relative pl-4 before:content-['•'] before:absolute before:left-0 before:top-0 before:text-[14px] before:text-gray-800 before:leading-6"
+                  className="text-base font-normal md:pr-20 relative pl-4 before:absolute before:left-0 before:top-0 before:text-[14px] before:text-gray-800 before:leading-6"
                 >
                   {point}
-                </li>
+                </p>
               ))}
             </ul>
           </div>

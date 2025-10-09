@@ -1,8 +1,26 @@
-// @ts-nocheck
-
+// api/courses/categories/route.ts
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 import { NextResponse } from "next/server";
+
+interface CreateCategoryRequest {
+  name: string;
+  slug: string;
+  parentCategoryId?: string | null;
+  isChild?: boolean;
+}
+
+interface UpdateCategoryRequest {
+  id: string;
+  name: string;
+  slug: string;
+  parentCategoryId?: string | null;
+  isChild?: boolean;
+}
+
+interface DeleteCategoryRequest {
+  id: string;
+}
 
 // GET: Fetch all categories
 export async function GET(request: Request) {
@@ -32,7 +50,7 @@ export async function GET(request: Request) {
     });
     return NextResponse.json(categories);
   } catch (error) {
-    console.error("Error fetching categories:", error);
+    console.error("[GET_CATEGORIES_ERROR]", error);
     return NextResponse.json(
       { error: "An error occurred while fetching categories" },
       { status: 500 }
@@ -45,19 +63,27 @@ export async function POST(request: Request) {
   try {
     const { userId } = await getServerUserSession(request);
 
+    if (!userId) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
     // Check if admin user
     const user = await db.user.findUnique({
       where: {
         id: userId,
+      },
+      select: {
         isAdmin: true,
       },
     });
 
     if (!user?.isAdmin) {
-      return new NextResponse("Unauthorized Admin", { status: 401 });
+      return new NextResponse("Unauthorized Admin", { status: 403 });
     }
 
-    const { name, slug, ...rest } = await request.json();
+    const body: CreateCategoryRequest = await request.json();
+    const { name, slug, parentCategoryId, isChild } = body;
+
     if (!name || !slug) {
       return NextResponse.json(
         { error: "Name and slug are required" },
@@ -66,13 +92,13 @@ export async function POST(request: Request) {
     }
 
     // Check if category already exists
-    const category = await db.category.findUnique({
+    const existingCategory = await db.category.findUnique({
       where: {
         slug,
       },
     });
 
-    if (category) {
+    if (existingCategory) {
       return NextResponse.json(
         { message: "Category already exists" },
         { status: 400 }
@@ -80,12 +106,17 @@ export async function POST(request: Request) {
     }
 
     const newCategory = await db.category.create({
-      data: { name, slug, ...rest },
+      data: {
+        name,
+        slug,
+        parentCategoryId: parentCategoryId || null,
+        isChild: isChild ?? false,
+      },
     });
 
     return NextResponse.json(newCategory, { status: 201 });
   } catch (error) {
-    console.error("Error creating category:", error);
+    console.error("[CREATE_CATEGORY_ERROR]", error);
     return NextResponse.json(
       { message: "An error occurred while creating the category" },
       { status: 500 }
@@ -96,14 +127,18 @@ export async function POST(request: Request) {
 // PUT: Update an existing category
 export async function PUT(request: Request) {
   try {
-    const { isAdmin } = await getServerUserSession(request);
+    const { userId, isAdmin } = await getServerUserSession(request);
 
-    if (!isAdmin) {
-      return new NextResponse("Unauthorized Admin", { status: 401 });
+    if (!userId) {
+      return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const { id, name, slug, ...rest } = await request.json();
-    // console.log({ id, name, slug });
+    if (!isAdmin) {
+      return new NextResponse("Unauthorized Admin", { status: 403 });
+    }
+
+    const body: UpdateCategoryRequest = await request.json();
+    const { id, name, slug, parentCategoryId, isChild } = body;
 
     if (!id || !name || !slug) {
       return NextResponse.json(
@@ -114,12 +149,17 @@ export async function PUT(request: Request) {
 
     const updatedCategory = await db.category.update({
       where: { id },
-      data: { name, slug, ...rest },
+      data: {
+        name,
+        slug,
+        parentCategoryId: parentCategoryId || null,
+        isChild: isChild ?? undefined,
+      },
     });
 
     return NextResponse.json(updatedCategory);
   } catch (error) {
-    console.error("Error updating category:", error);
+    console.error("[UPDATE_CATEGORY_ERROR]", error);
     return NextResponse.json(
       { error: "An error occurred while updating the category" },
       { status: 500 }
@@ -132,19 +172,27 @@ export async function DELETE(request: Request) {
   try {
     const { userId } = await getServerUserSession(request);
 
+    if (!userId) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
     // Check if admin user
     const user = await db.user.findUnique({
       where: {
         id: userId,
+      },
+      select: {
         isAdmin: true,
       },
     });
 
     if (!user?.isAdmin) {
-      return new NextResponse("Unauthorized Admin", { status: 401 });
+      return new NextResponse("Unauthorized Admin", { status: 403 });
     }
 
-    const { id } = await request.json();
+    const body: DeleteCategoryRequest = await request.json();
+    const { id } = body;
+
     if (!id) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
@@ -155,7 +203,7 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({ message: "Category deleted successfully" });
   } catch (error) {
-    console.error("Error deleting category:", error);
+    console.error("[DELETE_CATEGORY_ERROR]", error);
     return NextResponse.json(
       { error: "An error occurred while deleting the category" },
       { status: 500 }

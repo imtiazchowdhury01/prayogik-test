@@ -142,13 +142,14 @@ const CourseCheckout = async ({
                     </span>
                   </div>
                   {hasDiscount && (
-                    <div className="">
+                    <div className="space-x-1">
                       <span className="text-sm text-brand font-medium">
                         ডিসকাউন্টেড প্রাইস:
                       </span>
                       <span className="text-xl font-bold text-brand">
                         ৳{convertNumberToBangla(discountedAmount)}
                       </span>
+                      <span className="text-xs">(স্ট্যান্ডার্ড কোর্সের জন্য প্রযোজ্য)</span>
                     </div>
                   )}
                   {/* {hasActiveSubscription && (

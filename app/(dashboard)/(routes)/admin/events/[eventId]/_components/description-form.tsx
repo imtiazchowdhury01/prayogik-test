@@ -63,6 +63,7 @@ export const EventDescriptionForm = ({
     await updateEvent({
       eventId,
       values,
+      slug: initialData.slug,
       toggleEdit,
       setLoading,
       router,

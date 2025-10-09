@@ -1,17 +1,52 @@
-// @ts-nocheck
-import { Category, Course } from "@prisma/client";
-import { getProgress } from "@/actions/get-progress";
-import { db } from "@/lib/db";
-import { useStudentProfile } from "@/hooks/useStudentProfile";
-import { unslugify } from "@/lib/generateSlug";
+// actions/get-courses.ts
+"use server";
 
-type CourseWithProgressWithCategory = Course & {
-  category: Category | null;
-  lessons: { id: string }[];
+import { db } from "@/lib/db";
+import { getProgress } from "@/actions/get-progress";
+import { unslugify } from "@/lib/generateSlug";
+import type { Prisma } from "@prisma/client";
+
+type CourseResult = {
+  id: string;
+  title: string;
+  slug: string;
+  totalDuration: number | null;
+  category: Prisma.CategoryGetPayload<true> | null;
+  isUnderSubscription: boolean;
+  imageUrl: string | null;
+  prices: Array<{
+    regularAmount: number;
+    discountedAmount: number | null;
+    isFree: boolean;
+  }>;
+  _count: {
+    enrolledStudents: number;
+  };
+  teacherProfile: {
+    user: {
+      name: string;
+    };
+  };
+  lessons: Array<{
+    id: string;
+    slug: string;
+    isPublished: boolean;
+    isFree: boolean;
+    videoUrl: string | null;
+    Progress: Prisma.ProgressGetPayload<true>[];
+    position: number;
+  }>;
+  enrolledStudents: Array<{
+    id: string;
+    studentProfileId: string;
+  }>;
+};
+
+type CourseWithProgress = CourseResult & {
   progress: number | null;
 };
 
-type GetCourses = {
+type GetCoursesParams = {
   userId?: string | null;
   title?: string;
   categoryId?: string;
@@ -19,25 +54,40 @@ type GetCourses = {
   category?: string;
   limit?: number;
   search?: string;
-  sort?: string;
+  sort?: "asc" | "desc";
 };
 
-const courseFilters = ({ title, categoryId, category, search }: GetCourses) => {
-  const filters: db.CourseWhereInput = {
+type GetCoursesResponse = {
+  data: CourseWithProgress[];
+  meta: {
+    total: number;
+  };
+};
+
+const courseFilters = ({
+  title,
+  categoryId,
+  category,
+  search,
+}: GetCoursesParams): Prisma.CourseWhereInput => {
+  const filters: Prisma.CourseWhereInput = {
     isPublished: true,
   };
+
   if (title) {
     filters.title = {
       contains: title,
       mode: "insensitive",
     };
   }
+
   if (search) {
     filters.title = {
       contains: unslugify(search),
       mode: "insensitive",
     };
   }
+
   if (categoryId) {
     filters.categoryId = categoryId;
   }
@@ -47,8 +97,10 @@ const courseFilters = ({ title, categoryId, category, search }: GetCourses) => {
       slug: category,
     };
   }
+
   return filters;
 };
+
 export const getCourses = async ({
   userId,
   title,
@@ -58,8 +110,23 @@ export const getCourses = async ({
   search,
   limit = 12,
   sort = "desc",
-}: GetCourses): Promise<CourseWithProgressWithCategory[]> => {
+}: GetCoursesParams): Promise<GetCoursesResponse> => {
   try {
+    let studentProfileId: string | null = null;
+
+    // Get student profile if user is logged in
+    if (userId) {
+      const studentProfile = await db.studentProfile.findUnique({
+        where: {
+          userId: userId,
+        },
+        select: {
+          id: true,
+        },
+      });
+      studentProfileId = studentProfile?.id ?? null;
+    }
+
     const courses = await db.course.findMany({
       where: courseFilters({ title, categoryId, category, search }),
       select: {
@@ -105,15 +172,17 @@ export const getCourses = async ({
             position: true,
           },
         },
-        purchases: userId
+        enrolledStudents: studentProfileId
           ? {
               where: {
-                studentProfile: {
-                  userId: userId, // Use `studentProfile.userId` instead of `userId`
-                },
+                studentProfileId: studentProfileId,
+              },
+              select: {
+                id: true,
+                studentProfileId: true,
               },
             }
-          : undefined,
+          : true,
       },
       orderBy: {
         createdAt: sort,
@@ -121,28 +190,41 @@ export const getCourses = async ({
       take: Number(limit),
     });
 
-    const coursesWithProgress: CourseWithProgressWithCategory[] =
-      await Promise.all(
-        courses.map(async (course) => {
-          let progressPercentage = null;
+    const coursesWithProgress: CourseWithProgress[] = await Promise.all(
+      courses.map(async (course) => {
+        let progressPercentage: number | null = null;
 
-          if (userId && course.purchases.length > 0) {
-            progressPercentage = await getProgress(userId, course.id);
-          }
+        // Check if user is enrolled
+        const isEnrolled = studentProfileId
+          ? course.enrolledStudents.some(
+              (enrollment) => enrollment.studentProfileId === studentProfileId
+            )
+          : false;
 
-          return {
-            ...course,
-            progress: progressPercentage,
-          };
-        })
-      );
+        if (userId && isEnrolled) {
+          progressPercentage = await getProgress(userId, course.id);
+        }
+
+        return {
+          ...course,
+          progress: progressPercentage,
+        };
+      })
+    );
+
     const totalCourses = await db.course.count({
       where: courseFilters({ title, categoryId, category, search }),
     });
 
-    return { data: coursesWithProgress, meta: { total: totalCourses } };
+    return {
+      data: coursesWithProgress,
+      meta: { total: totalCourses },
+    };
   } catch (error) {
     console.error("[GET_COURSES]", error);
-    return [];
+    return {
+      data: [],
+      meta: { total: 0 },
+    };
   }
 };

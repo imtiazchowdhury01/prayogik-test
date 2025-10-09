@@ -43,6 +43,7 @@ import {
   freeCourseAccessSchema,
   SubscribersSchema,
   courseRoadmapSchema,
+  tiralCourseAccessSchema,
 } from "./types";
 import { initContract } from "@ts-rest/core";
 import { PurchaseType } from "@prisma/client";
@@ -264,6 +265,7 @@ export const ApiContractV1 = c.router({
       category: z.string().optional(),
       teacher: z.string().optional(),
       sort: z.enum(["asc", "desc"]).optional().default("desc"),
+      isUnderSubscription: z.boolean().optional(),
     }),
 
     responses: {
@@ -1191,19 +1193,43 @@ export const ApiContractV1 = c.router({
   getDashboardCourses: {
     method: "GET",
     path: "/api/user/courses/dashboard",
+    query: z.object({
+      tab: z
+        .enum(["purchased", "subscription", "certificate", "event"])
+        .optional(),
+      page: z.string().optional(),
+      limit: z.string().optional(),
+      metadataOnly: z.string().optional(),
+    }),
     responses: {
-      200: z.object({
-        completedCourses: z.array(CourseWithProgressSchema),
-        coursesInProgress: z.array(CourseWithProgressSchema),
-        subscribedCourses: z.array(CourseWithProgressSchema),
-        purchasedCourseIds: z.array(z.string()),
-        isSubscriber: z.boolean(),
-        subscription: z.any(),
-      }),
+      200: z.union([
+        // Metadata only response
+        z.object({
+          purchasedCourseIds: z.array(z.string()),
+          isSubscriber: z.boolean(),
+          subscription: z.any(),
+        }),
+        // Paginated courses response
+        z.object({
+          courses: z.array(CourseWithProgressSchema),
+          totalCount: z.number(),
+          hasMore: z.boolean(),
+          nextCursor: z.number().optional(),
+          isSubscriber: z.boolean().optional(),
+        }),
+        // Paginated events response
+        z.object({
+          events: z.array(z.any()),
+          totalCount: z.number(),
+          hasMore: z.boolean(),
+          nextCursor: z.number().optional(),
+        }),
+      ]),
       401: z.object({ error: z.string() }),
+      404: z.object({ error: z.string() }),
       500: z.object({ error: z.string() }),
     },
-    summary: "Get user's dashboard courses with progress",
+    summary: "Get user's dashboard courses with pagination",
   },
   // /api/user/profile/reset-password
   resetProfilePassword: {
@@ -1314,7 +1340,29 @@ export const ApiContractV1 = c.router({
       }),
     },
   },
-
+  // bkash payment callback
+  postBkashPaymentCallback: {
+    method: "POST",
+    path: "/api/bkash/callback",
+    body: z.object({
+      email: z.string(),
+      amount: z.number(),
+    }),
+    responses: {
+      200: z.object({
+        msg: z.string(),
+        data: z.object({
+          success: z.boolean(),
+          message: z.string(),
+        }),
+      }),
+      500: z.object({
+        error: z.boolean(),
+        message: z.string(),
+      }),
+    },
+  },
+  
   // Access course for free
   createFreeCourseAccess: {
     method: "POST",
@@ -1326,4 +1374,266 @@ export const ApiContractV1 = c.router({
       500: z.object({ message: z.string(), error: z.any() }),
     },
   },
+
+  // Access trial course
+  createTrialCourseAccess: {
+    method: "POST",
+    path: "/api/user/subscription/courses",
+    body: tiralCourseAccessSchema,
+    responses: {
+      200: z.any(),
+      400: z.object({ error: z.string() }),
+      500: z.object({ message: z.string(), error: z.any() }),
+    },
+  },
+
+  // get search courses
+  searchCourses: {
+    method: "GET",
+    path: "/api/courses/search",
+    query: z.object({
+      q: z.string().min(1),
+      page: z.string().optional().default("1"),
+      limit: z.string().optional().default("10"),
+      published: z.enum(["true", "false"]).optional(),
+      advanced: z.enum(["true", "false"]).optional().default("false"),
+      isUnderSubscription: z.enum(["true", "false"]).optional(),
+    }),
+    responses: {
+      200: z.object({
+        success: z.boolean(),
+        data: z.object({
+          courses: z.array(CourseSchema),
+          pagination: z.object({
+            currentPage: z.number(),
+            totalPages: z.number(),
+            totalCount: z.number(),
+            hasNextPage: z.boolean(),
+            hasPrevPage: z.boolean(),
+          }),
+          searchType: z.enum(["simple", "advanced"]),
+        }),
+      }),
+      400: z.object({
+        error: z.string(),
+      }),
+      500: z.object({
+        error: z.string(),
+      }),
+    },
+  },
+  getUserDetails: {
+    method: "GET",
+    path: "/api/user",
+    responses: {
+      200: FullUserSchema,
+      400: z.object({ error: z.string() }),
+      404: z.object({ error: z.string() }),
+      500: z.object({ error: z.string() }),
+    },
+    summary: "Get user profile",
+  },
+  getEventRegisterByUser: {
+    method: "GET",
+    path: "/api/events/:eventId/registration",
+    pathParams: z.object({
+      eventId: z.string(),
+    }),
+    responses: {
+      200: z.object({
+        success: z.boolean(),
+        data: z.object({
+          registeredUser: z.any(),
+          isPaid: z.boolean(),
+          isRegistered: z.boolean(),
+        }),
+      }),
+      400: z.object({ error: z.string() }),
+      404: z.object({ error: z.string() }),
+      500: z.object({ error: z.string() }),
+    },
+    summary: "Get event registration by userId",
+  },
+  getCertificationCourses: {
+    method: "GET",
+    path: "/api/certifications",
+    query: z.object({
+      page: z.number().min(1).max(50).optional().default(1),
+      limit: z.number().min(1).max(50).optional().default(10),
+      title: z.string().optional(),
+      category: z.string().optional(),
+      teacher: z.string().optional(),
+      sort: z.enum(["asc", "desc"]).optional().default("desc"),
+    }),
+    responses: {
+      200: z.object({
+        certifications: z.array(z.object({})),
+        pagination: z.object({
+          page: z.number(),
+          limit: z.number(),
+          totalCertifications: z.number(),
+          totalPages: z.number(),
+          hasNextPage: z.boolean(),
+          hasPrevPage: z.boolean(),
+        }),
+        searchType: z.enum(["simple", "advanced"]),
+      }),
+      400: z.object({
+        error: z.string(),
+      }),
+      500: z.object({
+        error: z.string(),
+      }),
+    },
+    summary: "Fetch certifications with filtering, pagination and search",
+  },
+  createCertification: {
+    method: "POST",
+    path: "/api/certifications",
+    body: z.object({
+      title: z.string(),
+      slug: z.string(),
+    }),
+    responses: {
+      201: z.object({}),
+      400: z.object({ error: z.string() }),
+      500: z.object({ error: z.string() }),
+    },
+    summary: "Create a new certification",
+  },
+  getCertificationById: {
+    method: "GET",
+    path: "/api/certifications/:certificationId",
+    responses: {
+      200: z.object({}),
+      400: z.object({ error: z.string() }),
+      404: z.object({ error: z.string() }),
+      500: z.object({ error: z.string() }),
+    },
+    summary: "Get certification by certificationId",
+  },
+  updateCertification: {
+    method: "PATCH",
+    path: "/api/certifications/:certificationId",
+    pathParams: z.object({
+      certificationId: z.string(),
+    }),
+    body: z.object({}),
+    responses: {
+      200: z.object({}),
+      400: z.object({ error: z.string() }),
+      404: z.object({ error: z.string() }),
+      500: z.object({ error: z.string() }),
+    },
+    summary: "Update a certification by ID",
+  },
+  deleteCertification: {
+    method: "DELETE",
+    path: "/api/certifications/:certificationId",
+    responses: {
+      200: z.object({ message: z.string() }),
+      404: z.object({ error: z.string() }),
+      500: z.object({ error: z.string() }),
+    },
+    summary: "Delete a certification by ID",
+  },
+  publishCertification: {
+    method: "PATCH",
+    path: "/api/certifications/:certificationId/publish",
+    body: z.object({}), // Empty body for PATCH requests
+    responses: {
+      200: z.object({
+        id: z.string(),
+        title: z.string(),
+        slug: z.string(),
+        isPublished: z.boolean(),
+        courseIds: z.array(z.string()).optional(),
+        createdAt: z.date(),
+        updatedAt: z.date(),
+      }),
+      400: z.object({
+        error: z.string().optional(),
+        message: z.string().optional(),
+      }),
+      401: z.object({ error: z.string() }),
+      404: z.object({ error: z.string() }),
+      500: z.object({ error: z.string() }),
+    },
+    summary: "Publish a certification by ID",
+  },
+  unpublishCertification: {
+    method: "PATCH",
+    path: "/api/certifications/:certificationId/unpublish",
+    body: z.object({}), // Empty body for PATCH requests
+    responses: {
+      200: z.object({
+        id: z.string(),
+        title: z.string(),
+        slug: z.string(),
+        isPublished: z.boolean(),
+        courseIds: z.array(z.string()).optional(),
+        createdAt: z.date(),
+        updatedAt: z.date(),
+      }),
+      400: z.object({
+        error: z.string().optional(),
+        message: z.string().optional(),
+      }),
+      401: z.object({ error: z.string() }),
+      404: z.object({ error: z.string() }),
+      500: z.object({ error: z.string() }),
+    },
+    summary: "Unpublish a certification by ID",
+  },
+
+  certificationAccess: {
+    method: "GET",
+    path: "/api/certifications/:certificationId/access",
+    pathParams: z.object({
+      certificationId: z.string(),
+    }),
+    responses: {
+      200: z.object({
+        access: z.boolean(),
+        reason: z.string(),
+      }),
+      400: z.object({ error: z.string() }),
+      500: z.object({ error: z.string() }),
+    },
+  },
+  getEventsQuery: {
+    method: "GET",
+    path: "/api/events",
+    query: z.object({
+      page: z.number().min(1).max(50).optional().default(1),
+      limit: z.number().min(1).max(50).optional().default(12),
+      title: z.string().optional(),
+      type: z.enum(["EOI", "PAID", "FREE"]).optional(),
+      status: z
+        .enum(["DRAFT", "UPCOMING", "CLOSED"])
+        .optional()
+        .default("UPCOMING"),
+      isOnline: z.boolean().optional(),
+      sort: z.enum(["asc", "desc"]).optional().default("asc"),
+    }),
+    responses: {
+      200: z.object({
+        events: z.array(z.any()),
+        pagination: z.object({
+          page: z.number(),
+          limit: z.number(),
+          totalEvents: z.number(),
+          totalPages: z.number(),
+          hasNextPage: z.boolean(),
+          hasPrevPage: z.boolean(),
+        }),
+      }),
+      500: z.object({
+        error: z.boolean(),
+        message: z.string(),
+      }),
+    },
+    summary: "Fetch events with filtering, pagination and search",
+  },
+
 });

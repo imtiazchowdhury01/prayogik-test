@@ -10,7 +10,7 @@ const HomeCourses = async () => {
 
   return (
     <section
-      className="w-full bg-white pt-16 md:pt-20"
+      className="w-full bg-white py-16 md:py-20"
       data-testid="our-courses-section"
     >
       <div className="app-container" data-testid="courses-container">

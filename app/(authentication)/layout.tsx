@@ -1,3 +1,4 @@
+// app/(authentication)/layout.tsx
 import PrayogikIntro from "./signin/_components/prayogik-intro";
 
 export default function RootLayout({

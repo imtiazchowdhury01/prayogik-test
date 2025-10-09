@@ -1,41 +1,36 @@
-// @ts-nocheck
-
-import { useTeacherProfile } from "@/hooks/useTeacherProfile";
+// api/admin/users/[userId]/details-with-course/route.ts
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 
-// Fetch all published courses for a teacher based on teacherProfileId
 export async function GET(
   request: Request,
   { params }: { params: { userId: string } }
 ) {
   const { userId } = params;
 
-
-
-
-
   try {
-    // Fetch all published courses for the teacher
-   const teacher = await db.user.findUnique({
-     where: { id: userId },
-     include: {
-       teacherProfile: {
-         include: {
-           teacherRank: true,
-           createdCourses: {
-             include: {
-               enrolledStudents: true,
-               prices: true,
-               enrolledStudents: true,
-             },
-           },
-         },
-       },
-     },
-   });
+    const teacher = await db.user.findUnique({
+      where: { id: userId },
+      include: {
+        teacherProfile: {
+          include: {
+            teacherRank: true,
+            createdCourses: {
+              include: {
+                enrolledStudents: true,
+                prices: true,
+              },
+            },
+          },
+        },
+      },
+    });
 
-    if (!teacher || teacher?.createdCourses?.length === 0) {
+    if (
+      !teacher ||
+      !teacher.teacherProfile ||
+      teacher.teacherProfile.createdCourses.length === 0
+    ) {
       return NextResponse.json(
         { message: "No published courses found for this teacher" },
         { status: 404 }

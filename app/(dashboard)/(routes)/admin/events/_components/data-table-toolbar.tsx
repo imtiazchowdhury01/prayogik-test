@@ -1,7 +1,7 @@
 "use client";
 
 import { Table } from "@tanstack/react-table";
-import { X, Plus} from "lucide-react";
+import { X, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -24,7 +24,7 @@ import toast from "react-hot-toast";
 import { isEnglish } from "@/lib/utils/stringUtils";
 import { CreateEventForm } from "./create-event-form";
 
-export type EventType = "PAID" | "FREE";
+export type EventType = "PAID" | "FREE" | "EOI";
 export type EventStatus = "DRAFT" | "UPCOMING" | "WAITING" | "CLOSED";
 export type EventFormat = "ONLINE" | "OFFLINE";
 
@@ -102,11 +102,10 @@ export function EventFilters<TData>({
     form.reset();
   };
 
-
   // Transform data for faceted filters
   const typeOptions = eventTypes.map((type) => ({
     value: type,
-    label: type === "PAID" ? "Paid" : "Free",
+    label: type.charAt(0) + type.slice(1).toLowerCase(),
   }));
 
   const statusOptions = eventStatuses.map((status) => ({

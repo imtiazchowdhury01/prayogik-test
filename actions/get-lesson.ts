@@ -1,6 +1,8 @@
-// @ts-nocheck
+// actions/get-lesson.ts
+"use server";
+
 import { db } from "@/lib/db";
-import { Attachment, Lesson } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 
 interface GetLessonProps {
   userId: string;
@@ -8,12 +10,67 @@ interface GetLessonProps {
   lessonSlug: string;
 }
 
+type LessonResult = Prisma.LessonGetPayload<{
+  select: {
+    id: true;
+    title: true;
+    slug: true;
+    description: true;
+    textContent: true;
+    videoUrl: true;
+    videoStatus: true;
+    position: true;
+    isPublished: true;
+    isFree: true;
+    duration: true;
+    courseId: true;
+    createdAt: true;
+    updatedAt: true;
+  };
+}>;
+
+type CourseResult = Prisma.CourseGetPayload<{
+  select: {
+    id: true;
+    prices: true;
+  };
+}>;
+
+type AttachmentResult = Prisma.AttachmentGetPayload<{
+  select: {
+    id: true;
+    name: true;
+    url: true;
+    courseId: true;
+  };
+}>;
+
+type ProgressResult = Prisma.ProgressGetPayload<{
+  select: {
+    id: true;
+    studentProfileId: true;
+    lessonId: true;
+    isCompleted: true;
+    createdAt: true;
+    updatedAt: true;
+  };
+}>;
+
+type EnrollmentResult = Prisma.EnrolledStudentsGetPayload<{
+  select: {
+    id: true;
+    studentProfileId: true;
+    courseId: true;
+  };
+}>;
+
 export const getLesson = async ({
   userId,
   courseSlug,
   lessonSlug,
 }: GetLessonProps) => {
   try {
+    // Get the course
     const course = await db.course.findUnique({
       where: {
         slug: courseSlug,
@@ -29,26 +86,57 @@ export const getLesson = async ({
       throw new Error("Course not found or not published");
     }
 
-    // const purchase = await db.purchase.findUnique({
-    //   where: {
-    //     userId_courseId: {
-    //       userId,
-    //       courseId: course.id,
-    //     },
-    //   },
-    // });
-
-    const purchase = db.enrolledStudents.findFirst({
+    // Get student profile
+    const studentProfile = await db.studentProfile.findUnique({
       where: {
         userId: userId,
-        courseId: course.id,
+      },
+      select: {
+        id: true,
       },
     });
 
+    if (!studentProfile) {
+      throw new Error("Student profile not found");
+    }
+
+    // Check if student is enrolled in the course
+    const enrollment = await db.enrolledStudents.findFirst({
+      where: {
+        studentProfileId: studentProfile.id,
+        courseId: course.id,
+      },
+      select: {
+        id: true,
+        studentProfileId: true,
+        courseId: true,
+      },
+    });
+
+    // Get the lesson - using courseId and slug composite unique constraint
     const lesson = await db.lesson.findUnique({
       where: {
-        slug: lessonSlug,
+        courseId_slug: {
+          courseId: course.id,
+          slug: lessonSlug,
+        },
         isPublished: true,
+      },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        description: true,
+        textContent: true,
+        videoUrl: true,
+        videoStatus: true,
+        position: true,
+        isPublished: true,
+        isFree: true,
+        duration: true,
+        courseId: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
 
@@ -56,18 +144,26 @@ export const getLesson = async ({
       throw new Error("Lesson not found or not published");
     }
 
-    let attachments: Attachment[] = [];
-    let nextLesson: Lesson | null = null;
+    let attachments: AttachmentResult[] = [];
+    let nextLesson: LessonResult | null = null;
 
-    if (purchase) {
+    // Get attachments if enrolled
+    if (enrollment) {
       attachments = await db.attachment.findMany({
         where: {
           courseId: course.id,
         },
+        select: {
+          id: true,
+          name: true,
+          url: true,
+          courseId: true,
+        },
       });
     }
 
-    if (lesson.isFree || purchase) {
+    // Get next lesson if lesson is free or user is enrolled
+    if (lesson.isFree || enrollment) {
       nextLesson = await db.lesson.findFirst({
         where: {
           courseId: course.id,
@@ -79,15 +175,40 @@ export const getLesson = async ({
         orderBy: {
           position: "asc",
         },
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          description: true,
+          textContent: true,
+          videoUrl: true,
+          videoStatus: true,
+          position: true,
+          isPublished: true,
+          isFree: true,
+          duration: true,
+          courseId: true,
+          createdAt: true,
+          updatedAt: true,
+        },
       });
     }
 
+    // Get progress
     const progress = await db.progress.findUnique({
       where: {
-        userId_lessonId: {
-          userId,
+        studentProfileId_lessonId: {
+          studentProfileId: studentProfile.id,
           lessonId: lesson.id,
         },
+      },
+      select: {
+        id: true,
+        studentProfileId: true,
+        lessonId: true,
+        isCompleted: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
 
@@ -97,10 +218,10 @@ export const getLesson = async ({
       attachments,
       nextLesson,
       progress,
-      purchase,
+      purchase: enrollment,
     };
   } catch (error) {
-    console.log("[GET_LESSON_ERROR]", error);
+    console.error("[GET_LESSON_ERROR]", error);
     return {
       lesson: null,
       course: null,

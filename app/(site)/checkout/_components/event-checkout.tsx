@@ -106,12 +106,16 @@ const EventCheckout = async ({
                 {/* Event Date and Time */}
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-gray-500" />
-                  <div>
-                    <p className="font-medium">{formattedDate}</p>
-                    <p className="text-sm text-gray-600">
-                      সময়: {formattedTime}
-                    </p>
-                  </div>
+                  {event?.date ? (
+                    <div>
+                      <p className="font-medium">{formattedDate}</p>
+                      <p className="text-sm text-gray-600">
+                        সময়: {formattedTime}
+                      </p>
+                    </div>
+                  ) : (
+                    "তারিখ এখনও নির্ধারণ হয়নি"
+                  )}
                 </div>
 
                 {/* Event Location */}

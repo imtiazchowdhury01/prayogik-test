@@ -6,11 +6,13 @@ import {
   handleBkashPayment,
   handleTrialPurchase,
 } from "../utils/checkout/client";
+import { processDevPayment } from "../utils/checkout/dev-payment";
 
 export async function handleCheckout(formData: FormData) {
   const subscriptionPlanId = formData.get("planId") as string;
   const purchasedType = formData.get("type") as string;
   const courseId = formData.get("courseId") as string;
+  const certificationId = formData.get("certificationId") as string;
   const email = formData.get("email") as string;
   let amount = parseInt(formData.get("amount") as string) || 0;
   const eventId = formData.get("eventId") as string;
@@ -25,26 +27,25 @@ export async function handleCheckout(formData: FormData) {
       purchasedType === PurchaseType.SINGLE_COURSE ? null : subscriptionPlanId,
     eventId,
     courseId,
+    certificationId,
     name,
     email,
     phoneNumber,
     profession,
-    amount:
-      purchasedType === PurchaseType.TRIAL
-        ? 0
-        : Number(parseFloat(amount).toFixed(2)),
+    amount: Number(parseFloat(amount).toFixed(2)),
     type: purchasedType,
     isFreeCourse, // For Free Course Access
   };
 
   try {
-    switch (purchasedType) {
-      case PurchaseType.TRIAL:
-        return await handleTrialPurchase(payload);
+    // if (process.env.NODE_ENV === 'development') {
+    //   return await processDevPayment(payload);
 
-      default:
-        return await handleBkashPayment(payload);
-    }
+    //   // console.log("Checkout Payload:", payload);
+    // }
+    // else {
+      return await handleBkashPayment(payload);
+    // }
   } catch (error) {
     console.error("Checkout error:", error);
     return {

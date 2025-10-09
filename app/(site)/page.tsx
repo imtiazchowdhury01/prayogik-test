@@ -6,6 +6,7 @@ import UpcomingEvents from "./_components/home/UpcomingEvents";
 import HomeCourses from "./_components/HomeCourses";
 import LiveCourses from "./_components/LiveCourses";
 import PrayogikHero from "./_components/home/PrayogikHero";
+import CertificationCourses from "./certifications/_components/certification-courses";
 
 export const metadata: Metadata = {
   title: "Prayogik – Practical Courses in Bangla for Career Skills",
@@ -19,6 +20,7 @@ export default function HomePage() {
       <PrayogikHero />
       <HomeCourses />
       <LiveCourses />
+      {/* <CertificationCourses  isCertificationPage={false}/> */}
       <UpcomingEvents />
       <SuccessStory />
       <OurExperts />
@@ -26,7 +28,7 @@ export default function HomePage() {
         <ActionBanner
           title="অভিজ্ঞ প্রফেশনাল?"
           description="আপনার দক্ষতা ও নলেজ শেয়ার করুন। আমাদের প্ল্যাটফর্মে কোর্স, লাইভ ট্রেনিং, ওয়ার্কশপ বা ক্যারিয়ার মেন্টর হিসেবে যোগ দিন!"
-          buttonText="বিস্তারিত জানুন"
+          buttonText="বিস্তারিত"
           buttonLink="/become-a-teacher"
           backgroundImage="/images/teacher/teacher-cta-bg.webp"
           className="mb-0 xl:mb-28"

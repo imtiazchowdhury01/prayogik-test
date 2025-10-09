@@ -1,16 +1,28 @@
+// api/admin/manage/course-roadmap/[id]/route.ts
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
-import { z } from "zod";
-import { courseRoadmapSchema } from "@/lib/utils/openai/types";
+import { CourseRoadmapStatus, DifficultyLevel } from "@prisma/client";
 
-type UpdateCourseRoadmapBody = z.infer<typeof courseRoadmapSchema>;
+interface UpdateCourseRoadmapBody {
+  title?: string;
+  description?: string;
+  status?: CourseRoadmapStatus;
+  category?: string;
+  estimatedDuration?: string;
+  targetDate?: string;
+  difficulty?: DifficultyLevel;
+  prerequisites?: string;
+  courseLink?: string;
+  teacherId?: string;
+}
 
 export async function PUT(
   req: Request,
   { params }: { params: { id: string } }
 ) {
   try {
+    const body = (await req.json()) as UpdateCourseRoadmapBody;
     const {
       title,
       description,
@@ -22,7 +34,7 @@ export async function PUT(
       prerequisites,
       courseLink,
       teacherId,
-    }: UpdateCourseRoadmapBody = await req.json();
+    } = body;
 
     const { isAdmin } = await getServerUserSession(req);
     if (!isAdmin) {
@@ -47,20 +59,26 @@ export async function PUT(
       );
     }
 
-    const updateData: any = {};
+    const updateData: Record<string, any> = {};
+
     if (title !== undefined) updateData.title = title;
-    if (courseLink !== undefined) updateData.courseLink = courseLink;
     if (description !== undefined) updateData.description = description;
     if (status !== undefined) updateData.status = status;
     if (category !== undefined) updateData.category = category;
-    if (teacherId !== undefined) updateData.teacherId = teacherId;
     if (estimatedDuration !== undefined)
       updateData.estimatedDuration = estimatedDuration;
-    if (targetDate !== undefined)
-      updateData.targetDate = targetDate ? new Date(targetDate) : null;
     if (difficulty !== undefined) updateData.difficulty = difficulty;
+    if (courseLink !== undefined) updateData.courseLink = courseLink || null;
     if (prerequisites !== undefined)
       updateData.prerequisites = prerequisites || null;
+    if (targetDate !== undefined)
+      updateData.targetDate = targetDate ? new Date(targetDate) : null;
+
+    if (teacherId !== undefined) {
+      updateData.teacher = teacherId
+        ? { connect: { id: teacherId } }
+        : { disconnect: true };
+    }
 
     const updatedRoadmap = await db.courseRoadmap.update({
       where: { id },

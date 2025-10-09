@@ -1,88 +1,105 @@
-// @ts-nocheck
-
+// api/subscriptions/discounts/route.ts
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 
-// POST API to create or update subscription discount
+// POST API to create subscription discount
 export async function POST(req: Request) {
-  const { name, discountPercentage, isDefault } = await req.json();
-
-  // Validate input
-  if (
-    !name ||
-    typeof discountPercentage !== "number" ||
-    discountPercentage < 0 ||
-    discountPercentage > 100
-  ) {
-    return NextResponse.json(
-      { message: "Invalid input data" },
-      { status: 400 }
-    );
-  }
-
   try {
+    const body = await req.json();
+    const { name, discountPercentage, isDefault } = body;
+
+    // Validate input
+    if (
+      !name ||
+      typeof discountPercentage !== "number" ||
+      discountPercentage < 0 ||
+      discountPercentage > 100
+    ) {
+      return NextResponse.json(
+        { message: "Invalid input data" },
+        { status: 400 }
+      );
+    }
+
     // Create new subscription discount
     const newSubscriptionDiscount = await db.subscriptionDiscount.create({
       data: {
         name,
         discountPercentage,
-        isDefault,
+        isDefault: isDefault ?? false,
       },
     });
 
     return NextResponse.json(newSubscriptionDiscount, { status: 201 });
   } catch (error) {
-    console.error("Error creating/updating sales", {
-      error: error.message,
-      stack: error.stack,
+    console.error("Error creating subscription discount:", {
+      error: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
     });
 
     return NextResponse.json(
-      { message: error.message || "Error managing subscription discount" },
+      {
+        message:
+          error instanceof Error
+            ? error.message
+            : "Error creating subscription discount",
+      },
       { status: 500 }
     );
   }
 }
 
-// GET API to fetch all subscription discount
+// GET API to fetch all subscription discounts
 export async function GET() {
   try {
-    // Fetch all subscription discount from the database
-    const subscriptionDiscounts = await db.subscriptionDiscount.findMany();
+    const subscriptionDiscounts = await db.subscriptionDiscount.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
 
-    // Return settings as JSON response
-    return NextResponse.json(subscriptionDiscounts);
+    return NextResponse.json(subscriptionDiscounts, { status: 200 });
   } catch (error) {
-    console.error("Error fetching subscription discount:", error);
-    return NextResponse.error();
+    console.error("Error fetching subscription discounts:", error);
+    return NextResponse.json(
+      {
+        message:
+          error instanceof Error
+            ? error.message
+            : "Error fetching subscription discounts",
+      },
+      { status: 500 }
+    );
   }
 }
 
+// PUT API to update subscription discount
 export async function PUT(req: Request) {
-  const { id, name, discountPercentage, isDefault } = await req.json();
-
-  // Validate input
-  if (
-    !id ||
-    !name ||
-    typeof discountPercentage !== "number" ||
-    discountPercentage < 0 ||
-    discountPercentage > 100
-  ) {
-    return NextResponse.json(
-      { message: "Invalid input data" },
-      { status: 400 }
-    );
-  }
-
   try {
+    const body = await req.json();
+    const { id, name, discountPercentage, isDefault } = body;
+
+    // Validate input
+    if (
+      !id ||
+      !name ||
+      typeof discountPercentage !== "number" ||
+      discountPercentage < 0 ||
+      discountPercentage > 100
+    ) {
+      return NextResponse.json(
+        { message: "Invalid input data" },
+        { status: 400 }
+      );
+    }
+
     // Update the subscription discount
     const updatedSubscriptionDiscount = await db.subscriptionDiscount.update({
       where: { id },
       data: {
         name,
         discountPercentage,
-        isDefault,
+        isDefault: isDefault ?? false,
       },
     });
 
@@ -90,7 +107,12 @@ export async function PUT(req: Request) {
   } catch (error) {
     console.error("Error updating subscription discount:", error);
     return NextResponse.json(
-      { message: error.message || "Error updating subscription discount" },
+      {
+        message:
+          error instanceof Error
+            ? error.message
+            : "Error updating subscription discount",
+      },
       { status: 500 }
     );
   }

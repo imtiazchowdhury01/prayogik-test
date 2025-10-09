@@ -1,4 +1,4 @@
-// @ts-nocheck
+// api/teacher/payment/route.ts
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
@@ -7,8 +7,12 @@ export async function GET(request: Request) {
     const teachers = await db.user.findMany({
       where: { role: "TEACHER" },
       include: {
-        Payments: true,
-        PaymentMethod: true,
+        teacherProfile: {
+          include: {
+            teacherPayments: true,
+            bankAccounts: true,
+          },
+        },
       },
     });
 
@@ -25,8 +29,7 @@ export async function POST(request: Request) {
   try {
     const { paymentId, status } = await request.json();
 
-    // Fetch the current payment data
-    const payment = await db.payments.findUnique({
+    const payment = await db.teacherPayments.findUnique({
       where: { id: paymentId },
     });
 
@@ -34,23 +37,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Payment not found" }, { status: 404 });
     }
 
-    // Update payment based on status
     let updatedPayment;
     if (status === "paid") {
-      updatedPayment = await db.payments.update({
+      updatedPayment = await db.teacherPayments.update({
         where: { id: paymentId },
         data: {
-          paidAmount: payment.paidAmount + payment.dueAmount,
-          dueAmount: 0,
-          balance: payment.balance - payment.dueAmount,
+          amount_paid: payment.amount_paid,
+          payment_status: "PAID",
+          payment_date: new Date(),
         },
       });
     } else if (status === "not_paid") {
-      updatedPayment = await db.payments.update({
+      updatedPayment = await db.teacherPayments.update({
         where: { id: paymentId },
         data: {
-          dueAmount: payment.dueAmount + payment.balance,
-          balance: 0,
+          payment_status: "UNPAID",
         },
       });
     }

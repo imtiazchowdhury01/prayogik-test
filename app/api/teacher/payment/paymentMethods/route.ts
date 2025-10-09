@@ -1,62 +1,65 @@
-// @ts-nocheck
-
+// api/teacher/payment/paymentMethods/route.ts
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { useTeacherProfile } from "@/hooks/useTeacherProfile";
 
-// GET method for fetching payment methods of a teacher
-export async function GET(request) {
+export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const teacherId = searchParams.get("teacherId");
+  const teacherProfileId = searchParams.get("teacherProfileId");
 
-  const teacherProfileId = await useTeacherProfile(teacherId);
+  if (!teacherProfileId) {
+    return NextResponse.json(
+      { error: "Teacher profile ID required" },
+      { status: 400 }
+    );
+  }
 
-  const paymentMethods = await db.paymentMethod.findMany({
+  const bankAccounts = await db.bankAccount.findMany({
     where: { teacherProfileId },
   });
 
-  return NextResponse.json(paymentMethods);
+  return NextResponse.json(bankAccounts);
 }
 
-// POST method for creating a new payment method
-export async function POST(request) {
+export async function POST(request: Request) {
   const {
-    teacherId,
+    teacherProfileId,
     accountNumber,
-    type,
     bankName,
     branch,
-    routingNo,
-    accName,
-    active,
+    routingNumber,
+    accountName,
+    isPrimary,
   } = await request.json();
 
-  const teacherProfileId = await useTeacherProfile(teacherId);
+  if (!teacherProfileId) {
+    return NextResponse.json(
+      { error: "Teacher profile ID required" },
+      { status: 400 }
+    );
+  }
 
-  const newPaymentMethod = await db.paymentMethod.create({
+  const newBankAccount = await db.bankAccount.create({
     data: {
       teacherProfileId,
       accountNumber,
-      type,
       bankName,
       branch,
-      routingNo,
-      accName,
-      active: active !== undefined ? active : true, // Set active to true by default
+      routingNumber,
+      accountName,
+      isPrimary: isPrimary !== undefined ? isPrimary : false,
     },
   });
 
-  return NextResponse.json(newPaymentMethod);
+  return NextResponse.json(newBankAccount);
 }
 
-// PATCH method for updating the active status of a payment method
-export async function PATCH(request) {
-  const { id, active } = await request.json();
+export async function PATCH(request: Request) {
+  const { id, isPrimary } = await request.json();
 
-  const updatedPaymentMethod = await db.paymentMethod.update({
+  const updatedBankAccount = await db.bankAccount.update({
     where: { id },
-    data: { active },
+    data: { isPrimary },
   });
 
-  return NextResponse.json(updatedPaymentMethod);
+  return NextResponse.json(updatedBankAccount);
 }

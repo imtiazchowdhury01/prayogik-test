@@ -20,11 +20,13 @@ import Link from "next/link";
 import { formatDateForDisplay } from "@/lib/utils/formatDateForDisplay";
 import { EventType, EventStatus } from "@prisma/client";
 import { cn } from "@/lib/utils";
+import AttendeesSheet from "./AttendeesSheet";
 
 export type Event = any;
 
 interface ColumnsProps {
   onDelete: (event: Event) => void;
+  eventLeads?: any[];
 }
 
 // Helper component for sortable column headers
@@ -57,6 +59,7 @@ const SortableHeader = ({
 
 export const createColumns = ({
   onDelete,
+  eventLeads = [],
 }: ColumnsProps): ColumnDef<Event>[] => {
   return [
     {
@@ -68,7 +71,14 @@ export const createColumns = ({
         const event = row.original;
         return (
           <div className="max-w-xs">
-            <div className="font-medium text-sm truncate">{event.title}</div>
+            <div className="font-medium text-sm truncate">
+              <Link
+                href={`/admin/events/${row.original.id}`}
+                className="flex items-center hover:underline hover:text-primary-brand"
+              >
+                {event.title}
+              </Link>
+            </div>
             {event.slug && (
               <div className="text-xs text-gray-500 truncate">
                 /{event.slug}
@@ -116,7 +126,13 @@ export const createColumns = ({
         const price = row.original.price;
         return (
           <div className="space-y-1">
-            {type === EventType.FREE ? <>Free</> : <>{price}</>}
+            {type === EventType.FREE ? (
+              <>Free</>
+            ) : price === 0 ? (
+              <>Not set</>
+            ) : (
+              <>{price}</>
+            )}
           </div>
         );
       },
@@ -158,9 +174,15 @@ export const createColumns = ({
       accessorFn: (row) => row.attendees?.length || 0,
       cell: ({ row }) => {
         const attendeeCount = row.original.attendees?.length || 0;
+        const event = row.original;
         return (
           <div className="text-sm font-medium text-start">
-            <span>{attendeeCount}</span>
+            <Link
+              href={`/admin/events/${event?.id}/attendees`}
+              className="hover:text-primary-brand hover:underline"
+            >
+              <span>{attendeeCount}</span>
+            </Link>
           </div>
         );
       },
@@ -169,22 +191,19 @@ export const createColumns = ({
       sortDescFirst: true, // Show highest attendance first by default
     },
     // {
-    //   accessorKey: "waitingCount",
+    //   id: "attendeesList",
+    //   accessorKey: "attendees",
     //   header: ({ column }) => (
-    //     <SortableHeader column={column}>Waiting</SortableHeader>
+    //     <SortableHeader column={column}>Attendees</SortableHeader>
     //   ),
-    //   accessorFn: (row) => row.original?.waitingCount || 0,
+    //   accessorFn: (row) => row.attendees?.length || 0,
     //   cell: ({ row }) => {
-    //     const waitingCount = row.original?.waitingCount || 0;
-    //     return (
-    //       <div className="text-sm font-medium text-start">
-    //         <span>{waitingCount}</span>
-    //       </div>
-    //     );
+    //     const event = row.original;
+    //     return <AttendeesSheet event={event} eventLeads={eventLeads} />;
     //   },
     //   enableSorting: true,
     //   sortingFn: "alphanumeric",
-    //   sortDescFirst: true, // Show highest attendance first by default
+    //   sortDescFirst: true,
     // },
     {
       accessorKey: "status",
@@ -200,8 +219,6 @@ export const createColumns = ({
               return "bg-slate-500";
             case "UPCOMING":
               return "bg-brand text-white";
-            case "WAITING":
-              return "bg-secondary-button text-white";
             case "CLOSED":
               return "bg-red-500 text-white";
             default:
@@ -218,58 +235,6 @@ export const createColumns = ({
       enableSorting: true,
       sortingFn: "alphanumeric",
     },
-    // {
-    //   id: "location",
-    //   header: "Location/Link",
-    //   accessorFn: (row) => (row.isOnline ? row.zoomLink : row.location),
-    //   cell: ({ row }) => {
-    //     const event = row.original;
-    //     const locationText = event.isOnline ? event.zoomLink : event.location;
-    //     return (
-    //       <div
-    //         className="text-xs text-gray-600 truncate max-w-[120px]"
-    //         title={locationText}
-    //       >
-    //         {locationText || "Not specified"}
-    //       </div>
-    //     );
-    //   },
-    //   enableSorting: false, // Location might not need sorting
-    // },
-    // {
-    //   id: "speakers",
-    //   header: "Speakers",
-    //   accessorFn: (row) => row.speakers?.length || 0,
-    //   cell: ({ row }) => {
-    //     const speakers = row.original.speakers || [];
-    //     return (
-    //       <div className="text-xs">
-    //         {speakers.length > 0 ? (
-    //           <div className="space-y-1">
-    //             {speakers.slice(0, 2).map((speaker: any, index: number) => (
-    //               <div
-    //                 key={index}
-    //                 className="truncate max-w-[100px]"
-    //                 title={speaker.name}
-    //               >
-    //                 {speaker.name}
-    //               </div>
-    //             ))}
-    //             {speakers.length > 2 && (
-    //               <div className="text-gray-500">
-    //                 +{speakers.length - 2} more
-    //               </div>
-    //             )}
-    //           </div>
-    //         ) : (
-    //           <span className="text-gray-400">No speakers</span>
-    //         )}
-    //       </div>
-    //     );
-    //   },
-    //   enableSorting: true,
-    //   sortingFn: "alphanumeric",
-    // },
     {
       id: "actions",
       header: "",
@@ -280,6 +245,7 @@ export const createColumns = ({
             <Link
               href={`/preview/events/${event?.slug}`}
               target="_blank"
+              title="Preview"
               className="hover:text-brand"
             >
               <Eye className="h-4 w-4 text-sm text-gray-500" />
@@ -299,20 +265,20 @@ export const createColumns = ({
                     Edit
                   </Link>
                 </DropdownMenuItem>
-
-                {/* <DropdownMenuItem
-                className="text-red-600 focus:text-red-600"
-                onClick={() => onDelete(event)}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete Event
-              </DropdownMenuItem> */}
+                <DropdownMenuItem asChild>
+                  <Link
+                    href={`/admin/events/${event?.id}/attendees`}
+                    className="flex items-center"
+                  >
+                    View Attendees
+                  </Link>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         );
       },
-      enableSorting: false, // Actions column doesn't need sorting
+      enableSorting: false,
     },
   ];
 };

@@ -1,3 +1,4 @@
+// api/subscribers/route.ts
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
@@ -8,31 +9,21 @@ export async function GET() {
     const { userId, isAdmin } = await getServerUserSession();
 
     if (!userId) {
-      return NextResponse.json({ message: "User not found!" }, { status: 500 });
+      return NextResponse.json({ message: "User not found!" }, { status: 401 });
     }
 
     if (!isAdmin) {
       return NextResponse.json(
         { message: "Unauthorized User" },
-        { status: 500 }
+        { status: 403 }
       );
     }
 
-    // First get all subscriptions with their student profiles
+    // Fetch subscriptions with their related data
     const subscriptions = await db.subscription.findMany({
       where: {
-        subscriptionPlan: {
-          isNot: null, // Only include subscriptions with a plan
-        },
-        studentProfile: {
-          AND: {
-            id: {
-              not: undefined,
-            },
-            userId: {
-              not: undefined,
-            },
-          },
+        subscriptionPlanId: {
+          not: null, // Only include subscriptions with a plan
         },
       },
       select: {
@@ -41,18 +32,34 @@ export async function GET() {
         status: true,
         createdAt: true,
         updatedAt: true,
+        isTrial: true,
+        trialStartedAt: true,
+        trialEndsAt: true,
         subscriptionPlan: {
           select: {
             id: true,
             name: true,
+            type: true,
+            regularPrice: true,
+            offerPrice: true,
+            durationInMonths: true,
+            isTrial: true,
           },
         },
         studentProfile: {
           select: {
             id: true,
             userId: true,
-            // enrolledCourseIds: true,
-            // purchases: true
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                avatarUrl: true,
+                role: true,
+                currentPlan: true,
+              },
+            },
           },
         },
       },
@@ -61,40 +68,25 @@ export async function GET() {
       },
     });
 
-    // Then fetch user data for each unique userId
-    const userIds = subscriptions
-      .map((sub) => sub.studentProfile?.userId)
-      .filter(Boolean) as string[];
-
-    const users = await db.user.findMany({
-      where: {
-        id: { in: userIds },
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        avatarUrl: true,
-        role: true,
-      },
-    });
-
-    // Combine the data
-    const subscriptionsWithUsers = subscriptions.map((subscription) => {
-      const user = subscription.studentProfile?.userId
-        ? users.find((u) => u.id === subscription.studentProfile?.userId)
-        : null;
-
-      return {
-        ...subscription,
-        studentProfile: subscription.studentProfile
-          ? {
-              ...subscription.studentProfile,
-              user,
-            }
-          : null,
-      };
-    });
+    // Transform the data to flatten the user information
+    const subscriptionsWithUsers = subscriptions.map((subscription) => ({
+      id: subscription.id,
+      expiresAt: subscription.expiresAt,
+      status: subscription.status,
+      createdAt: subscription.createdAt,
+      updatedAt: subscription.updatedAt,
+      isTrial: subscription.isTrial,
+      trialStartedAt: subscription.trialStartedAt,
+      trialEndsAt: subscription.trialEndsAt,
+      subscriptionPlan: subscription.subscriptionPlan,
+      studentProfile: subscription.studentProfile
+        ? {
+            id: subscription.studentProfile.id,
+            userId: subscription.studentProfile.userId,
+            user: subscription.studentProfile.user,
+          }
+        : null,
+    }));
 
     return NextResponse.json(subscriptionsWithUsers);
   } catch (error) {

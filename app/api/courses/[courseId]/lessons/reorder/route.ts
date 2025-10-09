@@ -1,99 +1,84 @@
+// api/courses/[courseId]/lessons/reorder/route.ts
 import { useCourseByTeacherOrCoTeacher } from "@/hooks/useTeacherProfile";
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
-import { NextResponse } from "next/server";
-import { ObjectId } from 'mongodb';
-// export async function PUT(
-//   req: Request,
-//   { params }: { params: { courseId: string } }
-// ) {
-//   try {
-//     // Get user session to check if the user is authorized
-//     const { userId, isAdmin } = await getServerUserSession(req);
+import { NextRequest, NextResponse } from "next/server";
 
-//     if (!userId) {
-//       return new NextResponse("Unauthorized", { status: 401 });
-//     }
+// ========== TYPE DEFINITIONS ==========
 
-//     const teacherProfileId = await useTeacherProfile(userId);
+interface RouteParams {
+  params: {
+    courseId: string;
+  };
+}
 
-//     // Parse the incoming request JSON to extract the list of chapter positions
-//     const { list } = await req.json();
+interface ReorderItem {
+  id: string;
+  position: number;
+}
 
-//     // Check if the course belongs to the logged-in teacher (i.e., the userId should match the course's teacherId)
-//     const ownCourse = await useCourseByTeacherOrCoTeacher(
-//       userId,
-//       params.courseId
-//     );
+interface ReorderRequest {
+  list: ReorderItem[];
+}
 
-//     if (!ownCourse && !isAdmin) {
-//       return new NextResponse("Unauthorized", { status: 401 });
-//     }
-
-//     // Iterate through the list of chapters and update their positions
-//     for (const item of list) {
-//       await db.lesson.update({
-//         where: { id: item.id },
-//         data: { position: item.position },
-//       });
-//     }
-
-//     return new NextResponse("Success", { status: 200 });
-//   } catch (error) {
-//     console.log("[REORDER]", error);
-//     return new NextResponse("Internal Error", { status: 500 });
-//   }
-// }
-
-
+// ========== PUT HANDLER ==========
 
 export async function PUT(
-  req: Request,
-  { params }: { params: { courseId: string } }
-) {
+  req: NextRequest,
+  { params }: RouteParams
+): Promise<NextResponse> {
   try {
-    const { userId, isAdmin } = await getServerUserSession(req);
+    const { courseId } = params;
+
+    if (!courseId) {
+      return new NextResponse("Missing courseId", { status: 400 });
+    }
+
+    const { userId, isAdmin } = await getServerUserSession();
 
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const { list } = await req.json();
+    const body: ReorderRequest = await req.json();
+    const { list } = body;
 
     if (!list || !Array.isArray(list) || list.length === 0) {
       return new NextResponse("Invalid data", { status: 400 });
     }
 
-    const ownCourse = await useCourseByTeacherOrCoTeacher(
-      userId,
-      params.courseId
-    );
+    // Verify ownership if not admin
+    if (!isAdmin) {
+      const ownCourse = await useCourseByTeacherOrCoTeacher(userId, courseId);
 
-    if (!ownCourse && !isAdmin) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      if (!ownCourse) {
+        return new NextResponse("Unauthorized", { status: 401 });
+      }
     }
 
     const startTime = Date.now();
 
-  
+    // Update all lessons in parallel
     await Promise.all(
       list.map((item) =>
         db.lesson.update({
           where: { id: item.id },
-          data: { 
-            position: item.position, 
-            updatedAt: new Date() 
+          data: {
+            position: item.position,
+            updatedAt: new Date(),
           },
         })
       )
     );
 
     const duration = Date.now() - startTime;
-    console.log(`[PARALLEL UPDATE] Updated ${list.length} lessons in ${duration}ms`);
+    console.log(
+      `[REORDER_LESSONS] Updated ${list.length} lessons in ${duration}ms`
+    );
 
     return new NextResponse("Success", { status: 200 });
   } catch (error) {
-    console.error("[PARALLEL UPDATE ERROR]", error);
+    console.error("[REORDER_LESSONS_ERROR]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

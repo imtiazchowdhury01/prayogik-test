@@ -6,6 +6,7 @@ interface SectionTitleProps {
   titleClassName?: string;
   descriptionClassName?: string;
   containerClassName?: string;
+  alignment?: string; // New prop for alignment
 }
 
 const SectionTitle = ({
@@ -14,9 +15,10 @@ const SectionTitle = ({
   titleClassName = "",
   descriptionClassName = "",
   containerClassName = "pb-8 px-6 md:px-0",
+  alignment = "text-center", // Default alignment
 }: SectionTitleProps) => {
   return (
-    <div className={`text-center ${containerClassName}`}>
+    <div className={`${alignment} ${containerClassName}`}>
       <h2
         className={`${titleClassName} text-3xl lg:text-[40px] font-bold leading-[120%] tracking-[-0.4px] pb-1.5`}
       >

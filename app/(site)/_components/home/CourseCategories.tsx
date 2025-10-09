@@ -91,15 +91,15 @@ const CourseCategories = async () => {
               <div key={parentCategory.id}>
                 <ul className="space-y-1 text-base font-normal">
                   {/* Show parent category as first item */}
-                  <li className="hover:text-primary transition-all cursor-pointer">
-                    <Link
+                  <li className="hover:text-primary transition-all">
+                    {/* <Link
                       href={`/courses?category=${parentCategory.slug}`}
                       prefetch={false}
-                    >
-                      <h3 className="text-lg font-bold mb-3 hover:text-primary transition-all cursor-pointer">
-                        {textLangChecker(parentCategory.name)}
-                      </h3>
-                    </Link>
+                    > */}
+                    <h3 className="text-lg font-bold mb-3 hover:text-primary transition-all ">
+                      {textLangChecker(parentCategory.name)}
+                    </h3>
+                    {/* </Link> */}
                   </li>
 
                   {/* Show child categories */}

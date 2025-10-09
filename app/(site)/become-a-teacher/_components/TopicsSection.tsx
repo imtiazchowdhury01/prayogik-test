@@ -16,7 +16,7 @@ const TopicsSection = () => {
   const categories = [
     {
       id: "digital-marketing",
-      name: "ডিজিটাল মার্কেটিং & SEO",
+      name: "ডিজিটাল মার্কেটিং",
       icon: "🚀",
       image: "/placeholder.svg",
     },

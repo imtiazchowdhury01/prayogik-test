@@ -6,9 +6,11 @@ import { motion, AnimatePresence } from "framer-motion";
 const FaqComponent = ({
   faqItems,
   showRightSection = true, // Default to true if not provided
+  alignment = "mx-auto",
 }: {
   faqItems: { question: string; answer: string }[];
   showRightSection?: boolean; // Default to true if not provided
+  alignment?: string;
 }) => {
   const [openItems, setOpenItems] = useState<number[]>([]);
 
@@ -21,7 +23,9 @@ const FaqComponent = ({
   return (
     <div className="relative pb-24">
       <div
-        className={`${showRightSection ? "max-w-7xl" : "max-w-4xl"} mx-auto`}
+        className={`${
+          showRightSection ? "max-w-7xl" : "max-w-4xl"
+        } ${alignment}`}
       >
         <div className="grid grid-cols-1 gap-16 items-start">
           {/* Left Section - FAQ (60%) */}
@@ -30,7 +34,7 @@ const FaqComponent = ({
               showRightSection ? "lg:col-span-3" : "lg:col-span-5"
             }  space-y-6`}
           >
-            {faqItems.map((item, index) => (
+            {faqItems?.map((item, index) => (
               <div
                 key={index}
                 className="bg-white rounded-lg border border-gray-200 shadow-sm"

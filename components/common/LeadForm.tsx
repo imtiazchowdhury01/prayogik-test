@@ -56,7 +56,7 @@ export function LeadForm({
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors,isDirty  },
     reset,
     setValue,
   } = useForm<LeadFormValues>({
@@ -161,7 +161,6 @@ export function LeadForm({
     try {
       setIsSubmitting(true);
       await submitHandler(data);
-      reset();
     } catch (error) {
       const errorMessage =
         error instanceof Error
@@ -171,6 +170,7 @@ export function LeadForm({
       console.error("Error submitting form:", error);
     } finally {
       setIsSubmitting(false);
+      reset();
     }
   };
 
@@ -205,9 +205,13 @@ export function LeadForm({
       {/* Show logged in user's name (read-only) */}
       {userInfo?.name && (
         <div>
-          <Label className="text-sm font-medium text-gray-700 mb-1 block">
-            আপনার নাম
+          <Label>
+            <RequiredFieldStar
+              labelText="আপনার নাম"
+              className="text-sm font-medium text-gray-700 mb-1 block"
+            />
           </Label>
+
           <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700">
             {userInfo.name}
           </div>
@@ -307,7 +311,7 @@ export function LeadForm({
         <Input
           id="facebookProfile"
           type="url"
-          placeholder="https://facebook.com/yourusername"
+          placeholder="https://facebook.com/username"
           {...register("facebookProfile")}
           className="w-full placeholder:text-gray-400"
           disabled={isSubmitting || isPreviewMode}
@@ -329,7 +333,7 @@ export function LeadForm({
         <Input
           id="linkedin"
           type="url"
-          placeholder="https://linkedin.com/in/yourusername"
+          placeholder="https://linkedin.com/in/username"
           {...register("linkedin")}
           className="w-full placeholder:text-gray-400"
           disabled={isSubmitting || isPreviewMode}
@@ -379,13 +383,12 @@ export function LeadForm({
           emailCheckLoading ||
           userInfoLoading
         }
-        className={`w-full font-medium py-3 rounded-md transition-colors disabled:opacity-50 ${
-          isUserRegistered
-            ? buttonVariants({
-                variant: "disabled",
-              })
-            : "bg-orange-500 hover:bg-orange-600 text-white"
-        }`}
+        className={`w-full font-medium py-3 rounded-md transition-colors
+    disabled:bg-gray-500 disabled:text-white disabled:opacity-50
+    ${
+      !isUserRegistered &&
+      "bg-brand hover:bg-brand hover:opacity-85 transition-all duration-300 text-white"
+    }`}
       >
         {emailCheckLoading || isSubmitting || userInfoLoading ? (
           <Loader size={16} className="animate-spin" />

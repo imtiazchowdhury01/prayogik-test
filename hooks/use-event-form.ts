@@ -26,7 +26,6 @@ import {
 const EVENT_STATUS_OPTIONS = [
   { value: "DRAFT", label: "Draft" },
   { value: "UPCOMING", label: "Upcoming" },
-  { value: "WAITING", label: "Waiting" },
   { value: "CLOSED", label: "Closed" },
 ] as const;
 

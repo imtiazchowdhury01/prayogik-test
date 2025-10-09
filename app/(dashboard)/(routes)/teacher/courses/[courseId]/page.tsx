@@ -1,8 +1,7 @@
-// @ts-nocheck
 
+// @ts-nocheck
 import { Banner } from "@/components/banner";
 import { IconBadge } from "@/components/icon-badge";
-import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 import {
   ArrowLeft,

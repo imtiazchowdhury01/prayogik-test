@@ -59,6 +59,7 @@ export const EventSlugTitleForm = ({
     await updateEvent({
       eventId,
       values,
+      slug: values.slug,
       toggleEdit,
       setLoading,
       router,
@@ -68,9 +69,8 @@ export const EventSlugTitleForm = ({
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
-       
         <div>
-           Slug
+          Slug
           <span className="text-red-500">*</span>
         </div>
         <Button onClick={toggleEdit} variant="ghost">

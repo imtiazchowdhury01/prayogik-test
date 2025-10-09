@@ -15,7 +15,7 @@ import {
 import UserAvatar from "./avatar";
 
 const ProfileHeader = ({ userData }: any) => {
-  console.log("userData result:", userData);
+  // console.log("userData result:", userData);
 
   return (
     <Card className="mb-6 border-border/50 shadow-sm bg-white">

@@ -1,7 +1,13 @@
-// @ts-nocheck
-export const dynamic = "force-dynamic"
+// api/courses/search/route.ts
+export const dynamic = "force-dynamic";
+
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
+
+function escapeRegex(string: string): string {
+  return string.replace(/[.*+?^${}()|\\[\]]/g, "\\$&");
+}
 
 // Helper function to create search terms for better matching
 function createSearchTerms(query: string): string[] {
@@ -12,38 +18,50 @@ function createSearchTerms(query: string): string[] {
     .map((term) => term.trim());
 }
 
+interface SearchFilters {
+  isPublished?: boolean;
+  isUnderSubscription?: boolean;
+  courseMode?: string;
+  categoryId?: string;
+  teacherProfileId?: string;
+}
+
 async function performFuzzySearch(
   query: string,
-  filters: any = {},
+  filters: SearchFilters = {},
   page: number = 1,
   limit: number = 10,
-  sortBy: string = "updatedAt",
+  sortBy: string = "createdAt",
   sortOrder: "asc" | "desc" = "desc"
 ) {
   const searchTerms = createSearchTerms(query);
+  const escapedQuery = escapeRegex(query);
+  const escapedSearchTerms = searchTerms.map((term) => escapeRegex(term));
   const skip = (page - 1) * limit;
 
   // MongoDB aggregation pipeline for advanced search
-  const pipeline = [
+  const pipeline: any[] = [
     {
       $match: {
         $and: [
           {
             $or: [
               // Exact phrase matches (highest priority)
-              { title: { $regex: query, $options: "i" } },
-              { description: { $regex: query, $options: "i" } },
+              { title: { $regex: escapedQuery, $options: "i" } },
+              { description: { $regex: escapedQuery, $options: "i" } },
               {
                 learningOutcomes: {
-                  $elemMatch: { $regex: query, $options: "i" },
+                  $elemMatch: { $regex: escapedQuery, $options: "i" },
                 },
               },
               {
-                requirements: { $elemMatch: { $regex: query, $options: "i" } },
+                requirements: {
+                  $elemMatch: { $regex: escapedQuery, $options: "i" },
+                },
               },
               // Individual term matches (lower priority)
-              ...(searchTerms.length > 1
-                ? searchTerms.map((term) => ({
+              ...(escapedSearchTerms.length > 1
+                ? escapedSearchTerms.map((term) => ({
                     $or: [
                       { title: { $regex: term, $options: "i" } },
                       { description: { $regex: term, $options: "i" } },
@@ -87,9 +105,13 @@ async function performFuzzySearch(
             {
               $cond: [
                 {
-                  $regexMatch: { input: "$title", regex: query, options: "i" },
+                  $regexMatch: {
+                    input: "$title",
+                    regex: escapedQuery,
+                    options: "i",
+                  },
                 },
-                100, // Much higher score for exact phrase match
+                100,
                 0,
               ],
             },
@@ -99,7 +121,7 @@ async function performFuzzySearch(
                 {
                   $regexMatch: {
                     input: "$description",
-                    regex: query,
+                    regex: escapedQuery,
                     options: "i",
                   },
                 },
@@ -117,7 +139,7 @@ async function performFuzzySearch(
                       cond: {
                         $regexMatch: {
                           input: "$$this",
-                          regex: query,
+                          regex: escapedQuery,
                           options: "i",
                         },
                       },
@@ -137,7 +159,7 @@ async function performFuzzySearch(
                       cond: {
                         $regexMatch: {
                           input: "$$this",
-                          regex: query,
+                          regex: escapedQuery,
                           options: "i",
                         },
                       },
@@ -147,16 +169,15 @@ async function performFuzzySearch(
                 20,
               ],
             },
-            // Bonus for multiple term matches (if searching for multiple words)
-            ...(searchTerms.length > 1
+            // Bonus for multiple term matches
+            ...(escapedSearchTerms.length > 1
               ? [
                   {
                     $multiply: [
-                      // Count how many search terms match in title
                       {
                         $size: {
                           $filter: {
-                            input: searchTerms,
+                            input: escapedSearchTerms,
                             cond: {
                               $regexMatch: {
                                 input: "$title",
@@ -167,20 +188,19 @@ async function performFuzzySearch(
                           },
                         },
                       },
-                      // Score multiplier - more terms matched = higher score
                       {
                         $multiply: [
                           10,
-                          { $divide: [1, searchTerms.length] }, // Normalize by number of terms
+                          { $divide: [1, escapedSearchTerms.length] },
                         ],
                       },
                     ],
                   },
                 ]
               : []),
-            // Individual term matches (much lower scores)
-            ...(searchTerms.length > 1
-              ? searchTerms.map((term) => ({
+            // Individual term matches
+            ...(escapedSearchTerms.length > 1
+              ? escapedSearchTerms.map((term) => ({
                   $add: [
                     {
                       $cond: [
@@ -191,7 +211,7 @@ async function performFuzzySearch(
                             options: "i",
                           },
                         },
-                        2, // Much lower score for individual terms
+                        2,
                         0,
                       ],
                     },
@@ -327,7 +347,7 @@ async function performFuzzySearch(
         ],
       },
     },
-    // Transform the data to match Prisma structure
+    // Transform the data
     {
       $addFields: {
         id: "$_id",
@@ -351,7 +371,7 @@ async function performFuzzySearch(
         teacherUser: 0,
       },
     },
-    // Sort by search score first, then by specified field
+    // Sort
     { $sort: { searchScore: -1, [sortBy]: sortOrder === "desc" ? -1 : 1 } },
     { $skip: skip },
     { $limit: limit },
@@ -364,25 +384,27 @@ async function performFuzzySearch(
     cursor: {},
   });
 
-  // Get total count for pagination - also fix the match condition
+  // Get total count
   const countPipeline = [
     {
       $match: {
         $and: [
           {
             $or: [
-              { title: { $regex: query, $options: "i" } },
-              { description: { $regex: query, $options: "i" } },
+              { title: { $regex: escapedQuery, $options: "i" } },
+              { description: { $regex: escapedQuery, $options: "i" } },
               {
                 learningOutcomes: {
-                  $elemMatch: { $regex: query, $options: "i" },
+                  $elemMatch: { $regex: escapedQuery, $options: "i" },
                 },
               },
               {
-                requirements: { $elemMatch: { $regex: query, $options: "i" } },
+                requirements: {
+                  $elemMatch: { $regex: escapedQuery, $options: "i" },
+                },
               },
-              ...(searchTerms.length > 1
-                ? searchTerms.map((term) => ({
+              ...(escapedSearchTerms.length > 1
+                ? escapedSearchTerms.map((term) => ({
                     $or: [
                       { title: { $regex: term, $options: "i" } },
                       { description: { $regex: term, $options: "i" } },
@@ -427,8 +449,8 @@ async function performFuzzySearch(
   });
 
   return {
-    courses: courses.cursor?.firstBatch || [],
-    totalCount: countResult.cursor?.firstBatch?.[0]?.total || 0,
+    courses: (courses as any).cursor?.firstBatch || [],
+    totalCount: (countResult as any).cursor?.firstBatch?.[0]?.total || 0,
   };
 }
 
@@ -439,6 +461,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
     const isPublished = searchParams.get("published");
+    const isUnderSubscription = searchParams.get("isUnderSubscription");
     const useAdvanced = searchParams.get("advanced") === "true";
 
     if (!query || query.trim().length === 0) {
@@ -456,6 +479,9 @@ export async function GET(request: NextRequest) {
         query.trim(),
         {
           ...(isPublished !== null && { isPublished: isPublished === "true" }),
+          ...(isUnderSubscription !== null && {
+            isUnderSubscription: isUnderSubscription === "true",
+          }),
         },
         page,
         limit
@@ -479,8 +505,8 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Simple Prisma search - FIXED for scalar arrays
-    const searchFilter: any = {
+    // Simple Prisma search
+    const searchFilter: Prisma.CourseWhereInput = {
       OR: [
         {
           title: {
@@ -497,55 +523,55 @@ export async function GET(request: NextRequest) {
       ],
     };
 
-    // Add publication filter if specified
+    // Add publication filter
     if (isPublished !== null) {
       searchFilter.isPublished = isPublished === "true";
     }
 
-    // For scalar array fields, use hasSome to check if array contains any matching elements
+    // Add subscription filter
+    if (isUnderSubscription !== null) {
+      searchFilter.isUnderSubscription = isUnderSubscription === "true";
+    }
+
+    // Search in array fields
     const searchTerms = createSearchTerms(query);
+    const arraySearchConditions: Prisma.CourseWhereInput[] = [];
 
-    // Add array search conditions for learningOutcomes and requirements
-    const arraySearchConditions: any[] = [];
-
-    // Search for the full query in arrays
     arraySearchConditions.push(
       {
         learningOutcomes: {
-          hasSome: [query.trim()], // Check if array contains the full query
+          hasSome: [query.trim()],
         },
       },
       {
         requirements: {
-          hasSome: [query.trim()], // Check if array contains the full query
+          hasSome: [query.trim()],
         },
       }
     );
 
-    // Also search for individual terms in arrays
     if (searchTerms.length > 0) {
       searchTerms.forEach((term) => {
         arraySearchConditions.push(
           {
             learningOutcomes: {
-              hasSome: [term], // Check if array contains the term
+              hasSome: [term],
             },
           },
           {
             requirements: {
-              hasSome: [term], // Check if array contains the term
+              hasSome: [term],
             },
           }
         );
       });
     }
 
-    // Add array search conditions to main OR
     if (arraySearchConditions.length > 0) {
-      searchFilter.OR.push(...arraySearchConditions);
+      searchFilter.OR = [...(searchFilter.OR || []), ...arraySearchConditions];
     }
 
-    // Execute search with pagination
+    // Execute search
     const [courses, totalCount] = await Promise.all([
       db.course.findMany({
         where: searchFilter,
@@ -604,7 +630,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Search error:", error);
+    console.error("[SEARCH_ERROR]", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

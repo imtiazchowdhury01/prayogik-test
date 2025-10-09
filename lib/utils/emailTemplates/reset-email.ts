@@ -14,7 +14,7 @@ export const resetEmailTemplate = (resetUrl: string, contactUrl: string) => {
         <body style="background-color:#f6f9fc;padding:10px 0">
             <div
             style="display:none;overflow:hidden;line-height:1px;opacity:0;max-height:0;max-width:0">
-            প্রয়োগিক-এ আপনার পাসওয়ার্ড রিসেট করা হয়েছে
+            প্রায়োগিক-এ আপনার পাসওয়ার্ড রিসেট করা হয়েছে
             <div>
             
             </div>
@@ -52,7 +52,7 @@ export const resetEmailTemplate = (resetUrl: string, contactUrl: string) => {
                             </p>
                             <p
                             style="font-size:16px;line-height:26px;margin:16px 0;font-family:&#x27;Open Sans&#x27;, &#x27;HelveticaNeue-Light&#x27;, &#x27;Helvetica Neue Light&#x27;, &#x27;Helvetica Neue&#x27;, Helvetica, Arial, &#x27;Lucida Grande&#x27;, sans-serif;font-weight:300;color:#404040">
-                            সম্প্রতি কেউ আপনার প্রয়োগিক অ্যাকাউন্টের পাসওয়ার্ড পরিবর্তনের জন্য অনুরোধ করেছে। যদি এটা আপনার পক্ষ থেকে হয়ে থাকে, তাহলে আপনি নিচের লিঙ্ক থেকে নতুন পাসওয়ার্ড সেট করতে পারেন:
+                            সম্প্রতি কেউ আপনার প্রায়োগিক অ্যাকাউন্টের পাসওয়ার্ড পরিবর্তনের জন্য অনুরোধ করেছে। যদি এটা আপনার পক্ষ থেকে হয়ে থাকে, তাহলে আপনি নিচের লিঙ্ক থেকে নতুন পাসওয়ার্ড সেট করতে পারেন:
                             </p>
                             
                             <!-- RESET_LINK-->

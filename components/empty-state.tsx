@@ -12,6 +12,7 @@ interface EmptyStateProps {
     onClick: () => void;
   };
   className?: string;
+  minWidth?: any;
 }
 
 export function EmptyState({
@@ -20,14 +21,16 @@ export function EmptyState({
   icons = [],
   action,
   className,
+  minWidth = "min-w-[620px]",
 }: EmptyStateProps) {
   return (
     <div
       className={cn(
         "bg-background border-border hover:border-border/80 text-center",
-        "border-2 border-dashed rounded-xl p-14 w-full min-w-[620px]",
+        "border-2 border-dashed rounded-xl p-14 w-full",
         "group hover:bg-muted/50 transition duration-500 hover:duration-200",
-        className
+        className,
+        minWidth
       )}
     >
       <div className="flex justify-center isolate">

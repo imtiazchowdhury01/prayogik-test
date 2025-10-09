@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 interface Course {
   id: string;
@@ -37,7 +36,11 @@ interface SearchResult {
   searchType: "simple" | "advanced";
 }
 
-export function useSearchResults(query: string, published: string, advanced: string) {
+export function useSearchResults(
+  query: string,
+  published: string,
+  advanced: string,
+) {
   const [allCourses, setAllCourses] = useState<Course[]>([]);
   const [searchResult, setSearchResult] = useState<SearchResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -64,29 +67,31 @@ export function useSearchResults(query: string, published: string, advanced: str
         advanced,
       });
 
-      const response = await fetch(`/api/courses/search?${searchUrl.toString()}`);
-      
+      const response = await fetch(
+        `/api/courses/search?${searchUrl.toString()}`
+      );
+
       if (!response.ok) {
-        throw new Error('Failed to fetch search results');
+        throw new Error("Failed to fetch search results");
       }
 
       const data = await response.json();
-      
+
       if (data.success) {
         setSearchResult(data.data);
-        
+
         if (isLoadMore) {
-          setAllCourses(prev => [...prev, ...data.data.courses]);
+          setAllCourses((prev) => [...prev, ...data.data.courses]);
         } else {
           setAllCourses(data.data.courses);
         }
-        
+
         setCurrentPage(page);
       } else {
-        throw new Error(data.error || 'Search failed');
+        throw new Error(data.error || "Search failed");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
       setLoadingMore(false);

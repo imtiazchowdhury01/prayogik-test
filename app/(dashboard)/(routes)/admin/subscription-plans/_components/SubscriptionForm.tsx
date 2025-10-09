@@ -35,7 +35,7 @@ const subscriptionSchema = z
   .object({
     name: z.string().min(1, "Name is required"),
     type: z
-      .enum(["MONTHLY", "YEARLY"], {
+      .enum(["MONTHLY", "YEARLY", "NONE"], {
         required_error: "Please select a subscription type",
       })
       .optional(),
@@ -64,7 +64,7 @@ const subscriptionSchema = z
       }
 
       // For non-trial subscriptions, if type is not selected yet, allow it
-      if (!data.type || data.type === "") {
+      if (!data.type || data.type === "NONE") {
         return true; // Let them submit or continue filling the form
       }
 
@@ -92,7 +92,6 @@ const SubscriptionForm = ({ subscription, onClose, onSave }) => {
   const [defaultDiscountId, setDefaultDiscountId] = useState(null);
   const router = useRouter();
   const [isTrialExist, setIsTrialExist] = useState(false);
-  // console.log(subscription, "sub");
   const form = useForm({
     resolver: zodResolver(subscriptionSchema),
     mode: "onChange",
@@ -263,7 +262,7 @@ const SubscriptionForm = ({ subscription, onClose, onSave }) => {
               )}
             />
           )}
-          {!watchedIsTrial && (
+          {
             <>
               {/* Price */}
               <FormField
@@ -324,6 +323,7 @@ const SubscriptionForm = ({ subscription, onClose, onSave }) => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value="NONE">None</SelectItem>
                         <SelectItem value="MONTHLY">Monthly</SelectItem>
                         <SelectItem value="YEARLY">Yearly</SelectItem>
                       </SelectContent>
@@ -378,7 +378,7 @@ const SubscriptionForm = ({ subscription, onClose, onSave }) => {
                 />
               )}
             </>
-          )}
+          }
 
           {/* Discount */}
           <FormField

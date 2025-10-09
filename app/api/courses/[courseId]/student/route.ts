@@ -1,10 +1,29 @@
-import { NextResponse } from "next/server";
-import { db } from "@/lib/db"; 
+// api/courses/[courseId]/student/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+
+// ========== TYPE DEFINITIONS ==========
+
+interface RouteParams {
+  params: {
+    courseId: string;
+  };
+}
+
+interface StudentCountResponse {
+  enrolledStudents: number;
+}
+
+interface ErrorResponse {
+  error: string;
+}
+
+// ========== GET HANDLER ==========
 
 export async function GET(
-  request: Request,
-  { params }: { params: { courseId: string } }
-) {
+  request: NextRequest,
+  { params }: RouteParams
+): Promise<NextResponse<StudentCountResponse | ErrorResponse>> {
   const { courseId } = params;
 
   if (!courseId) {
@@ -15,16 +34,13 @@ export async function GET(
   }
 
   try {
-    const course = await db.course.findUnique({
-      where: { id: courseId },
-      select: { enrolledStudents: true },
+    const enrolledCount = await db.enrolledStudents.count({
+      where: { courseId },
     });
 
-    const enrolledStudents = course?.enrolledStudents?.length || 0;
-
-    return NextResponse.json({ enrolledStudents });
+    return NextResponse.json({ enrolledStudents: enrolledCount });
   } catch (error) {
-    console.error("Error fetching enrolled students:", error);
+    console.error("[ENROLLED_STUDENTS_COUNT_ERROR]", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

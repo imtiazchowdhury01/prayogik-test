@@ -1,13 +1,13 @@
 "use client";
 
-import axios from "axios";
 import { Loader2, Lock, Video, RefreshCw } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import { toast } from "react-hot-toast";
+import { useEffect, useState } from "react";
 import VdocipherPlayer from "@/components/VdocipherPlayer";
-import { useConfettiStore } from "@/hooks/use-confetti-store";
 import { Button } from "@/components/ui/button";
+import axios from "axios";
+import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
+import { useConfettiStore } from "@/hooks/use-confetti-store";
 
 interface VdocipherVideoPlayerProps {
   videoUrl: string;
@@ -23,12 +23,11 @@ interface VdocipherVideoPlayerProps {
 export const VdocipherVideoPlayer = ({
   videoUrl,
   videoStatus,
+  isLocked,
   courseId,
   chapterId,
-  nextChapterId,
-  isLocked,
   completeOnEnd,
-  title,
+  nextChapterId,
 }: VdocipherVideoPlayerProps) => {
   const [isReady, setIsReady] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -49,7 +48,7 @@ export const VdocipherVideoPlayer = ({
           confetti.onOpen();
         }
 
-        toast.success("Progress updated");
+        toast.success("প্রগ্রেস আপডেট করা হয়েছে");
         router.refresh();
 
         if (nextChapterId) {
@@ -67,23 +66,26 @@ export const VdocipherVideoPlayer = ({
       const { data } = await axios.get(
         `/api/courses/${courseId}/chapters/${chapterId}`
       );
+      console.log({ data });
+
       setIsReady(data.videoStatus === "READY");
     } catch (error) {
-      // console.error("Error fetching video status:", error);
+      console.error("Error fetching video status:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (!isReady) {
-        refreshVideoStatus();
-      }
-    }, 10000);
+  // INFINITE FETCH
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     if (!isReady) {
+  //       refreshVideoStatus();
+  //     }
+  //   }, 10000);
 
-    return () => clearInterval(interval);
-  }, [isReady, courseId, chapterId]);
+  //   return () => clearInterval(interval);
+  // }, [isReady, courseId, chapterId]);
 
   return (
     <div className="relative aspect-w-16 aspect-h-9">

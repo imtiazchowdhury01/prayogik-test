@@ -26,6 +26,9 @@ import {
   Megaphone,
   BookOpenText,
   LayoutGrid,
+  CalendarRange,
+  GraduationCap,
+  Wallet,
 } from "lucide-react";
 
 import {
@@ -43,6 +46,8 @@ const studentRoutes = [
   { icon: LayoutGrid, label: "Dashboard", href: "/dashboard", isParent: true },
   // { icon: Compass, label: "Browse", href: "/search", isParent: true },
   { icon: User, label: "Profile", href: "/profile", isParent: true },
+  { icon: Wallet, label: "Wallet", href: "/wallet", isParent: true },
+  { icon: Award, label: "Referral", href: "/referral", isParent: true },
 ];
 
 const onboardRoute = [
@@ -73,6 +78,18 @@ const teacherRoutes = [
     href: "/teacher/accounts",
     isParent: true,
   },
+  {
+    icon: Wallet,
+    label: "Wallet",
+    href: "/wallet",
+    isParent: true,
+  },
+  {
+    icon: Award,
+    label: "Referral",
+    href: "/teacher/referral",
+    isParent: true,
+  }
 ];
 
 const adminRoute = [
@@ -96,6 +113,11 @@ const adminRoute = [
         icon: LayoutList,
         label: "All Courses",
         href: "/admin/courses",
+      },
+      {
+        icon: GraduationCap,
+        label: "Certification",
+        href: "/admin/certifications",
       },
     ],
   },
@@ -138,10 +160,23 @@ const adminRoute = [
       },
     ],
   },
-    {
+  {
     icon: BookOpenText,
     label: "Events",
     href: "/admin/events",
+    isParent: true,
+    subroutes: [
+      {
+        icon: CalendarRange,
+        label: "Event List",
+        href: "/admin/events",
+      },
+      // {
+      //   icon: User,
+      //   label: "Attendees",
+      //   href: "/admin/event-attendees",
+      // },
+    ],
   },
   {
     icon: Layers,

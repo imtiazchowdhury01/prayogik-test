@@ -1,14 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, Users, Calendar, GraduationCap } from "lucide-react";
-import { TabValue } from "./summary-and-courses";
 import courseCapIcon2 from "../_icons/courseCapIcon2";
 import courseCapIcon from "../_icons/courseCapIcon";
 import certificationIcon from "../_icons/certificationIcon";
 import eventsIcon from "../_icons/eventsIcon";
+import { TabValue } from "./courses-tab";
 
 interface SummaryCardsProps {
   purchasedCourses?: number;
   subscriptionCourses?: number;
+  purchasedCertificationCoursesCount?: number;
   registeredEvents?: number;
   trends?: {
     purchasedCoursesLastMonth: number;
@@ -21,6 +22,7 @@ interface SummaryCardsProps {
 export function SummaryCards({
   purchasedCourses = 0,
   subscriptionCourses = 0,
+  purchasedCertificationCoursesCount = 0,
   registeredEvents = 0,
   trends,
   onTabChange,
@@ -79,11 +81,11 @@ export function SummaryCards({
     },
     {
       title: "Certification Courses",
-      value: 0,
+      value: purchasedCertificationCoursesCount,
       icon: certificationIcon,
       description: "Active certification courses",
       trend: getTrendMessage("certificate", 0),
-      hasPositiveTrend: 0 > 0,
+      hasPositiveTrend: purchasedCertificationCoursesCount > 0,
       tabValue: "certificate" as TabValue,
       bgColor: "bg-[#E6FBEA]",
       iconColor: "text-[#0D942A]",
@@ -112,13 +114,13 @@ export function SummaryCards({
               className="transition-all duration-200 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1 cursor-pointer border border-slate-200 shadow-none"
               onClick={() => handleCardClick(metric.tabValue)}
             >
-              <CardHeader className="flex flex-row items-center gap-x-4 space-y-0 pb-3">
+              <CardHeader className=" 2xl:p-6 xl:p-4 p-6 flex flex-row items-start 2xl:items-center 2xl:gap-x-4 xl:gap-x-3 gap-x-4 space-y-0 pb-3">
                 <div className={`p-4 rounded-lg ${metric.bgColor}`}>
                   <Icon />
                 </div>
 
-                <CardTitle className="font-semibold text-base">
-                  {metric.title}
+                <CardTitle>
+                  <p className="font-semibold text-base">{metric.title}</p>
                   <p className="text-gray-500 text-xs pt-2 font-normal">
                     {metric.description}
                   </p>
@@ -135,8 +137,7 @@ export function SummaryCards({
                         ? "text-secondary-button"
                         : "text-gray-500"
                     }`}
-                  >
-                  </div>
+                  ></div>
                 </div>
               </CardContent>
             </Card>

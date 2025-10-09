@@ -63,17 +63,24 @@ export const sendEventRegistrationEmail = (
                                 তারিখ ও সময়:
                               </td>
                               <td style="padding:12px 0;font-size:15px;color:#2d3748;font-family:'Open Sans', Arial,sans-serif;font-weight:500;">
-                                ${eventDetails?.date ? new Date(eventDetails.date).toLocaleDateString("bn-BD", {
-                                  year: "numeric",
-                                  month: "long",
-                                  day: "numeric",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                }) : "N/A"}
+                                ${
+                                  eventDetails?.date
+                                    ? new Date(
+                                        eventDetails.date
+                                      ).toLocaleDateString("bn-BD", {
+                                        year: "numeric",
+                                        month: "long",
+                                        day: "numeric",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })
+                                    : "তারিখ ও সময় নির্ধারণ করা হয়নি"
+                                }
                               </td>
                             </tr>
                             ${
-                              eventDetails?.type === "PAID" && eventDetails?.price
+                              eventDetails?.type === "PAID" &&
+                              eventDetails?.price
                                 ? `
                               <tr>
                                 <td style="padding:12px 0;font-size:15px;color:#4a5568;font-family:'Open Sans', Arial,sans-serif;font-weight:500;width:35%;vertical-align:top;">
@@ -82,10 +89,14 @@ export const sendEventRegistrationEmail = (
                                 <td style="padding:12px 0;font-size:15px;color:#2d3748;font-family:'Open Sans', Arial,sans-serif;font-weight:600;">
                                   ৳${eventDetails.price}
                                 </td>
-                              </tr>
-                            `
+                             </tr>
+                              `
+                                : eventDetails?.type === "EOI"
+                                ? `
+                                ''
+                              `
                                 : `
-                              <tr>
+                                <tr>
                                 <td style="padding:12px 0;font-size:15px;color:#4a5568;font-family:'Open Sans', Arial,sans-serif;font-weight:500;width:35%;vertical-align:top;">
                                   ফি:
                                 </td>
@@ -100,9 +111,12 @@ export const sendEventRegistrationEmail = (
                                 স্থান:
                               </td>
                               <td style="padding:12px 0;font-size:15px;color:#2d3748;font-family:'Open Sans', Arial,sans-serif;font-weight:500;">
-                                ${eventDetails?.isOnline 
-                                  ? "অনলাইন" 
-                                  : eventDetails?.location || "তথ্য পরে জানানো হবে"}
+                                ${
+                                  eventDetails?.isOnline
+                                    ? "অনলাইন"
+                                    : eventDetails?.location ||
+                                      "তথ্য পরে জানানো হবে"
+                                }
                               </td>
                             </tr>
                             ${
@@ -110,12 +124,12 @@ export const sendEventRegistrationEmail = (
                                 ? `
                               <tr>
                                 <td style="padding:12px 0;font-size:15px;color:#4a5568;font-family:'Open Sans', Arial,sans-serif;font-weight:500;width:35%;vertical-align:top;">
-                                  জুম লিংক:
+                                  মিটিং লিংক:
                                 </td>
                                 <td style="padding:12px 0;font-size:15px;color:#2d3748;font-family:'Open Sans', Arial,sans-serif;">
                                   <a href="${eventDetails.zoomLink}" 
                                      style="color:#3182ce;text-decoration:none;font-weight:500;padding:8px 12px;background-color:#f7fafc;border-radius:6px;display:inline-block;">
-                                    জুম মিটিং লিংক
+                                    মিটিং লিংক
                                   </a>
                                 </td>
                               </tr>
@@ -134,6 +148,21 @@ export const sendEventRegistrationEmail = (
                                 })}
                               </td>
                             </tr>
+                            ${
+                              eventDetails?.type === "EOI"
+                                ? `
+                                <tr>
+                                  <td colspan="2" style="padding:16px 0;">
+                                    <div style="background-color:#fff3cd;border:1px solid #ffeaa7;border-radius:8px;padding:12px;">
+                                      <p style="margin:0;font-size:14px;color:#856404;font-family:'Open Sans', Arial,sans-serif;font-weight:500;">
+                                        ইভেন্টের ফি এখনো নির্ধারণ হয়নি। পরবর্তীতে ইমেইলের মাধ্যমে জানানো হবে।
+                                      </p>
+                                    </div>
+                                  </td>
+                                </tr>
+`
+                                : ""
+                            }
                           </table>
                         </div>
                         

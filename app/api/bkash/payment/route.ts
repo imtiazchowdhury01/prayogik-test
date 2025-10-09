@@ -1,7 +1,8 @@
+// api/bkash/payment/route.ts
 import { db } from "@/lib/db";
 import { createPayment } from "@/services/bkash";
 import { NextResponse, NextRequest } from "next/server";
-import { v4 as uuidv4 } from "uuid";
+import type { PurchaseType } from "@prisma/client";
 
 const bkashConfig = {
   base_url: process.env.BKASH_BASE_URL!,
@@ -11,19 +12,42 @@ const bkashConfig = {
   app_secret: process.env.BKASH_CHECKOUT_URL_APP_SECRET!,
 };
 
+interface PaymentRequest {
+  email: string;
+  subscriptionPlanId?: string | null;
+  courseId?: string | null;
+  certificationId?: string | null;
+  amount: number;
+  type: PurchaseType;
+  eventId?: string | null;
+  phoneNumber?: string | null;
+  profession?: string | null;
+  name?: string | null;
+}
+
 export async function POST(req: NextRequest) {
   try {
+    const requestBody: PaymentRequest = await req.json();
     const {
       email,
       subscriptionPlanId,
       courseId,
+      certificationId,
       amount,
       type,
       eventId,
       phoneNumber,
       profession,
       name,
-    } = await req.json();
+    } = requestBody;
+
+    // Validate required fields
+    if (!email || !amount || !type) {
+      return NextResponse.json(
+        { message: "Missing required fields" },
+        { status: 400 }
+      );
+    }
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
 
@@ -31,22 +55,26 @@ export async function POST(req: NextRequest) {
       data: {
         email: email,
         amount: Number(amount),
-        subscriptionPlanId: subscriptionPlanId,
-        courseId: courseId,
+        subscriptionPlanId: subscriptionPlanId || null,
+        courseId: courseId || null,
+        certificationId: certificationId || null,
         purchaseType: type,
-        eventId,
-        phoneNumber,
-        profession,
-        name,
+        eventId: eventId || null,
+        phoneNumber: phoneNumber || null,
+        profession: profession || null,
+        name: name || null,
       },
     });
 
     if (!order) {
-      return NextResponse.json({ message: "Payment order creation Failed" });
+      return NextResponse.json(
+        { message: "Payment order creation failed" },
+        { status: 500 }
+      );
     }
 
     const paymentDetails = {
-      amount,
+      amount: Number(amount),
       orderId: order.id,
       reference: order.id,
       callbackURL: `${baseUrl}/api/bkash/callback`,
@@ -58,7 +86,7 @@ export async function POST(req: NextRequest) {
     );
 
     if (createPaymentResponse.statusCode !== "0000") {
-      return NextResponse.json({ message: "Payment Failed" });
+      return NextResponse.json({ message: "Payment failed" }, { status: 400 });
     }
 
     await db.bkashPurchaseHistory.update({
@@ -67,10 +95,14 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({
-      message: "Payment Success",
+      message: "Payment success",
       url: createPaymentResponse.bkashURL,
     });
   } catch (error) {
-    return NextResponse.json({ message: "Something went wrong" });
+    console.error("[BKASH_PAYMENT_ERROR]", error);
+    return NextResponse.json(
+      { message: "Something went wrong" },
+      { status: 500 }
+    );
   }
 }

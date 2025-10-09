@@ -1,6 +1,4 @@
-// @ts-nocheck
-
-import { useTeacherProfile } from "@/hooks/useTeacherProfile";
+// api/user/[courseId]/route.ts
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 import { NextResponse } from "next/server";
@@ -10,33 +8,36 @@ export async function DELETE(
   { params }: { params: { courseId: string } }
 ) {
   try {
-    const { userId } = await getServerUserSession(req);
+    const { userId } = await getServerUserSession();
 
-    // Check if userId is available
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const teacherProfileId = await useTeacherProfile(userId);
+    const teacherProfile = await db.teacherProfile.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
 
-    // Fetch the course associated with the user (teacher)
-    const course = await db.course.findUnique({
+    if (!teacherProfile) {
+      return new NextResponse("Teacher profile not found", { status: 404 });
+    }
+
+    const course = await db.course.findFirst({
       where: {
         id: params.courseId,
-        teacherProfileId,
+        teacherProfileId: teacherProfile.id,
       },
       include: {
-        attachments: true, // Include attachments to delete them
-        chapters: true, // Include chapters to delete them
+        attachments: true,
+        lessons: true,
       },
     });
 
-    // If course not found, return 404
     if (!course) {
       return new NextResponse("Not found", { status: 404 });
     }
 
-    // Delete associated attachments
     if (course.attachments.length > 0) {
       await db.attachment.deleteMany({
         where: {
@@ -45,12 +46,10 @@ export async function DELETE(
       });
     }
 
-    // Delete associated chapters and their videos
-    if (course.chapters.length > 0) {
-      for (const chapter of course.chapters) {
-        const videoId = chapter.videoUrl; // Get the video ID from the chapter
+    if (course.lessons.length > 0) {
+      for (const lesson of course.lessons) {
+        const videoId = lesson.videoUrl;
         if (videoId) {
-          // Construct the URL for deleting the video
           const apiSecret = process.env.VDOCIPHER_API_SECRET;
           if (!apiSecret) {
             throw new Error("API Secret is not defined.");
@@ -58,7 +57,6 @@ export async function DELETE(
 
           const url = `https://dev.vdocipher.com/api/videos?videos=${videoId}`;
 
-          // Attempt to delete the video from VdoCipher
           const response = await fetch(url, {
             method: "DELETE",
             headers: {
@@ -68,7 +66,6 @@ export async function DELETE(
             },
           });
 
-          // Check if the response is OK (status in the range 200-299)
           if (!response.ok) {
             const errorText = await response.text();
             console.error(`Response from VdoCipher: ${errorText}`);
@@ -79,25 +76,22 @@ export async function DELETE(
         }
       }
 
-      // Delete the chapters after videos are deleted
       await db.lesson.deleteMany({
         where: {
-          id: params.courseId,
+          courseId: params.courseId,
         },
       });
     }
 
-    // Delete the course
     const deletedCourse = await db.course.delete({
       where: {
         id: params.courseId,
       },
     });
 
-    // Return the deleted course data in response
     return NextResponse.json(deletedCourse);
   } catch (error) {
-    console.error("[COURSE_ID_DELETE]", error); // Use console.error for error logging
+    console.error("[COURSE_ID_DELETE]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
@@ -107,44 +101,45 @@ export async function PATCH(
   { params }: { params: { courseId: string } }
 ) {
   try {
-    const { userId } = await getServerUserSession(req);
+    const { userId } = await getServerUserSession();
     const { courseId } = params;
 
-    const teacherProfileId = await useTeacherProfile(userId);
-
-    // Parse the request body
-    const values = await req.json();
-
-    // Check if the user is authenticated
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    // Ensure at least one field is present to update
+    const teacherProfile = await db.teacherProfile.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+
+    if (!teacherProfile) {
+      return new NextResponse("Teacher profile not found", { status: 404 });
+    }
+
+    const values = await req.json();
+
     if (!values || Object.keys(values).length === 0) {
       return new NextResponse("No fields to update", { status: 400 });
     }
 
-    // Find the existing course to ensure it belongs to the user
-    const existingCourse = await db.course.findUnique({
+    const existingCourse = await db.course.findFirst({
       where: {
         id: courseId,
-        teacherProfileId,
+        teacherProfileId: teacherProfile.id,
       },
     });
 
-    // If the course is not found, return a 404 response
     if (!existingCourse) {
       return new NextResponse("Not found", { status: 404 });
     }
 
-    // Update the course with the provided fields
     const updatedCourse = await db.course.update({
       where: {
         id: courseId,
       },
       data: {
-        ...values, // Only apply the fields being updated
+        ...values,
       },
     });
 

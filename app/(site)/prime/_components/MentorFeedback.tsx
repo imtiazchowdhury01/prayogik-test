@@ -2,8 +2,20 @@ import SectionTitle from "@/components/common/SectionTitle";
 import React from "react";
 import { mentorsFeedbackData } from "../../course-roadmap/_utils/data";
 import VideoGallery from "../../course-roadmap/_components/VideoGallery";
+import TrialCheckoutButton from "@/components/trial-checkout-button";
+import PrimeActionBanner from "./PrimeActionBanner";
 
-const MentorFeedback = () => {
+const MentorFeedback = ({
+  trialPlan,
+  trialPlanDuration,
+  trialPlanPrice,
+  courseLimit,
+}: {
+  trialPlan: any;
+  trialPlanDuration: any;
+  trialPlanPrice: any;
+  courseLimit: any;
+}) => {
   return (
     <div>
       <SectionTitle
@@ -12,6 +24,26 @@ const MentorFeedback = () => {
         descriptionClassName="max-w-5xl md:px-10"
       />
       <VideoGallery videos={mentorsFeedbackData} />
+      <div className="pt-28">
+        <PrimeActionBanner
+          trialPlanPrice={trialPlanPrice}
+          trialPlanDuration={trialPlanDuration}
+          courseLimit={courseLimit}
+          backgroundImage="/images/teacher/teacher-cta-bg.webp"
+          className="mb-0 xl:mb-28"
+          customButton={
+            <TrialCheckoutButton
+              trialPlan={trialPlan}
+              size={"lg"}
+              variant={"primary"}
+              className="bg-secondary-button hover:bg-secondary-button hover:opacity-95 text-white block rounded-md transition-all duration-300 shadow-sm text-base font-semibold px-4"
+              subTextNode=""
+            >
+              এখনই শুরু করুন
+            </TrialCheckoutButton>
+          }
+        />
+      </div>
     </div>
   );
 };

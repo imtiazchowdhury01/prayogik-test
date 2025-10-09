@@ -1,80 +1,41 @@
-// // @ts-nocheck
-// import { useStudentProfile } from "@/hooks/useStudentProfile";
-// import { db } from "@/lib/db";
-// import { getServerUserSession } from "@/lib/getServerUserSession";
-// import { NextResponse } from "next/server";
-
-// export async function PUT(
-//   req: Request,
-//   { params }: { params: { courseId: string; lessonId: string } }
-// ) {
-//   try {
-    
-//     const { userId } = await getServerUserSession(req);
-//     const studentProfileId = await useStudentProfile(userId);
-
-
-
-//     const { isCompleted } = await req.json();
-
-//     if (!userId) {
-//       return new NextResponse("Unauthorized", { status: 401 });
-//     }
-
-//     const newIsCompleted = isCompleted;
-
-//     const progress = await db.progress.upsert({
-//       where: {
-//         studentProfileId_lessonId: {
-//           studentProfileId,
-//           lessonId: params.lessonId,
-//         },
-//       },
-//       update: {
-//         isCompleted: newIsCompleted,
-//       },
-//       create: {
-//         studentProfileId,
-//         lessonId: params.lessonId,
-//         isCompleted: newIsCompleted,
-//       },
-//     });
-
-    
-//     return NextResponse.json(progress);
-//   } catch (error) {
-//     console.error("[CHAPTER_ID_PROGRESS]", error);
-//     return new NextResponse("Internal Server Error", { status: 500 });
-//   }
-// }
-
-
-// @ts-nocheck
+// api/courses/[courseId]/lessons/[lessonId]/progress/route.ts
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+
+interface RouteParams {
+  params: {
+    courseId: string;
+    lessonId: string;
+  };
+}
+
+interface ProgressRequest {
+  isCompleted: boolean;
+}
 
 export async function PUT(
-  req: Request,
-  { params }: { params: { courseId: string; lessonId: string } }
-) {
+  req: NextRequest,
+  { params }: RouteParams
+): Promise<NextResponse> {
   try {
-    const { userId } = await getServerUserSession(req);
+    const { lessonId } = params;
+
+    if (!lessonId) {
+      return new NextResponse("Missing lessonId", { status: 400 });
+    }
+
+    const { userId } = await getServerUserSession();
 
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    // Get studentProfileId from the database
     const user = await db.user.findUnique({
-      where: {
-        id: userId,
-      },
+      where: { id: userId },
       select: {
         studentProfile: {
-          select: {
-            id: true,
-          },
+          select: { id: true },
         },
       },
     });
@@ -85,28 +46,29 @@ export async function PUT(
       return new NextResponse("Student profile not found", { status: 400 });
     }
 
-    const { isCompleted } = await req.json();
+    const body: ProgressRequest = await req.json();
+    const { isCompleted } = body;
 
     const progress = await db.progress.upsert({
       where: {
-        studentProfileId_lessonId: {  // Use the name of the unique constraint
-          studentProfileId: studentProfileId,
-          lessonId: params.lessonId,
+        studentProfileId_lessonId: {
+          studentProfileId,
+          lessonId,
         },
       },
       update: {
-        isCompleted: isCompleted,
+        isCompleted,
       },
       create: {
-        studentProfileId: studentProfileId,
-        lessonId: params.lessonId,
-        isCompleted: isCompleted,
+        studentProfileId,
+        lessonId,
+        isCompleted,
       },
     });
 
     return NextResponse.json(progress);
   } catch (error) {
-    console.error("[CHAPTER_ID_PROGRESS]", error);
+    console.error("[LESSON_PROGRESS_ERROR]", error);
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

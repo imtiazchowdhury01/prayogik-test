@@ -13,13 +13,15 @@ import { CourseTypeForm } from "./course-type-form";
 import { MultiplePriceForm } from "./multiple-price-form";
 import { SubscriptionStatus } from "./subscription-status";
 import { AttachmentForm } from "./attachment-form";
-import { CourseMode } from "@prisma/client";
+import { Certification, CourseMode } from "@prisma/client";
+import { CertificationSelectForm } from "./certification-select-form";
 
 interface CourseRightSidebarProps {
   course: any; // Replace with proper Course type
   isAdmin: boolean;
   teacherProfiles: any[]; // Replace with proper TeacherProfile type
   coTeachers: any[]; // Replace with proper TeacherProfile type
+  certifications?: Certification[]
 }
 
 export const CourseRightSidebar = ({
@@ -27,6 +29,7 @@ export const CourseRightSidebar = ({
   isAdmin,
   teacherProfiles,
   coTeachers,
+  certifications
 }: CourseRightSidebarProps) => {
   return (
     <div className="space-y-6">
@@ -101,6 +104,13 @@ export const CourseRightSidebar = ({
           </div>
         )}
 
+      <div>
+        <div className="flex items-center gap-x-2">
+          <IconBadge icon={CircleDollarSign} />
+          <h2 className="text-xl">Select Certifications</h2>
+        </div>
+        <CertificationSelectForm initialData={course} courseId={course.id}  certifications={certifications || []}/>
+      </div>
       <div>
         <div className="flex items-center gap-x-2">
           <IconBadge icon={File} />

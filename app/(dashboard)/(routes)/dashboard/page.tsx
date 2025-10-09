@@ -1,26 +1,33 @@
 export const dynamic = "force-dynamic";
 import { ProgressAndCompletedSection } from "./_components/progress-and-completed-section";
-import DashboardSubscriptionMessage from "./_components/dashboard-subscription-message";
 import { Suspense } from "react";
-import {
-  DashboardSummarySkeleton,
-} from "./_components/dashboard-skeleton";
-import { SummaryAndCoursesWrapper } from "./_components/summary-and-courses-wrapper";
+import { DashboardSummarySkeleton } from "./_components/dashboard-skeleton";
+import { SummaryCardsWrapper } from "./_components/summary-cards-wrapper";
+import { CoursesTabWrapper } from "./_components/courses-tab-wrapper";
+import { DashboardTabProvider } from "@/hooks/use-dashboard-tab";
+import SubscriptionMessageContent from "./_components/dashboard-subscription-message";
 
 export default function Dashboard() {
   return (
-    <div className="space-y-6">
-      {/* subscription message */}
-      <DashboardSubscriptionMessage />
-      <h2 className="text-3xl font-semibold">Dashboard</h2>
-      {/* complete and progress cards  */}
-      <Suspense fallback={null}>
-        <ProgressAndCompletedSection />
-      </Suspense>
-      {/* summary and course tab */}
-      <Suspense fallback={<DashboardSummarySkeleton />}>
-        <SummaryAndCoursesWrapper />
-      </Suspense>
-    </div>
+    <DashboardTabProvider>
+      <div className="space-y-6">
+        {/* subscription message */}
+        <Suspense fallback={null}>
+          <SubscriptionMessageContent />
+        </Suspense>
+
+        <h2 className="text-3xl font-semibold">Dashboard</h2>
+        {/* complete and progress cards  */}
+        <Suspense fallback={null}>
+          <ProgressAndCompletedSection />
+        </Suspense>
+        {/* summary cards */}
+        <Suspense fallback={<DashboardSummarySkeleton />}>
+          <SummaryCardsWrapper />
+        </Suspense>
+        {/* courses tab - renders immediately */}
+        <CoursesTabWrapper />
+      </div>
+    </DashboardTabProvider>
   );
 }

@@ -6,6 +6,7 @@ import Link from "next/link";
 import CourseCheckout from "./_components/course-checkout";
 import SubscriptionCheckout from "./_components/subscription-checkout";
 import EventCheckout from "./_components/event-checkout";
+import CertificationCheckout from "./_components/certification-checkout";
 
 interface CheckOutPageProps {
   searchParams: {
@@ -81,10 +82,24 @@ const CheckOutPage = async ({ searchParams }: CheckOutPageProps) => {
       </div>
     );
   }
-  if(cartData?.type === "EVENT"){
-     return (
+  if (cartData?.type === "EVENT") {
+    return (
       <div>
         <EventCheckout
+          cartData={cartData}
+          errorMessage={errorMessage}
+          isPaymentSuccessful={isPaymentSuccessful}
+          transactionId={transactionId}
+          amount={amount}
+        />
+      </div>
+    );
+  }
+
+  if (cartData?.type === "CERTIFICATION") {
+    return (
+      <div>
+        <CertificationCheckout
           cartData={cartData}
           errorMessage={errorMessage}
           isPaymentSuccessful={isPaymentSuccessful}

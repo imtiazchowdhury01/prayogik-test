@@ -1,61 +1,136 @@
-import { useStudentProfile } from "./../../../../hooks/useStudentProfile";
+// api/courses/[courseId]/route.ts
+export const dynamic = "force-dynamic";
 
 import { getProgress } from "@/actions/get-progress";
 import { deleteImageFromS3 } from "@/actions/upload-aws";
 import {
   useCoTeacherProfileId,
-  useCourseByTeacherOrCoTeacher,
   useTeacherProfile,
 } from "@/hooks/useTeacherProfile";
+import { useStudentProfile } from "@/hooks/useStudentProfile";
+import { updateCourseCertificationsBatch } from "@/lib/certifications";
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
-import { RouteHandler } from "@/lib/utils/server/route-handler";
 import { deleteFolderInVdeocipherByCourseId } from "@/lib/utils/vdeocipher";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 
-const routeHandler = new RouteHandler();
+// ========== TYPE DEFINITIONS ==========
 
-export async function GET(req: any, { params }: any) {
+interface RouteParams {
+  params: {
+    courseId: string;
+  };
+}
+
+interface ProgressRequest {
+  userId: string;
+}
+
+interface CourseUpdateRequest {
+  coTeacherIds?: string[];
+  liveSchedules?: Array<{
+    dayOfWeek:
+      | "SATURDAY"
+      | "SUNDAY"
+      | "MONDAY"
+      | "TUESDAY"
+      | "WEDNESDAY"
+      | "THURSDAY"
+      | "FRIDAY";
+    startTime: string;
+    endTime: string;
+  }>;
+  certificationIds?: string[];
+  [key: string]: any;
+}
+
+interface ApiErrorResponse {
+  error: boolean;
+  message: string;
+}
+
+interface ProgressResponse {
+  progress: number;
+}
+
+type CourseWithDeleteData = Prisma.CourseGetPayload<{
+  include: {
+    attachments: true;
+    lessons: true;
+    enrolledStudents: true;
+  };
+}>;
+
+type CourseWithUpdateData = Prisma.CourseGetPayload<{
+  include: {
+    lessons: true;
+    category: true;
+    attachments: true;
+    liveSchedules: true;
+  };
+}>;
+
+// ========== GET HANDLER ==========
+
+export async function GET(
+  req: NextRequest,
+  { params }: RouteParams
+): Promise<NextResponse> {
   try {
     const { courseId } = params;
+
     if (!courseId) {
-      throw new Error("Failed to fetch the course. Missing courseId.");
+      return NextResponse.json(
+        {
+          error: true,
+          message: "Failed to fetch the course. Missing courseId.",
+        },
+        { status: 400 }
+      );
     }
+
     const { userId } = await getServerUserSession();
 
     if (!userId) {
-      throw new Error("User not found");
+      return NextResponse.json(
+        {
+          error: true,
+          message: "User not found",
+        },
+        { status: 401 }
+      );
     }
 
     const studentProfileId = await useStudentProfile(userId);
 
-    // Fetch course details with related data
-    const course = await db.course.findUnique({
+    // Build the query conditionally
+    const courseQuery: Prisma.CourseFindUniqueArgs = {
       where: {
-        id: params.courseId,
+        id: courseId,
       },
       include: {
-        // subscriptionDiscount: true,
-        purchases: userId
-          ? {
-              where: {
-                studentProfileId,
-              },
-            }
-          : false,
+        ...(studentProfileId && {
+          purchases: {
+            where: {
+              studentProfileId,
+              paymentStatus: "COMPLETED",
+            },
+          },
+        }),
         lessons: {
           where: {
             isPublished: true,
           },
-          include: userId
-            ? {
-                Progress: {
-                  where: {
-                    studentProfileId,
-                  },
+          ...(studentProfileId && {
+            include: {
+              Progress: {
+                where: {
+                  studentProfileId,
                 },
-              }
-            : null,
+              },
+            },
+          }),
           orderBy: {
             position: "asc",
           },
@@ -71,131 +146,138 @@ export async function GET(req: any, { params }: any) {
           },
         },
       },
-    });
+    };
+
+    const course = await db.course.findUnique(courseQuery);
+
+    if (!course) {
+      return NextResponse.json(
+        {
+          error: true,
+          message: "Course not found",
+        },
+        { status: 404 }
+      );
+    }
+
     return NextResponse.json(course);
   } catch (error: any) {
-    // console.log("SINGLE_COURSE_ERROR:", error);
+    console.error("[SINGLE_COURSE_ERROR]", error);
     return NextResponse.json(
       {
         error: true,
-        message: error.message,
+        message: error?.message || "Internal server error",
       },
       { status: 500 }
     );
   }
 }
 
-export async function DELETE(
-  req: Request,
-  { params }: { params: { courseId: string } }
-) {
-  try {
-    const { userId } = await getServerUserSession(req);
+// ========== DELETE HANDLER ==========
 
-    // Check if userId is available
+export async function DELETE(
+  req: NextRequest,
+  { params }: RouteParams
+): Promise<NextResponse> {
+  try {
+    const { userId } = await getServerUserSession();
+
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
     const teacherProfileId = await useTeacherProfile(userId);
 
-    // Fetch the course associated with the user (teacher)
-    const course = await db.course.findUnique({
+    if (!teacherProfileId) {
+      return new NextResponse("Unauthorized - Teacher profile not found", {
+        status: 401,
+      });
+    }
+
+    const course: CourseWithDeleteData | null = await db.course.findUnique({
       where: {
         id: params.courseId,
-        teacherProfileId, // Ensure that the user (teacher) owns the course
+        teacherProfileId,
       },
       include: {
-        // subscriptionDiscount: true,
-        attachments: true, // Include attachments to delete them
-        lessons: true, // Include lessons to delete them
-        enrolledStudents: true, // Include students
+        attachments: true,
+        lessons: true,
+        enrolledStudents: true,
       },
     });
 
     if (!course) {
-      // If course not found, return 404
       return new NextResponse("Course not found", { status: 404 });
     }
-    // Check if any lessons contain video URLs
+
     const lessonsWithVideos = course.lessons.filter(
       (lesson) => lesson.videoUrl
     );
 
     if (course.enrolledStudents.length > 0 || lessonsWithVideos.length > 0) {
-      let errorMessage = "";
+      const errors: string[] = [];
 
       if (course.enrolledStudents.length > 0) {
-        errorMessage = "Cannot delete course with enrolled students.";
+        errors.push("Cannot delete course with enrolled students.");
       }
 
       if (lessonsWithVideos.length > 0) {
-        if (errorMessage) errorMessage += " ";
-        errorMessage +=
-          "Please delete all lessons with videos first before deleting the course.";
+        errors.push(
+          "Please delete all lessons with videos first before deleting the course."
+        );
       }
 
-      // Throw a regular error (can be caught in a try/catch or show toast on client)
-      throw new Error(errorMessage);
-    } else {
-      // Delete course image from S3 and clear imageUrl in database
-      if (course.imageUrl) {
-        try {
-          const imageKey = course.imageUrl.split(".amazonaws.com/")[1];
-          if (imageKey) {
-            await deleteImageFromS3(imageKey);
-          }
-          // Remove imageUrl from the course record before deletion
-          await db.course.update({
-            where: { id: params.courseId },
-            data: { imageUrl: "" },
-          });
-        } catch (error) {
-          console.error("Failed to delete course image:", error);
-        }
-      }
-      // Delete associated attachments
-      if (course.attachments.length > 0) {
-        // First delete all attachments from S3
-        for (const attachment of course.attachments) {
-          try {
-            const previousKey = attachment.url?.split(".amazonaws.com/")[1];
-            // console.log("previousKey result:", previousKey);
-            if (previousKey) {
-              await deleteImageFromS3(previousKey);
-            }
-          } catch (error) {
-            console.error(
-              `Failed to delete attachment from S3: ${attachment.id}`,
-              error
-            );
-          }
-        }
+      return new NextResponse(errors.join(" "), { status: 400 });
+    }
 
-        // Then delete all attachments from database
-        await db.attachment.deleteMany({
-          where: {
-            courseId: params.courseId,
-          },
+    if (course.imageUrl) {
+      try {
+        const imageKey = course.imageUrl.split(".amazonaws.com/")[1];
+        if (imageKey) {
+          await deleteImageFromS3(imageKey);
+        }
+        await db.course.update({
+          where: { id: params.courseId },
+          data: { imageUrl: null },
         });
+      } catch (error) {
+        console.error("Failed to delete course image:", error);
+      }
+    }
+
+    if (course.attachments.length > 0) {
+      for (const attachment of course.attachments) {
+        try {
+          const attachmentKey = attachment.url?.split(".amazonaws.com/")[1];
+          if (attachmentKey) {
+            await deleteImageFromS3(attachmentKey);
+          }
+        } catch (error) {
+          console.error(
+            `Failed to delete attachment from S3: ${attachment.id}`,
+            error
+          );
+        }
       }
 
-      // Delete associated lessons and their videos
-      if (course.lessons.length > 0) {
-        for (const lesson of course.lessons) {
-          const videoId = lesson.videoUrl; // Get the video URL from the lesson
+      await db.attachment.deleteMany({
+        where: { courseId: params.courseId },
+      });
+    }
 
-          if (videoId) {
-            // Construct the URL for deleting the video from VdoCipher
-            const apiSecret = process.env.VDOCIPHER_API_SECRET;
+    if (course.lessons.length > 0) {
+      const apiSecret = process.env.VDOCIPHER_API_SECRET;
 
-            if (!apiSecret) {
-              throw new Error("API Secret is not defined.");
-            }
+      if (!apiSecret) {
+        return new NextResponse("API Secret is not defined", { status: 500 });
+      }
 
+      for (const lesson of course.lessons) {
+        const videoId = lesson.videoUrl;
+
+        if (videoId) {
+          try {
             const url = `https://dev.vdocipher.com/api/videos?videos=${videoId}`;
-
-            // Attempt to delete the video from VdoCipher
             const response = await fetch(url, {
               method: "DELETE",
               headers: {
@@ -205,60 +287,59 @@ export async function DELETE(
               },
             });
 
-            // Check if the response is OK (status in the range 200-299)
             if (!response.ok) {
               const errorText = await response.text();
               console.error(`Response from VdoCipher: ${errorText}`);
-              throw new Error(
-                `Failed to delete video ${videoId}: ${response.status} - ${errorText}`
-              );
             }
+          } catch (error) {
+            console.error(`Failed to delete video ${videoId}:`, error);
           }
         }
-
-        // Delete the lessons after videos are deleted
-        await db.lesson.deleteMany({
-          where: {
-            courseId: params.courseId,
-          },
-        });
       }
 
-      // Delete folder in vdeocipher
-      await deleteFolderInVdeocipherByCourseId(params.courseId);
-
-      // Delete the course
-      const deletedCourse = await db.course.delete({
-        where: {
-          id: params.courseId,
-        },
+      await db.lesson.deleteMany({
+        where: { courseId: params.courseId },
       });
-
-      // Return the deleted course data in response
-      return NextResponse.json(deletedCourse);
     }
+
+    await deleteFolderInVdeocipherByCourseId(params.courseId);
+
+    const deletedCourse = await db.course.delete({
+      where: { id: params.courseId },
+    });
+
+    return NextResponse.json(deletedCourse);
   } catch (error: any) {
-    console.error(error.message);
-    return new NextResponse(error.message, { status: 400 });
+    console.error("[COURSE_DELETE_ERROR]", error);
+    return new NextResponse(error?.message || "Internal Error", {
+      status: 500,
+    });
   }
 }
 
-export async function POST(
-  request: Request,
-  { params }: { params: { courseId: string } }
-) {
-  const { userId } = await request.json(); // Extract userId from request body
-  const { courseId } = params; // Extract courseId from route parameters
+// ========== POST HANDLER (Get Progress) ==========
 
+export async function POST(
+  request: NextRequest,
+  { params }: RouteParams
+): Promise<NextResponse<ProgressResponse | { error: string }>> {
   try {
-    // Fetch the progress using the getProgress function
+    const body: ProgressRequest = await request.json();
+    const { userId } = body;
+    const { courseId } = params;
+
+    if (!userId || !courseId) {
+      return NextResponse.json(
+        { error: "Missing userId or courseId" },
+        { status: 400 }
+      );
+    }
+
     const progressPercentage = await getProgress(userId, courseId);
 
-    // Return the progress percentage as a JSON response
     return NextResponse.json({ progress: progressPercentage });
   } catch (error) {
-    console.error(error);
-    // Return an error response
+    console.error("[GET_PROGRESS_ERROR]", error);
     return NextResponse.json(
       { error: "Error fetching progress" },
       { status: 500 }
@@ -266,212 +347,107 @@ export async function POST(
   }
 }
 
+// ========== PATCH HANDLER ==========
+
 export async function PATCH(
-  req: Request,
-  { params }: { params: { courseId: string } }
-) {
+  req: NextRequest,
+  { params }: RouteParams
+): Promise<NextResponse> {
   try {
-    const { userId, isAdmin } = await getServerUserSession(req);
+    const { userId, isAdmin } = await getServerUserSession();
     const { courseId } = params;
 
-    // Parse the request body
-    const values = await req.json();
-
-    // Check if the user is authenticated
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    // Ensure at least one field is present to update
+    const values: CourseUpdateRequest = await req.json();
+
     if (!values || Object.keys(values).length === 0) {
       return new NextResponse("No fields to update", { status: 400 });
     }
 
     const teacherProfileId = await useTeacherProfile(userId);
-    const coTeacherProfileId = await useCoTeacherProfileId(
-      userId,
-      params.courseId
-    );
+    const coTeacherProfileId = await useCoTeacherProfileId(userId, courseId);
 
     if (!isAdmin && !teacherProfileId && !coTeacherProfileId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    // Build where clause based on role
-    let whereClause: any = {
-      id: courseId,
-    };
+    // Build where clause for findFirst
+    const whereConditions: any[] = [{ id: courseId }];
 
-    // If user is not admin, add teacher/co-teacher restrictions
     if (!isAdmin) {
-      whereClause.OR = [];
+      const orConditions: any[] = [];
 
       if (teacherProfileId) {
-        whereClause.OR.push({ teacherProfileId });
+        orConditions.push({ teacherProfileId });
       }
 
       if (coTeacherProfileId) {
-        whereClause.OR.push({
-          coTeacherIds: {
-            hasSome: [coTeacherProfileId],
-          },
+        orConditions.push({
+          coTeacherIds: { hasSome: [coTeacherProfileId] },
         });
       }
-    }
 
-    const existingCourse = await db.course.findUnique({
-      where: whereClause,
-      include: {
-        lessons: true,
-        category: true,
-        attachments: true,
-        liveSchedules: true, // Include existing schedules
-      },
-    });
-
-    // If the course is not found, return a 404 response
-    if (!existingCourse) {
-      return new NextResponse("Not found", { status: 404 });
-    }
-
-    // Extract liveSchedules from values to handle separately
-    const { liveSchedules, ...courseUpdateData } = values;
-
-    // Get current coTeacherIds from the existing course
-    const currentCoTeachers = existingCourse.coTeacherIds || [];
-
-    // Handle co-teacher assignment/unassignment if coTeacherIds is being updated
-    if (values.coTeacherIds !== undefined) {
-      const newCoTeachers = values.coTeacherIds || [];
-
-      // Handle empty array case explicitly
-      if (newCoTeachers.length === 0) {
-        // If empty array is sent, remove courseId from all current co-teachers
-        if (currentCoTeachers.length > 0) {
-          console.log(`Removing all co-teachers from course ${courseId}`);
-
-          for (const coTeacherId of currentCoTeachers) {
-            try {
-              const existingProfile = await db.teacherProfile.findUnique({
-                where: { id: coTeacherId },
-                select: { coTeachingCourseIds: true },
-              });
-
-              if (existingProfile) {
-                const updatedCourseIds = (
-                  existingProfile.coTeachingCourseIds || []
-                ).filter((id: string) => id !== courseId);
-
-                await db.teacherProfile.update({
-                  where: { id: coTeacherId },
-                  data: {
-                    coTeachingCourseIds: updatedCourseIds,
-                  },
-                });
-              }
-            } catch (error) {
-              console.error(
-                `Error removing courseId from teacher ${coTeacherId}:`,
-                error
-              );
-            }
-          }
-        }
-      } else {
-        // Handle non-empty array case
-        // Find teachers to add (in new list but not in current)
-        const teachersToAdd = newCoTeachers.filter(
-          (id: string) => !currentCoTeachers.includes(id)
-        );
-
-        // Find teachers to remove (in current list but not in new)
-        const teachersToRemove = currentCoTeachers.filter(
-          (id: string) => !newCoTeachers.includes(id)
-        );
-
-        // Add courseId to new co-teachers' coTeachingCourseIds
-        if (teachersToAdd.length > 0) {
-          for (const coTeacherId of teachersToAdd) {
-            try {
-              const existingProfile = await db.teacherProfile.findUnique({
-                where: { id: coTeacherId },
-                select: { coTeachingCourseIds: true },
-              });
-
-              if (existingProfile) {
-                const updatedCourseIds = Array.from(
-                  new Set([
-                    ...(existingProfile.coTeachingCourseIds || []),
-                    courseId,
-                  ])
-                );
-
-                await db.teacherProfile.update({
-                  where: { id: coTeacherId },
-                  data: {
-                    coTeachingCourseIds: updatedCourseIds,
-                  },
-                });
-              }
-            } catch (error) {
-              console.error(
-                `Error adding courseId to teacher ${coTeacherId}:`,
-                error
-              );
-            }
-          }
-        }
-
-        // Remove courseId from removed co-teachers' coTeachingCourseIds
-        if (teachersToRemove.length > 0) {
-          console.log(
-            `Removing co-teachers from course ${courseId}:`,
-            teachersToRemove
-          );
-
-          for (const coTeacherId of teachersToRemove) {
-            try {
-              const existingProfile = await db.teacherProfile.findUnique({
-                where: { id: coTeacherId },
-                select: { coTeachingCourseIds: true },
-              });
-
-              if (existingProfile) {
-                const updatedCourseIds = (
-                  existingProfile.coTeachingCourseIds || []
-                ).filter((id: string) => id !== courseId);
-
-                await db.teacherProfile.update({
-                  where: { id: coTeacherId },
-                  data: {
-                    coTeachingCourseIds: updatedCourseIds,
-                  },
-                });
-              }
-            } catch (error) {
-              console.error(
-                `Error removing courseId from teacher ${coTeacherId}:`,
-                error
-              );
-            }
-          }
-        }
+      if (orConditions.length > 0) {
+        whereConditions.push({ OR: orConditions });
       }
     }
 
-    // Handle LiveSchedules separately if provided
-    if (liveSchedules !== undefined) {
-      // First, delete all existing schedules for this course
-      await db.liveSchedule.deleteMany({
+    const existingCourse: CourseWithUpdateData | null =
+      await db.course.findFirst({
         where: {
-          courseId: courseId,
+          AND: whereConditions,
+        },
+        include: {
+          lessons: true,
+          category: true,
+          attachments: true,
+          liveSchedules: true,
         },
       });
 
-      // Then create new schedules if any provided
+    if (!existingCourse) {
+      return new NextResponse("Course not found", { status: 404 });
+    }
+
+    const { liveSchedules, ...courseUpdateData } = values;
+    const currentCoTeachers = existingCourse.coTeacherIds || [];
+
+    if (values.coTeacherIds !== undefined) {
+      const newCoTeachers = values.coTeacherIds || [];
+
+      if (newCoTeachers.length === 0) {
+        for (const coTeacherId of currentCoTeachers) {
+          await updateCoTeacherCourseIds(coTeacherId, courseId, "remove");
+        }
+      } else {
+        const teachersToAdd = newCoTeachers.filter(
+          (id) => !currentCoTeachers.includes(id)
+        );
+        const teachersToRemove = currentCoTeachers.filter(
+          (id) => !newCoTeachers.includes(id)
+        );
+
+        for (const coTeacherId of teachersToAdd) {
+          await updateCoTeacherCourseIds(coTeacherId, courseId, "add");
+        }
+
+        for (const coTeacherId of teachersToRemove) {
+          await updateCoTeacherCourseIds(coTeacherId, courseId, "remove");
+        }
+      }
+    }
+
+    if (liveSchedules !== undefined) {
+      await db.liveSchedule.deleteMany({
+        where: { courseId },
+      });
+
       if (liveSchedules && liveSchedules.length > 0) {
-        const scheduleCreateData = liveSchedules.map((schedule: any) => ({
-          courseId: courseId,
+        const scheduleCreateData = liveSchedules.map((schedule) => ({
+          courseId,
           dayOfWeek: schedule.dayOfWeek,
           startTime: new Date(schedule.startTime),
           endTime: new Date(schedule.endTime),
@@ -483,20 +459,61 @@ export async function PATCH(
       }
     }
 
-    // Update the course with the provided fields (excluding liveSchedules)
+    if (values.certificationIds) {
+      await updateCourseCertificationsBatch(
+        courseId,
+        values.certificationIds,
+        existingCourse.certificationIds
+      );
+    }
+
     const updatedCourse = await db.course.update({
-      where: {
-        id: courseId,
-      },
-      data: courseUpdateData, // Only course fields, not relations
+      where: { id: courseId },
+      data: courseUpdateData,
       include: {
-        liveSchedules: true, // Include updated schedules in response
+        liveSchedules: true,
       },
     });
 
     return NextResponse.json(updatedCourse);
   } catch (error) {
-    console.error("[COURSE_ID_UPDATE_ERROR]", error);
+    console.error("[COURSE_PATCH_ERROR]", error);
     return new NextResponse("Internal Error", { status: 500 });
+  }
+}
+
+// ========== HELPER FUNCTIONS ==========
+
+async function updateCoTeacherCourseIds(
+  coTeacherId: string,
+  courseId: string,
+  action: "add" | "remove"
+): Promise<void> {
+  try {
+    const existingProfile = await db.teacherProfile.findUnique({
+      where: { id: coTeacherId },
+      select: { coTeachingCourseIds: true },
+    });
+
+    if (!existingProfile) return;
+
+    const currentCourseIds = existingProfile.coTeachingCourseIds || [];
+
+    const updatedCourseIds =
+      action === "add"
+        ? Array.from(new Set([...currentCourseIds, courseId]))
+        : currentCourseIds.filter((id) => id !== courseId);
+
+    await db.teacherProfile.update({
+      where: { id: coTeacherId },
+      data: { coTeachingCourseIds: updatedCourseIds },
+    });
+  } catch (error) {
+    console.error(
+      `Error ${action}ing courseId ${
+        action === "add" ? "to" : "from"
+      } teacher ${coTeacherId}:`,
+      error
+    );
   }
 }

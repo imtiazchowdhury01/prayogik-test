@@ -1,25 +1,24 @@
-// @ts-nocheck
+// api/teacher/apply/route.ts
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-// Helper function to validate and parse data
 const parseAndValidateYearsOfExperience = (yearsOfExperience: string) => {
-  const parsedYears = parseInt(yearsOfExperience, 10);
-  if (isNaN(parsedYears)) {
-    return { valid: false, error: "Invalid years of experience." };
+  if (!yearsOfExperience) {
+    return { valid: true, value: undefined };
   }
-  return { valid: true, value: parsedYears };
+  return { valid: true, value: yearsOfExperience };
 };
 
-// Helper function to process comma-separated strings
-const processCommaSeparatedString = (str: string) => {
+const processCommaSeparatedString = (str: string | string[]) => {
+  if (Array.isArray(str)) {
+    return str;
+  }
   if (typeof str !== "string" || !str.trim()) {
-    return str; // Return an empty array if the input is not a valid string or is empty
+    return [];
   }
   return str.split(",").map((s) => s.trim());
 };
 
-// Main POST handler
 export async function POST(request: Request) {
   try {
     const data = await request.json();
@@ -42,7 +41,6 @@ export async function POST(request: Request) {
       zipCode,
     } = data;
 
-    // Check for required fields
     if (!teacherId) {
       return NextResponse.json(
         { error: "teacherId is required." },
@@ -50,49 +48,45 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validate years of experience
     const { valid, value: parsedYearsOfExperience } =
       parseAndValidateYearsOfExperience(yearsOfExperience);
     if (!valid) {
       return NextResponse.json(
-        { error: parsedYearsOfExperience },
+        { error: "Invalid years of experience." },
         { status: 400 }
       );
     }
 
-    // Update the User model fields
+    const updateData: any = {};
+    if (name !== undefined) updateData.name = name;
+    if (email !== undefined) updateData.email = email;
+    if (bio !== undefined) updateData.bio = bio;
+    if (dateOfBirth !== undefined)
+      updateData.dateOfBirth = new Date(dateOfBirth);
+    if (gender !== undefined) updateData.gender = gender;
+    if (nationality !== undefined) updateData.nationality = nationality;
+    if (phoneNumber !== undefined) updateData.phoneNumber = phoneNumber;
+    if (city !== undefined) updateData.city = city;
+    if (state !== undefined) updateData.state = state;
+    if (country !== undefined) updateData.country = country;
+    if (zipCode !== undefined) updateData.zipCode = zipCode;
+    if (education !== undefined) updateData.education = education;
+
     const updatedUser = await db.user.update({
       where: { id: teacherId },
-      data: {
-        name,
-        email,
-        bio,
-
-        dateOfBirth: new Date(dateOfBirth),
-        gender,
-        nationality,
-        phoneNumber,
-        city,
-        state,
-        country,
-        zipCode,
-        education,
-      },
+      data: updateData,
     });
 
-    // Check if TeacherProfile exists
     const existingTeacherProfile = await db.teacherProfile.findUnique({
       where: { userId: teacherId },
     });
 
-    // Fetch all ranks
     const unsortedRanks = await db.teacherRank.findMany();
     const ranks = unsortedRanks.sort(
       (a, b) => a.numberOfSales - b.numberOfSales
     );
 
     if (existingTeacherProfile) {
-      // Update existing TeacherProfile
       const updatedTeacherProfile = await db.teacherProfile.update({
         where: { userId: teacherId },
         data: {
@@ -113,7 +107,6 @@ export async function POST(request: Request) {
         { status: 200 }
       );
     } else {
-      // Create a new TeacherProfile
       const newTeacherProfile = await db.teacherProfile.create({
         data: {
           userId: teacherId,
@@ -135,7 +128,7 @@ export async function POST(request: Request) {
         { status: 201 }
       );
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error processing teacher profile:", error);
     return NextResponse.json(
       { error: "Failed to submit details.", details: error.message },

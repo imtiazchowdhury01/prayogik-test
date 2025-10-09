@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 interface PaymentErrorProps {
@@ -9,25 +10,38 @@ interface PaymentErrorProps {
 const PaymentError = ({ message }: PaymentErrorProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [isVisible, setIsVisible] = useState(true);
+  const [isAnimating, setIsAnimating] = useState(false);
 
-  const handleCancel = () => {
-    // Create new URLSearchParams without the error parameter
+ const handleCancel = () => {
+    // Start fade out animation
+    setIsAnimating(true);
+    
+    // Hide completely after animation
+    setTimeout(() => {
+      setIsVisible(false);
+    }, 150);
+
+    // Instantly update URL using window.history
     const newSearchParams = new URLSearchParams(searchParams);
     newSearchParams.delete("error");
 
-    // Get current pathname
     const currentPath = window.location.pathname;
-
-    // Navigate to the same page without the error parameter
     const newUrl = newSearchParams.toString()
       ? `${currentPath}?${newSearchParams.toString()}`
       : currentPath;
 
-    router.replace(newUrl);
+    window.history.replaceState({}, '', newUrl);
   };
+  // Don't render if not visible
+  if (!isVisible) {
+    return null;
+  }
 
   return (
-    <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
+    <div className={`mb-6 p-4 bg-red-50 border border-red-200 rounded-md transition-opacity duration-150 ${
+      isAnimating ? 'opacity-0' : 'opacity-100'
+    }`}>
       <div className="flex">
         <div className="flex-shrink-0">
           <svg
@@ -48,7 +62,9 @@ const PaymentError = ({ message }: PaymentErrorProps) => {
               <h3 className="text-sm font-medium text-red-800">
                 পেমেন্ট ব্যর্থ হয়েছে
               </h3>
-              <p className="mt-1 text-sm text-red-700">{message && 'দুঃখিত, আপনার পেমেন্টটি ব্যর্থ হয়েছে। অনুগ্রহ করে পুনরায় চেষ্টা করুন।'}</p>
+              <p className="mt-1 text-sm text-red-700">
+                {message && 'দুঃখিত, আপনার পেমেন্টটি ব্যর্থ হয়েছে। অনুগ্রহ করে পুনরায় চেষ্টা করুন।'}
+              </p>
             </div>
             <button
               onClick={handleCancel}
@@ -70,15 +86,6 @@ const PaymentError = ({ message }: PaymentErrorProps) => {
               </svg>
             </button>
           </div>
-
-          {/* <div className="mt-3">
-            <button
-              onClick={handleCancel}
-              className="inline-flex items-center px-3 py-2 bg-red-100 text-red-700 text-sm font-medium rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
-            >
-              Try Again
-            </button>
-          </div> */}
         </div>
       </div>
     </div>

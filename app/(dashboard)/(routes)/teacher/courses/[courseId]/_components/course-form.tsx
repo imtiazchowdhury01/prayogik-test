@@ -7,6 +7,7 @@ import { useTeacherProfile } from "@/hooks/useTeacherProfile";
 import { CourseHeader } from "./course-header";
 import { CourseLeftSidebar } from "./course-left-sidebar";
 import { CourseRightSidebar } from "./course-right-sdebar";
+import { getCertificationsDBCall } from "@/lib/data-access-layer/getCertificationCourses";
 async function getCourseById(courseId: string) {
   try {
     const response = await fetch(Urls.admin.courses + `/${courseId}`, {
@@ -62,9 +63,10 @@ export const CourseForm = async ({
   isAdmin,
 }: CourseDataLoaderProps) => {
   // Fetch data in parallel
-  const [course, teacherProfiles] = await Promise.all([
+  const [course, teacherProfiles, certifications] = await Promise.all([
     getCourseById(courseId),
     getTeacherProfiles(),
+    getCertificationsDBCall(),
   ]);
 
   if (!course) return notFound();
@@ -114,6 +116,7 @@ export const CourseForm = async ({
           isAdmin={isAdmin}
           teacherProfiles={teacherProfiles}
           coTeachers={coTeachers}
+          certifications={certifications}
         />
       </div>
     </div>

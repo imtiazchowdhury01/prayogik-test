@@ -146,7 +146,10 @@ const MultiSelect = ({
                   return (
                     <Badge
                       key={value}
-                      className={cn(multiSelectVariants(variant), "h-10")}
+                      className={cn(
+                        multiSelectVariants(variant),
+                        "h-10 rounded-sm"
+                      )}
                     >
                       {IconComponent && (
                         <IconComponent className="h-4 w-4 mr-2" />

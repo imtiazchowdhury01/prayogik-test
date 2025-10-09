@@ -1,20 +1,13 @@
+// api/teacher/courses/[courseId]/route.ts
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 import { CourseMode } from "@prisma/client";
 import { NextResponse } from "next/server";
 
-/**
- * GET handler to fetch detailed course information for an authorized teacher.
- *
- * @param req - Incoming request object
- * @param params - Route parameters containing courseId
- * @returns JSON response with course data or error message
- */
 export async function GET(
   req: Request,
   { params }: { params: { courseId: string } }
 ) {
-  // Get the logged-in user's ID from session
   const { userId } = await getServerUserSession();
   const { courseId } = params;
 
@@ -25,7 +18,6 @@ export async function GET(
     );
   }
 
-  // Fetch the teacher profile associated with the current user
   const teacherProfile = await db.teacherProfile.findUnique({
     where: { userId },
   });
@@ -40,16 +32,15 @@ export async function GET(
   }
 
   try {
-    // Fetch course details if the user is the main teacher or a co-teacher
-    const course = await db.course.findUnique({
+    const course = await db.course.findFirst({
       where: {
         id: courseId,
         courseMode: CourseMode.RECORDED,
         OR: [
-          { teacherProfileId }, // main teacher
+          { teacherProfileId },
           {
             coTeacherIds: {
-              hasSome: [teacherProfileId], // co-teacher
+              hasSome: [teacherProfileId],
             },
           },
         ],

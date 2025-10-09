@@ -86,8 +86,8 @@ export default function TeacherForm({
     country: z.string(),
     zipCode: z.string(),
     teacherRankId: z.string(),
-    isAdmin: z.boolean(),
-    isSuperAdmin: z.boolean(),
+    // isAdmin: z.boolean(),
+    // isSuperAdmin: z.boolean(),
     teacherStatus: z.string(),
   });
 
@@ -137,8 +137,8 @@ export default function TeacherForm({
       country: initialData.country || "",
       zipCode: initialData.zipCode || "",
       teacherRankId: initialData?.teacherProfile?.teacherRankId || "",
-      isAdmin: initialData.isAdmin || false,
-      isSuperAdmin: initialData.isSuperAdmin || false,
+      // isAdmin: initialData.isAdmin || false,
+      // isSuperAdmin: initialData.isSuperAdmin || false,
       teacherStatus: initialData?.teacherProfile?.teacherStatus || "NONE",
     },
   });
@@ -196,7 +196,7 @@ export default function TeacherForm({
     teacherRankId: "শিক্ষকের পদবী",
     isAdmin: "অ্যাডমিন কি না",
     isSuperAdmin: "সুপার অ্যাডমিন কি না",
-    teacherStatus: "শিক্ষকতার জন্য আবেদনের অগ্রগতি",
+    teacherStatus: "টিচার প্রোফাইল স্ট্যাটাস",
   };
   return (
     <>
@@ -376,31 +376,32 @@ export default function TeacherForm({
                             <SelectItem value="FEMALE">মহিলা</SelectItem>
                           </SelectContent>
                         </Select>
-                      ) : ["isAdmin", "isSuperAdmin"].includes(field.name) ? (
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            id={
-                              field.name === "isAdmin"
-                                ? "isAdmin"
-                                : "isSuperAdmin"
-                            }
-                            checked={field.value}
-                            onCheckedChange={(e) => field.onChange(e)}
-                            className="h-4 w-4 border-gray-300 rounded"
-                          />
-                          <FormLabel
-                            htmlFor={
-                              field.name === "isAdmin"
-                                ? "isAdmin"
-                                : "isSuperAdmin"
-                            }
-                          >
-                            {field.name === "isAdmin"
-                              ? "অ্যাডমিন হিসেবে নিযুক্ত"
-                              : "সুপার অ্যাডমিন হিসেবে নিযুক্ত"}
-                          </FormLabel>
-                        </div>
-                      ) : field.name === "teacherStatus" ? (
+                      ) : // ["isAdmin", "isSuperAdmin"].includes(field.name) ? (
+                      //   <div className="flex items-center space-x-2">
+                      //     <Checkbox
+                      //       id={
+                      //         field.name === "isAdmin"
+                      //           ? "isAdmin"
+                      //           : "isSuperAdmin"
+                      //       }
+                      //       checked={field.value}
+                      //       onCheckedChange={(e) => field.onChange(e)}
+                      //       className="h-4 w-4 border-gray-300 rounded"
+                      //     />
+                      //     <FormLabel
+                      //       htmlFor={
+                      //         field.name === "isAdmin"
+                      //           ? "isAdmin"
+                      //           : "isSuperAdmin"
+                      //       }
+                      //     >
+                      //       {field.name === "isAdmin"
+                      //         ? "অ্যাডমিন হিসেবে নিযুক্ত"
+                      //         : "সুপার অ্যাডমিন হিসেবে নিযুক্ত"}
+                      //     </FormLabel>
+                      //   </div>
+                      // ) :
+                      field.name === "teacherStatus" ? (
                         <Select
                           onValueChange={field.onChange}
                           value={field.value}

@@ -1,10 +1,12 @@
+// api/lead/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { leadFormSchema } from "@/app/(site)/leads/_schema/leads";
 import { LeadStatus } from "@prisma/client";
 
-// Extended schema for API route that includes search params
+// ========== TYPE DEFINITIONS ==========
+
 const leadApiSchema = leadFormSchema
   .extend({
     type: z.string().optional(),
@@ -15,23 +17,42 @@ const leadApiSchema = leadFormSchema
     path: ["ids"],
   });
 
-// Search params schema
 const searchParamsSchema = z.object({
   type: z.string().optional(),
   courseId: z.string().optional(),
   eventId: z.string().optional(),
   certificationId: z.string().optional(),
   status: z
-    .enum([LeadStatus.INTERSTED, LeadStatus.WAITING])
+    .enum([LeadStatus.INTERESTED, LeadStatus.WAITING])
     .default(LeadStatus.WAITING),
 });
 
-export async function POST(request: NextRequest) {
+interface LeadSuccessResponse {
+  success: boolean;
+  message: string;
+  data?: any;
+  duplicate?: boolean;
+  existingData?: {
+    registeredAt: Date;
+    type: string;
+  };
+}
+
+interface LeadErrorResponse {
+  success: boolean;
+  message: string;
+  error?: string;
+  errors?: Array<{ field: string; message: string }>;
+}
+
+// ========== POST HANDLER ==========
+
+export async function POST(
+  request: NextRequest
+): Promise<NextResponse<LeadSuccessResponse | LeadErrorResponse>> {
   try {
-    // Parse request body
     const body = await request.json();
 
-    // Get search params from URL
     const searchParams = request.nextUrl.searchParams;
     const searchParamsData = {
       type: searchParams.get("type") || undefined,
@@ -41,7 +62,6 @@ export async function POST(request: NextRequest) {
       status: (searchParams.get("status") as LeadStatus) || LeadStatus.WAITING,
     };
 
-    // Validate search params
     const validatedSearchParams = searchParamsSchema.parse(searchParamsData);
 
     const mergedData = {
@@ -53,23 +73,19 @@ export async function POST(request: NextRequest) {
         validatedSearchParams.certificationId || body.certificationId,
     };
 
-    // Validate the merged data
     const validatedData = leadApiSchema.parse(mergedData);
 
-    // Check for existing lead with same email and any of the IDs
+    // Check for existing lead
     const existingLead = await db.lead.findFirst({
       where: {
         email: validatedData.email,
         OR: [
-          // Check if courseId exists and matches
           ...(validatedData.courseId
             ? [{ courseId: validatedData.courseId }]
             : []),
-          // Check if eventId exists and matches
           ...(validatedData.eventId
             ? [{ eventId: validatedData.eventId }]
             : []),
-          // Check if certificationId exists and matches
           ...(validatedData.certificationId
             ? [{ certificationId: validatedData.certificationId }]
             : []),
@@ -85,7 +101,6 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // If duplicate found, return appropriate message
     if (existingLead) {
       let duplicateType = "";
       if (
@@ -124,7 +139,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Prepare data for database insertion
     const leadData = {
       name: validatedData.name,
       email: validatedData.email,
@@ -138,27 +152,23 @@ export async function POST(request: NextRequest) {
       status: validatedSearchParams.status,
     };
 
-    // Create lead - UNCOMMENTED
     const createdLead = await db.lead.create({
       data: leadData,
     });
-    // console.log("createdLead result:", createdLead);
 
     return NextResponse.json(
       {
         success: true,
         message:
-          "আপনি সফলভাবে ওয়েটিং লিস্টে রেজিস্ট্রেশন করেছেন। পরবর্তী আপডেট আমরা আপনাকে ইমেইলের মাধ্যমে জানিয়ে দেব।",
+          "আপনি সফলভাবে ওয়েটিং লিস্টে রেজিস্ট্রেশন করেছেন। পরবর্তী আপডেট আমরা আপনাকে ইমেইলের মাধ্যমে জানিয়ে দেব।",
         data: createdLead,
       },
       { status: 201 }
     );
   } catch (error) {
-    console.error("Error creating lead:", error);
+    console.error("[CREATE_LEAD_ERROR]", error);
 
-    // Handle Zod validation errors
     if (error instanceof z.ZodError) {
-      // Check if the error is specifically about missing IDs
       const idError = error.errors.find((err) => err.path.includes("ids"));
       if (idError) {
         return NextResponse.json(
@@ -188,20 +198,28 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         message: "দুঃখিত! কিছু সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।",
-        error: process.env.NODE_ENV === "development" ? error : undefined,
+        error:
+          process.env.NODE_ENV === "development"
+            ? error instanceof Error
+              ? error.message
+              : String(error)
+            : undefined,
       },
       { status: 500 }
     );
   }
 }
 
-export async function GET() {
+// ========== GET HANDLER ==========
+
+export async function GET(): Promise<NextResponse> {
   try {
     const leads = await db.lead.findMany({
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json(leads);
   } catch (error) {
+    console.error("[GET_LEADS_ERROR]", error);
     return NextResponse.json(
       { error: "Failed to fetch leads" },
       { status: 500 }

@@ -84,7 +84,7 @@ const CourseProposals = async () => {
             <div className="mb-8 sm:mb-10 lg:mb-12 app-container">
               <h2 className="course-proposal-heading">মেন্টরদের মন্তব্য</h2>
               <p className="course-proposal-description max-w-3xl">
-                প্রায়োগিকের সাথে কাজ করা মেন্টরদের আসল অভিজ্ঞতা জানুন।
+                প্রায়োগিকের সাথে কাজ করা মেন্টরদের অভিজ্ঞতা জানুন।
               </p>
             </div>
             <VideoGallery videos={mentorsFeedbackData} />

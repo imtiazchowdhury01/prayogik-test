@@ -114,7 +114,7 @@ const StudentFeedback = () => {
   return (
     <div>
       <SectionTitle
-        title="স্টুডেন্টদের সাফল্যের কথা"
+        title="শিক্ষার্থীদের সাফল্যের কথা"
         description="সাধারণ থেকে অসাধারণ হয়ে ওঠার এক অবিশ্বাস্য সফলতার গল্প।"
       />
       <div className="px-6 md:px-8 lg:px-8 xl:px-8 2xl:px-0 max-w-7xl mx-auto ">
@@ -123,7 +123,7 @@ const StudentFeedback = () => {
           {roadmapTestimonials.map((testimonial, index) => (
             <Card
               key={testimonial.id}
-              className={`${testimonial.bgColor} border-0 shadow-sm break-inside-avoid mb-6`}
+              className={`${testimonial.bgColor} border-0 shadow-sm break-inside-avoid mb-4`}
               style={{
                 animationDelay: `${index * 50}ms`,
               }}

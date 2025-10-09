@@ -1,235 +1,103 @@
-// // @ts-nocheck
-// "use client";
-
-// import axios from "axios";
-// import { CheckCircle, Loader } from "lucide-react";
-// import { useRouter } from "next/navigation";
-// import { useState } from "react";
-// import toast from "react-hot-toast";
-// import { Button } from "@/components/ui/button";
-// import { useConfettiStore } from "@/hooks/use-confetti-store";
-// import { getProgress } from "@/actions/get-progress";
-// import { getServerUserSession } from "@/lib/getServerUserSession";
-// import { log } from "console";
-
-// interface Lesson {
-//   id: string;
-//   slug: string;
-//   title: string;
-// }
-
-// interface Course {
-//   id: string;
-//   slug: string;
-//   lessons: Lesson[];
-// }
-
-// interface CourseProgressButtonProps {
-//   course: Course;
-//   lessonId: string;
-//   courseId: string;
-//   nextLessonId?: string;
-//   isCompleted?: boolean;
-//   userId: any;
-// }
-
-// export const CourseProgressButton = ({
-//   course,
-//   lessonId,
-//   courseId,
-//   nextLessonId,
-//   isCompleted,
-//   userId,
-// }: CourseProgressButtonProps) => {
-//   const router = useRouter();
-//   const confetti = useConfettiStore();
-//   const [isLoading, setIsLoading] = useState(false);
-//   const [lessonCompleted, setLessonCompleted] = useState(isCompleted);
-
-//   const onClick = async () => {
-//     try {
-//       let lessonSlug;
-
-//       setIsLoading(true);
-
-//       if (nextLessonId) {
-//         lessonSlug = findLessonSlugById(nextLessonId);
-//       }
-
-//       const response = await axios.put(
-//         `/api/courses/${courseId}/lessons/${lessonId}/progress`,
-//         {
-//           isCompleted: !lessonCompleted,
-//         }
-//       );
-
-//       setLessonCompleted(response?.data?.isCompleted);
-
-//       if (response?.data?.isCompleted == false) {
-//         toast.success("Progress updated");
-//         router.refresh();
-//         return;
-//       }
-
-//       if (response?.data?.isCompleted && nextLessonId && lessonSlug) {
-//         router.push(`/courses/${course.slug}/${lessonSlug}`);
-//       }
-
-//       const { data } = await axios.post(`/api/courses/${courseId}`, {
-//         userId,
-//         courseId: course.id,
-//       });
-
-//       const progressPercentage = data.progress;
-
-//       if (progressPercentage == "100") {
-//         confetti.onOpen();
-//       } else {
-//         toast.success("Progress updated");
-//       }
-
-//       router.refresh();
-//     } catch (error) {
-//       console.error(error);
-//       toast.error("Something went wrong");
-//     } finally {
-//       setIsLoading(false);
-//     }
-//   };
-
-//   const findLessonSlugById = (lessonId: string) => {
-//     const lesson = course.lessons.find((lesson) => lesson.id === lessonId);
-//     return lesson ? lesson.slug : null;
-//   };
-
-//   return (
-//     <Button
-//       onClick={onClick}
-//       disabled={isLoading}
-//       type="button"
-//       variant={lessonCompleted ? "outline" : "success"}
-//       className="lg:w-full md:w-auto"
-//     >
-//       {isLoading ? (
-//         <Loader className="h-4 w-4 animate-spin" />
-//       ) : (
-//         <>
-//           {lessonCompleted ? "Mark as incomplete" : "Mark as complete"}
-//           <CheckCircle
-//             className={`h-4 w-4 ml-2 ${
-//               lessonCompleted ? "text-gray-400" : " text-white"
-//             }`}
-//           />
-//         </>
-//       )}
-//     </Button>
-//   );
-// };
-
 // @ts-nocheck
 "use client";
 
-import axios from "axios";
-import { CheckCircle, Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import toast from "react-hot-toast";
-import { Button } from "@/components/ui/button";
 import { useConfettiStore } from "@/hooks/use-confetti-store";
-import { getProgress } from "@/actions/get-progress";
-import { getServerUserSession } from "@/lib/getServerUserSession";
-import { log } from "console";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-
-interface Lesson {
-  id: string;
-  slug: string;
-  title: string;
-}
-
-interface Course {
-  id: string;
-  slug: string;
-  lessons: Lesson[];
-}
+import { Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 
 interface CourseProgressButtonProps {
-  course: Course;
+  course: any;
   lessonId: string;
   courseId: string;
-  nextLessonId?: string;
+  nextLesson?: any;
   isCompleted?: boolean;
   userId: any;
+  onLessonClick?: any;
+  onProgressUpdate?: (lessonId: string, isCompleted: boolean) => void;
 }
 
 export const CourseProgressButton = ({
   course,
   lessonId,
   courseId,
-  nextLessonId,
+  nextLesson,
   isCompleted,
   userId,
+  onLessonClick,
+  onProgressUpdate,
 }: CourseProgressButtonProps) => {
-  const router = useRouter();
   const confetti = useConfettiStore();
   const [isLoading, setIsLoading] = useState(false);
   const [lessonCompleted, setLessonCompleted] = useState(isCompleted);
 
+  // Update local state when prop changes
+  useEffect(() => {
+    setLessonCompleted(isCompleted);
+  }, [isCompleted, lessonId]);
+
   const onChange = async () => {
     try {
-      let lessonSlug;
-
       setIsLoading(true);
+      const newCompletionStatus = !lessonCompleted;
 
-      if (nextLessonId) {
-        lessonSlug = findLessonSlugById(nextLessonId);
-      }
-
-      const response = await axios.put(
+      // Update progress using fetch
+      const response = await fetch(
         `/api/courses/${courseId}/lessons/${lessonId}/progress`,
         {
-          isCompleted: !lessonCompleted,
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            isCompleted: newCompletionStatus,
+          }),
         }
       );
 
-      setLessonCompleted(response?.data?.isCompleted);
+      const data = await response.json();
+      setLessonCompleted(data.isCompleted);
+      
+      // Notify parent about progress update
+      if (onProgressUpdate) {
+        onProgressUpdate(lessonId, data.isCompleted);
+      }
 
-      if (response?.data?.isCompleted == false) {
-        toast.success("Progress updated");
-        router.refresh();
+      if (!data.isCompleted) {
+        toast.success("প্রগ্রেস আপডেট করা হয়েছে");
         return;
       }
 
-      if (response?.data?.isCompleted && nextLessonId && lessonSlug) {
-        router.push(`/courses/${course.slug}/${lessonSlug}`);
+      // Navigate to next lesson without refresh
+      if (data.isCompleted && nextLesson && onLessonClick) {
+        onLessonClick(nextLesson);
       }
 
-      const { data } = await axios.post(`/api/courses/${courseId}`, {
-        userId,
-        courseId: course.id,
+      // Check course completion
+      const courseResponse = await fetch(`/api/courses/${courseId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          courseId: course.id,
+        }),
       });
 
-      const progressPercentage = data.progress;
-
-      if (progressPercentage == "100") {
+      const courseData = await courseResponse.json();
+      const progressPercentage = courseData.progress;
+      if (progressPercentage === 100) {
         confetti.onOpen();
       } else {
         toast.success("প্রগ্রেস আপডেট করা হয়েছে");
       }
-
-      router.refresh();
     } catch (error) {
       console.error(error);
       toast.error("সমস্যা হয়েছে আবার চেষ্টা করুন");
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const findLessonSlugById = (lessonId: string) => {
-    const lesson = course.lessons.find((lesson) => lesson.id === lessonId);
-    return lesson ? lesson.slug : null;
   };
 
   return (
@@ -256,7 +124,6 @@ export const CourseProgressButton = ({
           lessonCompleted ? "text-brand" : "text-gray-700"
         } ${isLoading ? "cursor-not-allowed opacity-50" : ""}`}
       >
-        {/* {lessonCompleted ? "সম্পূর্ণ হয়েছে" : "সম্পূর্ণ করুন"} */}
         সম্পূর্ণ হয়েছে
       </label>
     </div>

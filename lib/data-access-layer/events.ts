@@ -6,7 +6,7 @@ const getEventsDBCall = async () => {
       attendees: true,
     },
     orderBy: {
-      date: "desc",
+      updatedAt: "desc",
     },
   });
 
@@ -48,7 +48,7 @@ const getFilteredEventsDBCall = async () => {
   const events = await db.event.findMany({
     where: {
       status: {
-        in: ["UPCOMING", "WAITING"],
+        in: ["UPCOMING"],
       },
       isPublished: true,
     },
@@ -79,6 +79,7 @@ const getEventBySlugDBCall = async (slug: string) => {
       attendees: true,
     },
   });
+  // console.log('event result:', event);
   return event;
 };
 export {

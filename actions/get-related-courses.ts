@@ -1,11 +1,36 @@
-// @ts-nocheck
-import { Category, Course } from "@prisma/client";
-import { db } from "@/lib/db";
+// actions/get-related-courses.ts
+"use server";
 
-type CourseWithCategory = Course & {
-  category: Category | null;
-  chapters: { id: string }[];
-};
+import { db } from "@/lib/db";
+import type { Prisma } from "@prisma/client";
+
+// Define the return type based on the actual query
+type RelatedCourseResult = Prisma.CourseGetPayload<{
+  include: {
+    category: true;
+    prices: true;
+    enrolledStudents: {
+      select: {
+        id: true;
+        studentProfileId: true;
+      };
+    };
+    teacherProfile: {
+      include: {
+        user: {
+          select: {
+            id: true;
+            name: true;
+            username: true;
+            email: true;
+            avatarUrl: true;
+            role: true;
+          };
+        };
+      };
+    };
+  };
+}>;
 
 type GetRelatedCoursesParams = {
   userId?: string | null;
@@ -19,51 +44,71 @@ export const getRelatedCourses = async ({
   categoryId,
   currentCourseId,
   limit = 4,
-}: GetRelatedCoursesParams): Promise<CourseWithCategory[]> => {
+}: GetRelatedCoursesParams): Promise<RelatedCourseResult[]> => {
   try {
-    let studentProfileId: string | null = null; // Initialize as null
+    let purchasedCourseIds: string[] = [];
+
+    // If user is logged in, get their purchased courses
     if (userId) {
       const studentProfile = await db.studentProfile.findUnique({
         where: {
           userId: userId,
         },
-      });
-      studentProfileId = studentProfile?.id || null; // Extract ID or set to null
-    }
-
-    let purchasedCourseIds: string[] = [];
-    if (studentProfileId) {
-      const purchasedCourses = await db.enrolledStudents.findMany({
-        where: { studentProfileId },
-        select: { courseId: true },
+        select: {
+          id: true,
+        },
       });
 
-      purchasedCourseIds = purchasedCourses
-        .map((purchase) => purchase.courseId)
-        .filter((courseId) => courseId !== null) as string[]; // Filter out null values and assert type
+      if (studentProfile) {
+        const enrolledCourses = await db.enrolledStudents.findMany({
+          where: {
+            studentProfileId: studentProfile.id,
+            courseId: { not: null },
+          },
+          select: {
+            courseId: true,
+          },
+        });
+
+        purchasedCourseIds = enrolledCourses
+          .map((enrollment) => enrollment.courseId)
+          .filter((courseId): courseId is string => courseId !== null);
+      }
     }
+
+    // Build the where clause
+    const whereClause: Prisma.CourseWhereInput = {
+      isPublished: true,
+      categoryId,
+      id: {
+        not: currentCourseId,
+        ...(purchasedCourseIds.length > 0 && { notIn: purchasedCourseIds }),
+      },
+    };
 
     const relatedCourses = await db.course.findMany({
-      where: {
-        isPublished: true,
-        categoryId,
-        id: {
-          not: currentCourseId,
-        },
-        NOT: {
-          // Use NOT to exclude courses
-          id: {
-            in: purchasedCourseIds.length > 0 ? purchasedCourseIds : undefined, // Use undefined if empty
-          },
-        },
-      },
+      where: whereClause,
       include: {
         category: true,
         prices: true,
-        enrolledStudents: true,
+        enrolledStudents: {
+          select: {
+            id: true,
+            studentProfileId: true,
+          },
+        },
         teacherProfile: {
           include: {
-            user: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+                username: true,
+                email: true,
+                avatarUrl: true,
+                role: true,
+              },
+            },
           },
         },
       },

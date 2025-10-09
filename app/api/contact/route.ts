@@ -1,13 +1,33 @@
-// @ts-nocheck
+// api/contact/route.ts
 import { contactFormSubmissionTemplate } from "@/lib/utils/emailTemplates/contact-form-submission";
-import { contactFormSchema } from "@/app/(site)/contact/_schema/contactFormSchema";
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { teachingFormSubmissionTemplate } from "@/lib/utils/emailTemplates/teaching-form-submission-template";
 
+interface CourseProposal {
+  courseTitle: string;
+  courseDetails: string;
+  category: string;
+}
+
+interface ContactFormRequest {
+  name: string;
+  email: string;
+  message?: string;
+  subject?: string;
+  recaptchaToken: string;
+  formType?: "contact" | "teaching";
+  phone?: string;
+  facebookUrl?: string;
+  linkedinUrl?: string;
+  youtubeUrl?: string;
+  websiteUrl?: string;
+  courseProposals?: CourseProposal[];
+}
+
 export async function POST(req: Request) {
   try {
-    const requestData = await req.json();
+    const requestData: ContactFormRequest = await req.json();
     const {
       name,
       email,
@@ -48,20 +68,6 @@ export async function POST(req: Request) {
       }
 
       // Validate each course proposal
-      // for (let i = 0; i < courseProposals.length; i++) {
-      //   const proposal = courseProposals[i];
-      //   if (
-      //     !proposal.courseTitle ||
-      //     !proposal.courseDetails ||
-      //     !proposal.category ||
-      //     proposal.category.length === 0
-      //   ) {
-      //     return NextResponse.json(
-      //       { message: `কোর্স প্রস্তাবনা ${i + 1}: সব ক্ষেত্র পূরণ করুন।` },
-      //       { status: 400 }
-      //     );
-      //   }
-      // }
       for (let i = 0; i < courseProposals.length; i++) {
         const proposal = courseProposals[i];
         if (
@@ -91,7 +97,7 @@ export async function POST(req: Request) {
 
     const recaptchaData = await recaptchaResponse.json();
 
-    // For reCAPTCHA v2, we only need to check success, not score
+    // For reCAPTCHA v2, we only need to check success
     if (!recaptchaData.success) {
       return NextResponse.json(
         {
@@ -105,22 +111,22 @@ export async function POST(req: Request) {
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: process.env.SMTP_USERNAME,
-        pass: process.env.SMTP_APP_PASS,
+        user: process.env.SMTP_USERNAME!,
+        pass: process.env.SMTP_APP_PASS!,
       },
     });
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL + "";
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "";
 
     // Generate email content based on form type
-    let emailHtml;
-    let emailSubject;
+    let emailHtml: string;
+    let emailSubject: string;
 
     if (formType === "teaching") {
       emailHtml = teachingFormSubmissionTemplate(
         name,
         email,
-        message,
+        message || "",
         phone || "",
         facebookUrl || "",
         linkedinUrl || "",
@@ -129,22 +135,22 @@ export async function POST(req: Request) {
         courseProposals || [],
         baseUrl
       );
-     emailSubject = `প্রায়োগিক - নতুন শিক্ষক আবেদন।`;
+      emailSubject = `প্রায়োগিক - নতুন শিক্ষক আবেদন।`;
     } else {
       emailHtml = contactFormSubmissionTemplate(
         name,
         email,
-        subject,
-        message,
+        subject || "",
+        message || "",
         baseUrl
       );
-      emailSubject = `প্রায়োগিক - নতুন যোগাযোগ ফর্ম জমা হয়েছে।`;
+      emailSubject = `প্রায়োগিক - নতুন যোগাযোগ ফর্ম জমা হয়েছে।`;
     }
 
     const mailOptions = {
       from: "Prayogik",
       replyTo: email,
-      to: process.env.ADMIN_RECIPIENT_EMAIL,
+      to: process.env.ADMIN_RECIPIENT_EMAIL!,
       subject: emailSubject,
       html: emailHtml,
     };
@@ -161,7 +167,7 @@ export async function POST(req: Request) {
       message: successMessage,
     });
   } catch (error) {
-    console.error("Email send error:", error);
+    console.error("[CONTACT_FORM_ERROR]", error);
     return NextResponse.json(
       { message: "ইমেল পাঠাতে ব্যর্থ হয়েছে।" },
       { status: 500 }

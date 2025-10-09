@@ -116,12 +116,12 @@ export default function Footer() {
                 যোগাযোগ করুন
               </h4>
               <div className="flex flex-col space-y-1">
-                <p className="text-base font-normal text-fontcolor-subtitle">
+                {/* <p className="text-base font-normal text-fontcolor-subtitle">
                   হোয়াটস অ্যাপ:  
                   <span className="transition-all duration-300 hover:underline hover:text-primary-brand">
                     ০১৮১৪-৪৩২৮৭৫
                   </span>
-                </p>
+                </p> */}
                 <p className="text-base font-normal text-fontcolor-subtitle ">
                   ইমেল: <span>contact[@]prayogik.com</span>
                 </p>

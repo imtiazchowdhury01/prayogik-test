@@ -16,7 +16,7 @@ export const InfoCard = memo(
   ({ variant, icon: Icon, label, className, count }: InfoCardProps) => {
     return (
       <Card
-        className={cn("rounded-md flex items-center gap-x-4 p-4 px-6 border border-slate-200 shadow-none", className)}
+        className={cn("rounded-md flex items-center gap-x-4 p-4 2xl:px-6 xl:px-4 px-6 border border-slate-200 shadow-none", className)}
       >
         <div
           className={` ${

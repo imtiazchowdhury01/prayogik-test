@@ -13,7 +13,6 @@ const LiveCourses = async ({ isLivePage = false }) => {
   return (
     <section
       className="w-full bg-[#F3F9F9] py-16 md:py-20"
-      data-testid="our-courses-section"
     >
       <div className="app-container">
         <div

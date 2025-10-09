@@ -18,7 +18,7 @@ export const resetPasswordTemplate = (
                     <body style="background-color:#f6f9fc;padding:10px 0">
                       <div
                         style="display:none;overflow:hidden;line-height:1px;opacity:0;max-height:0;max-width:0">
-                        আপনার পাসওয়ার্ড রিসেট করা হয়েছে – প্রয়োগিক
+                        আপনার পাসওয়ার্ড রিসেট করা হয়েছে – প্রায়োগিক
                         <div></div>
                       </div>
                       <table
@@ -53,7 +53,7 @@ export const resetPasswordTemplate = (
                                       </p>
                                       <p
                                         style="font-size:16px;line-height:26px;margin:16px 0;font-family:'Open Sans', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;font-weight:300;color:#404040">
-                                        আপনার পাসওয়ার্ড ‘প্রয়োগিক’-এর অ্যাডমিন দ্বারা রিসেট করা হয়েছে।
+                                        আপনার পাসওয়ার্ড ‘প্রায়োগিক’-এর অ্যাডমিন দ্বারা রিসেট করা হয়েছে।
                                       </p>
                                       <p
                                         style="font-size:16px;line-height:26px;margin:16px 0;font-family:'Open Sans', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;font-weight:300;color:#404040">
@@ -80,7 +80,7 @@ export const resetPasswordTemplate = (
                                       <p
                                         style="font-size:16px;line-height:26px;margin:16px 0;font-family:'Open Sans', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;font-weight:300;color:#404040">
                                         শুভেচ্ছাসহ,<br>
-                                        প্রয়োগিক টিম
+                                        প্রায়োগিক টিম
                                       </p>
                                     </td>
                                   </tr>

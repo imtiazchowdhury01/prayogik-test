@@ -156,6 +156,11 @@ const SocialContact = ({
   };
 
   if (!isEditMode) {
+  const socialLinksWithValues = socialLinks.filter((social) => {
+  const value = getFieldValue(social.name);
+  return value && value.trim() !== '';
+});
+
     // Display Mode
     return (
       <div className="bg-white p-6 border rounded-lg shadow-md">
@@ -174,37 +179,42 @@ const SocialContact = ({
             Edit
           </Button>
         </div>
-
         <div className="space-y-3">
-          {socialLinks.map((social) => {
-            const value = getFieldValue(social.name);
-            if (!value) return null;
+          {socialLinksWithValues?.length > 0 ? (
+            socialLinks.map((social) => {
+              const value = getFieldValue(social.name);
+              if (!value) return null;
 
-            const IconComponent = social.icon;
-            return (
-              <div
-                key={social.name}
-                className="flex flex-col items-start gap-x-3"
-              >
-                <div className="flex gap-2">
-                  <IconComponent className={`w-4 h-4 ${social.color}`} />
-                  <div className="text-sm text-gray-600 font-normal">
-                    {social.label}
+              const IconComponent = social.icon;
+              return (
+                <div
+                  key={social.name}
+                  className="flex flex-col items-start gap-x-3"
+                >
+                  <div className="flex gap-2">
+                    <IconComponent className={`w-4 h-4 ${social.color}`} />
+                    <div className="text-sm text-gray-600 font-normal">
+                      {social.label}
+                    </div>
+                  </div>
+                  <div>
+                    <a
+                      href={value}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-brand hover:text-brand hover:underline text-sm"
+                    >
+                      {value}
+                    </a>
                   </div>
                 </div>
-                <div>
-                  <a
-                    href={value}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-brand hover:text-brand hover:underline text-sm"
-                  >
-                    {value}
-                  </a>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })
+          ) : (
+            <div className="flex items-center justify-center h-[200px] text-gray-400">
+              কোনো সোশ্যাল লিংক দেওয়া হয়নি
+            </div>
+          )}
         </div>
       </div>
     );

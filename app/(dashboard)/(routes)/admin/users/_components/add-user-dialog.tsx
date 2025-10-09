@@ -30,7 +30,13 @@ import { Urls } from "@/constants/urls";
 // Define validation schema with Zod
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  username: z.string().min(3, "Username must be at least 3 characters"),
+  username: z
+    .string()
+    .min(3, "Username must be at least 3 characters")
+    .regex(
+      /^[a-z0-9_.-]+$/,
+      "Username can only contain lowercase letters, numbers, underscore, dot, and hyphen"
+    ),
   email: z.string().email("Invalid email format"),
   password: z.string().min(6, "পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে"),
   sendCredentials: z.boolean().optional(),

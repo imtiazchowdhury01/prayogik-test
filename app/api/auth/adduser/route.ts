@@ -1,20 +1,20 @@
-// @ts-nocheck
+// api/auth/adduser/route.ts
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import jwt from "jsonwebtoken";
-import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
-import { generateUsername } from "@/lib/utils/stringUtils";
 import nodemailer from "nodemailer";
-import { sendCredentialTemplate } from "@/lib/utils/emailTemplates/send-credential-template";
 import { accountCreationTemplate } from "@/lib/utils/emailTemplates/account-creation";
+import { generateReferralCode } from "@/lib/utils/stringUtils";
 
-export async function POST(req) {
+export async function POST(req: NextRequest) {
   const { name, email, password, username, sendCredentials } = await req.json();
 
   if (!name || !email || !password || !username) {
-    return new Response(JSON.stringify({ error: "All fields are required" }), {
-      status: 400,
-    });
+    return NextResponse.json(
+      { error: "All fields are required" },
+      { status: 400 }
+    );
   }
 
   try {
@@ -23,45 +23,45 @@ export async function POST(req) {
     });
 
     if (existingUser) {
-      return new Response(JSON.stringify({ error: "ইউজার ইতোমধ্যে রয়েছে" }), {
-        status: 400,
-      });
+      return NextResponse.json(
+        { error: "ইউজার ইতোমধ্যে রয়েছে" },
+        { status: 400 }
+      );
     }
 
-    const token = jwt.sign(
-      { name, email, password },
-      process.env.JWT_SECRET_KEY,
-      {
-        expiresIn: "1h",
-      }
-    );
-
-    const passwordHash = await bcrypt.hash(password, 10);
-
-    // Username generate
-    // let username = generateUsername(name);
-
-    let usernameExists = await db.user.findUnique({
+    const usernameExists = await db.user.findUnique({
       where: { username },
     });
 
     if (usernameExists) {
-      return new Response(
-        JSON.stringify({ error: "ইউজারনেম ইতোমধ্যে রয়েছে!" }),
-        {
-          status: 400,
-        }
+      return NextResponse.json(
+        { error: "ইউজারনেম ইতোমধ্যে রয়েছে!" },
+        { status: 400 }
       );
     }
 
-    // while (usernameExists) {
-    //   username = generateUsername(name); // Regenerate username if already taken
-    //   usernameExists = await db.user.findUnique({
-    //     where: { username },
-    //   });
-    // }
+    const token = jwt.sign(
+      { name, email, password },
+      process.env.JWT_SECRET_KEY as string,
+      { expiresIn: "1h" }
+    );
 
-    // Create the user
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // Generate unique referral code
+    let referralCode = await generateReferralCode();
+    let codeExists = await db.user.findUnique({
+      where: { referralCode },
+    });
+
+    while (codeExists) {
+      referralCode = await generateReferralCode();
+      codeExists = await db.user.findUnique({
+        where: { referralCode },
+      });
+    }
+
+    // Create the user with student profile in a transaction
     const newUser = await db.user.create({
       data: {
         name,
@@ -71,17 +71,26 @@ export async function POST(req) {
         emailVerified: true,
         emailVerificationToken: token,
         tokenUsed: true,
+        role: "STUDENT",
+        accountStatus: "ACTIVE",
+        currentPlan: "NONE",
+        referralCode,
+        studentProfile: {
+          create: {},
+        },
+        wallet: {
+          create: {
+            totalCredits: 0,
+            availableCredits: 0,
+            expiredCredits: 0,
+            usedCredits: 0,
+            lifetimeEarnedCredits: 0,
+          },
+        },
       },
     });
 
-    // Create the student profile with the newly created userId
-    await db.studentProfile.create({
-      data: {
-        userId: newUser.id, // Set the userId to the created user's id
-      },
-    });
-
-    // if sendCredentials is true then send the credentials to the user
+    // Send credentials email if requested
     if (sendCredentials) {
       const transporter = nodemailer.createTransport({
         service: "Gmail",
@@ -94,25 +103,26 @@ export async function POST(req) {
       const mailOptions = {
         from: `"প্রায়োগিক" <${process.env.SMTP_USERNAME}>`,
         to: email,
-        subject: "প্রয়োগিকে স্বাগতম! আপনার অ্যাকাউন্ট তৈরি হয়েছে।",
+        subject: "প্রয়োগিকে স্বাগতম! আপনার অ্যাকাউন্ট তৈরি হয়েছে।",
         html: accountCreationTemplate(name, email, username, password),
       };
 
       await transporter.sendMail(mailOptions);
     }
 
-    if (sendCredentials) {
-      return NextResponse.json(
-        `ইউজার সফলভাবে তৈরি হয়েছে এবং ইমেইল পাঠানো হয়েছে!`,
-        { status: 201 }
-      );
-    } else {
-      return NextResponse.json(`ইউজার সফলভাবে তৈরি হয়েছে!`, { status: 201 });
-    }
+    return NextResponse.json(
+      {
+        message: sendCredentials
+          ? "ইউজার সফলভাবে তৈরি হয়েছে এবং ইমেইল পাঠানো হয়েছে!"
+          : "ইউজার সফলভাবে তৈরি হয়েছে!",
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Error during add user:", error);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-    });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

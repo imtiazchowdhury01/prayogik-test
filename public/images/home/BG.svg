@@ -963,7 +963,7 @@
 </mask>
 <path d="M1243.62 909H1243.08V909.547H1243.62V909ZM1296.07 909V908.454H1243.62V909V909.547H1296.07V909ZM1243.62 909H1244.17V856.55H1243.62H1243.08V909H1243.62Z" fill="#11C7B7" fill-opacity="0.08" mask="url(#path-469-inside-234_20319_4595)"/>
 </g>
-<rect x="2030.1" y="-139.727" width="1048.45" height="786.204" transform="rotate(90 2030.1 -139.727)" stroke="#11C7B7" stroke-opacity="0.08" stroke-width="0.546354"/>
+<rect x="2030.1" y="-139.727" width="1048.45" height="786.204" transform="rotate(90 2030.1 -139.727)" stroke="#11C7B7" stroke-opacity="0.08" strokeWidth="0.546354"/>
 </g>
 <defs>
 <clipPath id="clip0_20319_4595">

@@ -32,13 +32,13 @@ const ContactInfo = () => {
 
   // Contact info data
   const contactInfo = [
-    {
-      icon: Phone,
-      title: "মোবাইল",
-      content: "০১৮১৪-৪৩২৮৭৫",
-      href: "tel:01814432875",
-      isLink: true,
-    },
+    // {
+    //   icon: Phone,
+    //   title: "মোবাইল",
+    //   content: "০১৮১৪-৪৩২৮৭৫",
+    //   href: "tel:01814432875",
+    //   isLink: true,
+    // },
     {
       icon: Mail,
       title: "ইমেইল",

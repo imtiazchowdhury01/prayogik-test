@@ -60,7 +60,7 @@ export const contactFormSubmissionTemplate = (
           </tr>
           <tr>
             <td style="text-align:center;padding-top:20px;color:#888;font-size:12px;">
-              পাঠানো হয়েছে <a href=${baseUrl} style="color:#0073e6;text-decoration:none;">প্রয়োগিক</a> থেকে
+              পাঠানো হয়েছে <a href=${baseUrl} style="color:#0073e6;text-decoration:none;">প্রায়োগিক</a> থেকে
             </td>
           </tr>
         </tbody>

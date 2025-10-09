@@ -1,3 +1,4 @@
+// api/admin/manage/teachers/earnings/calculate/route.ts
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 
@@ -7,7 +8,8 @@ interface RequestBody {
 
 export async function POST(req: Request) {
   try {
-    const { isAdmin }: RequestBody = await req.json();
+    const body = (await req.json()) as RequestBody;
+    const { isAdmin } = body;
 
     if (!isAdmin) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 403 });

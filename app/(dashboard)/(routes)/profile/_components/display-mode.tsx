@@ -18,7 +18,7 @@ const DisplayField = ({ label, value, className = "", type }) => {
         return null;
     }
   };
-  const icon = getIcon();
+  const icon = value ? getIcon() : null;
   // Handle array of specializations
   if (type === "specializations" && Array.isArray(value)) {
     return (
@@ -35,8 +35,8 @@ const DisplayField = ({ label, value, className = "", type }) => {
               </span>
             ))
           ) : (
-            <p className="mt-1 text-foreground leading-relaxed text-pretty text-sm">
-              -
+            <p className="mt-1 text-gray-300 leading-relaxed text-pretty text-sm">
+              ----------
             </p>
           )}
         </div>
@@ -50,8 +50,12 @@ const DisplayField = ({ label, value, className = "", type }) => {
       <p className="text-sm font-medium text-muted-foreground">{label}</p>
       <div className="mt-1 flex items-center gap-2">
         {icon}
-        <p className="text-foreground leading-relaxed text-pretty text-sm break-words">
-          {value || "-"}
+        <p className="leading-relaxed text-pretty text-sm break-words">
+          {value ? (
+            <span className="text-foreground ">{value}</span>
+          ) : (
+            <span className="text-gray-300">----------</span>
+          )}
         </p>
       </div>
     </div>
@@ -59,7 +63,11 @@ const DisplayField = ({ label, value, className = "", type }) => {
 };
 
 // Main reusable component
-const DisplayMode = ({ fields, layout = "grid", className = "" }) => {
+const DisplayMode = ({
+  fields,
+  layout = "grid",
+  className = "",
+}) => {
   const formatValue = (value, type) => {
     switch (type) {
       case "date":
@@ -90,18 +98,44 @@ const DisplayMode = ({ fields, layout = "grid", className = "" }) => {
     }
   };
 
+  // Helper function to check if a value is empty
+  const isEmpty = (value, type) => {
+    if (value === null || value === undefined) return true;
+
+    if (type === "specializations" && Array.isArray(value)) {
+      return value.length === 0;
+    }
+
+    if (typeof value === "string") {
+      return value.trim() === "";
+    }
+
+    return false;
+  };
+
+
+  const isAllFieldsEmpty = fields.every((field) =>
+    isEmpty(field.value, field.type)
+  );
+
   return (
     <div className={`space-y-4 ${className}`}>
       <div className={getLayoutClass()}>
-        {fields.map((field, index) => (
-          <DisplayField
-            key={field.key || index}
-            label={field.label}
-            value={formatValue(field.value, field.type)}
-            type={field.type}
-            className={field.className}
-          />
-        ))}
+        {!isAllFieldsEmpty ? (
+          fields.map((field, index) => (
+            <DisplayField
+              key={field.key || index}
+              label={field.label}
+              value={formatValue(field.value, field.type)}
+              type={field.type}
+              className={field.className}
+            />
+          ))
+        ) : (
+          <div className="flex items-center justify-center h-[200px] text-gray-400">
+            কোনো তথ্য দেওয়া হয়নি
+          </div>
+        )}
       </div>
     </div>
   );

@@ -222,7 +222,7 @@ export default function SignIn() {
               className="animate-spin"
               size={25}
               color="#ffffff"
-              borderWidth="2px"
+              borderwidth="2px"
               height="100%"
               data-testid="loading"
             />

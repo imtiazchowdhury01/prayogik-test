@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/card";
 import RequiredFieldStar from "@/components/common/requiredFieldStar";
 import { PurchaseType } from "@prisma/client";
+import { checkEventRegistration } from "@/lib/event/event-registration";
 
 // Validation schema
 const formSchema = z.object({
@@ -53,12 +54,22 @@ const EventCheckoutForm = ({ event, isSignedIn, isPaymentSuccessful }: any) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [userInfoContinued, setUserInfoContinued] = useState(false);
+  const [isCheckingRegistration, setIsCheckingRegistration] = useState(false);
+  const [canProceedWithPayment, setCanProceedWithPayment] = useState(true);
+  const [registrationStatus, setRegistrationStatus] = useState<{
+    isRegistered: boolean;
+    isApproved?: boolean;
+    message?: string;
+  }>({
+    isRegistered: false,
+  });
+
   const [storedUserInfo, setStoredUserInfo] = useState({
     name: "",
     email: "",
     mobile: "",
   });
-  console.log({ storedUserInfo, userInfoContinued });
+
   const [isEditing, setIsEditing] = useState<any>({
     name: false,
     email: false,
@@ -83,6 +94,53 @@ const EventCheckoutForm = ({ event, isSignedIn, isPaymentSuccessful }: any) => {
     },
     mode: "onChange",
   });
+
+  // Check registration status when user info is available
+  useEffect(() => {
+    const checkExistingRegistration = async () => {
+      if (currentUserInfo.email && event?.id) {
+        setIsCheckingRegistration(true);
+        try {
+          const result = await checkEventRegistration(
+            currentUserInfo.email,
+            event.id
+          );
+
+          if (result.success) {
+            setRegistrationStatus({
+              isRegistered: result.isRegistered,
+              isApproved: result.isApproved,
+              message: result.message,
+            });
+            setCanProceedWithPayment(result.canProceed);
+
+            // Show error message if user cannot proceed
+            if (!result.canProceed && result.message) {
+              setErrorMessage(result.message);
+            } else {
+              setErrorMessage("");
+            }
+          } else {
+            setErrorMessage(result.message);
+            setCanProceedWithPayment(false);
+          }
+        } catch (error) {
+          console.error("Error checking registration:", error);
+          setErrorMessage(
+            "নিবন্ধন যাচাই করতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।"
+          );
+          setCanProceedWithPayment(false);
+        } finally {
+          setIsCheckingRegistration(false);
+        }
+      }
+    };
+
+    // Only check if we have email and event ID, and we're not already processing
+    if (currentUserInfo.email && event?.id && !isCheckingRegistration) {
+      checkExistingRegistration();
+    }
+  }, [currentUserInfo.email, event?.id]);
 
   useEffect(() => {
     const initializeUserInfoState = () => {
@@ -128,7 +186,7 @@ const EventCheckoutForm = ({ event, isSignedIn, isPaymentSuccessful }: any) => {
     }));
   };
 
-  const handleFieldSave = (field: any) => {
+  const handleFieldSave = async (field: any) => {
     const value = form.getValues(field);
 
     if (field === "email") {
@@ -150,9 +208,47 @@ const EventCheckoutForm = ({ event, isSignedIn, isPaymentSuccessful }: any) => {
       ...prev,
       [field]: false,
     }));
+
+    // If email is changed, recheck registration status
+    if (field === "email" && value && event?.id) {
+      setIsCheckingRegistration(true);
+      try {
+        const result = await checkEventRegistration(value, event.id);
+
+        if (result.success) {
+          setRegistrationStatus({
+            isRegistered: result.isRegistered,
+            isApproved: result.isApproved,
+            message: result.message,
+          });
+          setCanProceedWithPayment(result.canProceed);
+
+          if (!result.canProceed && result.message) {
+            setErrorMessage(result.message);
+          } else {
+            setErrorMessage("");
+          }
+        } else {
+          setErrorMessage(result.message);
+          setCanProceedWithPayment(false);
+        }
+      } catch (error) {
+        console.error("Error checking registration:", error);
+        setErrorMessage("নিবন্ধন যাচাই করতে সমস্যা হয়েছে।");
+        setCanProceedWithPayment(false);
+      } finally {
+        setIsCheckingRegistration(false);
+      }
+    }
   };
 
   const onSubmit = async () => {
+    // Double check registration status before proceeding
+    if (!canProceedWithPayment) {
+      toast.error("আপনি এই মুহূর্তে পেমেন্ট করতে পারবেন না।");
+      return;
+    }
+
     setIsProcessing(true);
     setErrorMessage("");
 
@@ -301,6 +397,7 @@ const EventCheckoutForm = ({ event, isSignedIn, isPaymentSuccessful }: any) => {
                 }
               }}
               className="text-brand h-auto p-1 hover:no-underline font-normal text-sm sm:text-base"
+              disabled={isCheckingRegistration}
             >
               {isFieldEditing ? "সেভ" : "পরিবর্তন"}
             </Button>
@@ -341,7 +438,6 @@ const EventCheckoutForm = ({ event, isSignedIn, isPaymentSuccessful }: any) => {
                 )}
               </div>
             )}
-
             {errorMessage && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
@@ -349,45 +445,45 @@ const EventCheckoutForm = ({ event, isSignedIn, isPaymentSuccessful }: any) => {
               </Alert>
             )}
 
-            {!isUserInfoEmpty && (
-              <div className="flex justify-between items-center mt-4 text-xl font-bold border-t pr-2.5">
-                <p className="pt-2">সর্বমোট</p>
-                <p className="pt-2">
-                  ৳{convertNumberToBangla(event?.price || 0)}
-                </p>
-              </div>
-            )}
+            <div className="flex justify-between items-center mt-4 text-xl font-bold border-t pr-2.5">
+              <p className="pt-2">সর্বমোট</p>
+              <p className="pt-2">
+                ৳{convertNumberToBangla(event?.price || 0)}
+              </p>
+            </div>
 
-            {!isUserInfoEmpty && (
-              <>
-                <Button
-                  type="submit"
-                  className="w-full bg-[#E2136E] hover:bg-[#d70d65] disabled:bg-gray-400 disabled:text-gray-200 whitespace-nowrap"
-                  size="lg"
-                  disabled={isProcessing || isPaymentSuccessful}
+            <>
+              <Button
+                type="submit"
+                className="w-full bg-[#E2136E] hover:bg-[#d70d65] disabled:bg-gray-400 disabled:text-gray-200 whitespace-nowrap"
+                size="lg"
+                disabled={
+                  isProcessing ||
+                  isPaymentSuccessful ||
+                  isCheckingRegistration ||
+                  !canProceedWithPayment
+                }
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-10 h-10"
+                  viewBox="-6.6741 -11.07275 57.8422 66.4365"
+                  fill="none"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="w-10 h-10"
-                    viewBox="-6.6741 -11.07275 57.8422 66.4365"
-                    fill="none"
-                  >
-                    <g fill="none">
-                      <path d="M42.31 44.291H2.182C.981 44.291 0 43.308 0 42.107V2.186C0 .982.981 0 2.182 0H42.31c1.203 0 2.184.982 2.184 2.186v39.921c0 1.201-.981 2.184-2.184 2.184" />
-                      <path
-                        fill="#FFF"
-                        d="M31.894 24.251l-14.107-2.246 1.909 8.329zm.572-.682L21.374 8.16l-3.623 13.106zm-15.402-2.482L5.441 6.239l15.221 1.819zm-5.639-6.154l-6.449-6.08h1.695zm24.504 1.15L33.2 23.486l-4.426-6.118zM21.417 30.232l10.71-4.3.454-1.365zm-8.933 7.821l4.589-16.102 2.326 10.479zm24.099-21.914l-1.128 3.056 4.059-.07z"
-                      />
-                    </g>
-                  </svg>
-                  {isProcessing ? <>প্রক্রিয়াধীন…</> : "বিকাশে পেমেন্ট করুন"}
-                </Button>
-                <p className="text-sm text-gray-600 sm:text-center text-left">
-                  নিরাপদ পেমেন্ট প্রসেসিং বিকাশ এর মাধ্যমে। আপনার লেনদেন
-                  সুরক্ষিত।
-                </p>
-              </>
-            )}
+                  <g fill="none">
+                    <path d="M42.31 44.291H2.182C.981 44.291 0 43.308 0 42.107V2.186C0 .982.981 0 2.182 0H42.31c1.203 0 2.184.982 2.184 2.186v39.921c0 1.201-.981 2.184-2.184 2.184" />
+                    <path
+                      fill="#FFF"
+                      d="M31.894 24.251l-14.107-2.246 1.909 8.329zm.572-.682L21.374 8.16l-3.623 13.106zm-15.402-2.482L5.441 6.239l15.221 1.819zm-5.639-6.154l-6.449-6.08h1.695zm24.504 1.15L33.2 23.486l-4.426-6.118zM21.417 30.232l10.71-4.3.454-1.365zm-8.933 7.821l4.589-16.102 2.326 10.479zm24.099-21.914l-1.128 3.056 4.059-.07z"
+                    />
+                  </g>
+                </svg>
+                {isProcessing ? <>প্রক্রিয়াধীন…</> : "বিকাশে পেমেন্ট করুন"}
+              </Button>
+              <p className="text-sm text-gray-600 sm:text-center text-left">
+                নিরাপদ পেমেন্ট প্রসেসিং বিকাশ এর মাধ্যমে। আপনার লেনদেন সুরক্ষিত।
+              </p>
+            </>
           </form>
         </Form>
       </CardContent>

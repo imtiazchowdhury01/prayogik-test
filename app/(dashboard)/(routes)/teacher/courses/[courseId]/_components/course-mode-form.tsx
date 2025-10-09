@@ -417,12 +417,12 @@ export const CourseModeForm = ({
         submitData.totalLiveClass = 0;
       }
 
-      console.log("submitData result:", submitData);
+      // console.log("submitData result:", submitData);
 
       await axios.patch(`/api/courses/${courseId}`, submitData);
       toast.success("Course updated");
       setIsEditing(false);
-       await revalidatePage([
+      await revalidatePage([
         { route: "/" },
         { route: "/home" },
         { route: "/live" },

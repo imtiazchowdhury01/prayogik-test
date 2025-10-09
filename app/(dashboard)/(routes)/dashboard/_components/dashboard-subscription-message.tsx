@@ -1,25 +1,29 @@
+"use client";
 import React, { JSX } from "react";
 import { Button } from "@/components/ui/button";
 import { formatDateToBangla } from "@/lib/utils/stringUtils";
 import { Info, TriangleAlert, X } from "lucide-react";
 import Link from "next/link";
-import { clientApi } from "@/lib/utils/openai/client";
-import { cookies } from "next/headers";
 import { Suspense } from "react";
 import MessageClose from "./message-close";
 import { convertNumberToBangla } from "@/lib/convertNumberToBangla";
-import {
-  getSubscriptionDBCall,
-  getSubscriptionPlanByIdDBCall,
-} from "@/lib/data-access-layer/subscriptions";
+import { useQuery } from "@tanstack/react-query";
+import { clientSidefetchUserSubscription } from "@/lib/utils/openai/client/user";
+import { QueryKeys } from "@/constants/query-keys";
+import { useSession } from "next-auth/react";
 
-// Main subscription message component
-const SubscriptionMessageContent = async (): Promise<JSX.Element | null> => {
-  const SubscriptionResponse = await clientApi.getUserSubscriptions({
-    extraHeaders: { Cookie: cookies().toString() },
+const SubscriptionMessageContent = () => {
+  const session = useSession();
+  const {
+    data: subscription,
+    error,
+    isLoading,
+  } = useQuery<any>({
+    queryKey: [QueryKeys.USER_SUBSCRIPTION],
+    queryFn: clientSidefetchUserSubscription,
+    staleTime: 5 * 60 * 1000,
+    enabled: !!session,
   });
-
-  const subscription = SubscriptionResponse?.body as any;
 
   // Early return for inactive subscriptions or active non-trial
   if (
@@ -68,14 +72,16 @@ const SubscriptionMessageContent = async (): Promise<JSX.Element | null> => {
         isExpired
           ? "bg-[#FFF3F3] border-[#FFC4C2]"
           : "bg-[#FFFAF2] border-[#FFCB7F]"
-      }   t flex items-center justify-between gap-4 p-4 rounded-lg border text-primary mt-2`}
+      }   flex items-center max-md:items-start justify-between gap-4 p-4 rounded-lg border text-primary mt-2`}
     >
-      <div className="flex gap-4 items-center">
+      <div className="flex flex-wrap gap-4 items-center">
         <div className="flex items-center gap-2">
           {isExpired ? (
-            <Info className={` text-[#FF140C] w-4 h-4 `} />
+            <Info className={` text-[#FF140C] w-4 h-4 max-md:hidden`} />
           ) : (
-            <TriangleAlert className={` w-4 h-4 text-secondary-button`} />
+            <TriangleAlert
+              className={` w-4 h-4 text-secondary-button max-md:hidden`}
+            />
           )}
 
           <span
@@ -103,13 +109,4 @@ const SubscriptionMessageContent = async (): Promise<JSX.Element | null> => {
   );
 };
 
-// Main component with Suspense wrapper
-const DashboardSubscriptionMessage = (): JSX.Element => {
-  return (
-    <Suspense fallback={null}>
-      <SubscriptionMessageContent />
-    </Suspense>
-  );
-};
-
-export default DashboardSubscriptionMessage;
+export default SubscriptionMessageContent;

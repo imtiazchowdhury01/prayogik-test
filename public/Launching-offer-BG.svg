@@ -992,7 +992,7 @@
 </mask>
 <path d="M1429.27 861V861.61H1429.88V861H1429.27ZM1429.27 802.467H1428.66V861H1429.27H1429.88V802.467H1429.27ZM1429.27 861V860.39H1370.73V861V861.61H1429.27V861Z" fill="#05B1A1" fill-opacity="0.5" mask="url(#path-481-inside-240_20725_57334)"/>
 </g>
-<rect x="375.971" y="-16.6951" width="1170.06" height="877.39" stroke="#05B1A1" stroke-opacity="0.5" stroke-width="0.609722"/>
+<rect x="375.971" y="-16.6951" width="1170.06" height="877.39" stroke="#05B1A1" stroke-opacity="0.5" strokeWidth="0.609722"/>
 </g>
 </g>
 </g>

@@ -34,7 +34,7 @@ export function getPlainTextFromHtml(htmlString: string, maxLength = 100) {
   // Check if we're in a browser environment
   if (typeof document === 'undefined') {
     // Server-side fallback: use regex to strip HTML tags
-    const stripped = htmlString.replace(/<[^>]*>/g, '');
+    const stripped = htmlString?.replace(/<[^>]*>/g, '');
     const decoded = stripped
       .replace(/&amp;/g, '&')
       .replace(/&lt;/g, '<')

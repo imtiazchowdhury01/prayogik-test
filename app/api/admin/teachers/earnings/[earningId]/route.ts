@@ -1,5 +1,4 @@
-// @ts-nocheck
-
+// api/admin/teachers/earnings/[earningId]/route.ts
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 

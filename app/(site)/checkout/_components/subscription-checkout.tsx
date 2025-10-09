@@ -34,6 +34,7 @@ export default async function SubscriptionCheckout({
   if (!plan) {
     redirect("/prime"); // If no plan in cookies, send user back
   }
+  const isTrialPlan = plan?.type === "NONE";
   const activeSubscription = await getUserSubscription();
   // Check if user has used trial
   const { userId } = await getServerUserSession();
@@ -72,15 +73,16 @@ export default async function SubscriptionCheckout({
                   প্লানের বিস্তারিত
                 </h2>
                 <div>
-                  {plan.offerPrice ? (
-                    <Badge className="bg-secondary-button hover:bg-secondary-button text-white rounded text-sm sm:text-base font-normal text-wrap">
-                      স্পেশাল অফার
-                    </Badge>
-                  ) : (
-                    <Badge className="bg-brand/10 hover:bg-brand/10 text-brand rounded text-sm sm:text-base font-normal text-wrap">
-                      ফ্রী এক্সেস
-                    </Badge>
-                  )}
+                  {
+                    plan.offerPrice ? (
+                      <Badge className="bg-secondary-button hover:bg-secondary-button text-white rounded text-sm sm:text-base font-normal text-wrap">
+                        স্পেশাল অফার
+                      </Badge>
+                    ) : null
+                    // <Badge className="bg-brand/10 hover:bg-brand/10 text-brand rounded text-sm sm:text-base font-normal text-wrap">
+                    //   ফ্রী এক্সেস
+                    // </Badge>
+                  }
                 </div>
               </div>
               <CardHeader className="p-0">
@@ -94,19 +96,28 @@ export default async function SubscriptionCheckout({
                     {/* Text Block */}
                     <div className="space-y-1">
                       <p className="text-sm font-normal text-gray-500">
-                        {convertNumberToBangla(plan.durationInYears)} বছরের
-                        প্ল্যান
+                        {isTrialPlan
+                          ? `${convertNumberToBangla(
+                              plan.trialDurationInDays
+                            )} দিন`
+                          : `${convertNumberToBangla(
+                              plan.durationInYears
+                            )} বছর`}
                       </p>
 
                       <h3 className="flex flex-wrap items-center sm:gap-y-2 gap-y-0 sm:gap-x-2 gap-x-1">
-                        {plan.name === "Trial" ? (
-                          "ফ্রী প্ল্যান"
-                        ) : (
+                        {plan.offerPrice ? (
                           <>
                             <span className="text-black text-xl sm:text-3xl font-bold">
                               ৳{convertNumberToBangla(plan.offerPrice)}
                             </span>
                             <span className="text-gray-400 line-through text-sm sm:text-lg font-normal">
+                              ৳{convertNumberToBangla(plan.regularPrice)}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-black text-xl sm:text-3xl font-bold">
                               ৳{convertNumberToBangla(plan.regularPrice)}
                             </span>
                           </>
@@ -122,7 +133,7 @@ export default async function SubscriptionCheckout({
                     <div className="flex items-start sm:items-center gap-2 text-sm">
                       <CheckMarkIcon />
                       <p className="text-sm text-gray-700">
-                        {plan.name === "Trial" ? (
+                        {isTrialPlan ? (
                           <>
                             ফ্রী ট্রায়াল:{" "}
                             {convertNumberToBangla(plan.trialDurationInDays)}{" "}
@@ -136,19 +147,24 @@ export default async function SubscriptionCheckout({
                         )}
                       </p>
                     </div>
+                    {plan?.subscriptionDiscount?.discountPercentage > 0 ? (
+                      <div className="flex items-center gap-2 text-sm">
+                        <CheckMarkIcon />
+                        <p>
+                          সব স্ট্যান্ডার্ড কোর্সে{" "}
+                          {convertNumberToBangla(
+                            plan?.subscriptionDiscount?.discountPercentage
+                          )}
+                          % ডিসকাউন্ট
+                        </p>
+                      </div>
+                    ) : null}
                     <div className="flex items-center gap-2 text-sm">
                       <CheckMarkIcon />
                       <p>
-                        সব স্ট্যান্ডার্ড কোর্সে{" "}
-                        {convertNumberToBangla(
-                          plan?.subscriptionDiscount?.discountPercentage
-                        )}
-                        % ডিসকাউন্ট
+                        যে কোন {convertNumberToBangla(plan.trialCourseLimit)}টি
+                        কোর্স
                       </p>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <CheckMarkIcon />
-                      <p>সব প্রাইম কোর্স ফ্রি</p>
                     </div>
                   </div>
                 </CardDescription>

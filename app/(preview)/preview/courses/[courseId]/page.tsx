@@ -32,7 +32,7 @@ import { db } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { notFound } from "next/navigation";
 import { getSubscriptionDBCall } from "@/lib/data-access-layer/subscriptions";
-import { CourseAccessSkeleton } from "@/app/(course)/courses/[slug]/_components/single-course-price-tab";
+import { CourseAccessSkeleton } from "@/app/(course)/courses/[slug]/_components/course-price-section";
 
 // Generate metadata for this page
 export async function generateMetadata({

@@ -65,13 +65,6 @@ const VdocipherPlayer = ({ videoId }) => {
 
   if (loading) {
     return (
-      // <div
-      //   style={{ minHeight: "410px" }}
-      //   className="flex gap-2 flex-col items-center justify-center bg-slate-200 rounded-md"
-      // >
-      //   <Video className="h-10 w-10 text-slate-500 animate-pulse" />
-      //   <p className="text-gray-600">Loading video...</p>
-      // </div>
       <Skeleton className="h-auto w-full rounded-md flex justify-center items-center">
         <Loader className="w-6 h-6 animate-spin text-gray-400" />
       </Skeleton>
@@ -79,7 +72,7 @@ const VdocipherPlayer = ({ videoId }) => {
   }
 
   return (
-    <div className="h-full">
+    <div className="h-full bg-brand/5 transition-all">
       <iframe
         src={`https://player.vdocipher.com/v2/?otp=${otp}&playbackInfo=${playbackInfo}`}
         style={{
@@ -87,7 +80,6 @@ const VdocipherPlayer = ({ videoId }) => {
           width: "100%",
           height: "100%",
           borderRadius: "5px",
-          // filter: "drop-shadow(0 2px 10px rgba(0, 0, 0, 0.1))",
         }}
         allow="encrypted-media"
         allowFullScreen

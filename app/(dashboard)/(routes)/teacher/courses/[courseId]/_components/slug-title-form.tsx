@@ -23,6 +23,8 @@ interface SlugTitleFormProps {
     slug: string;
   };
   courseId: string;
+  successMessage?: string;
+  api?: string;
 }
 
 // Update the slug validation to require English letters, numbers, and hyphens
@@ -41,6 +43,8 @@ const formSchema = z.object({
 export const SlugTitleForm = ({
   initialData,
   courseId,
+  successMessage,
+  api,
 }: SlugTitleFormProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false); // State for loading
@@ -62,13 +66,15 @@ export const SlugTitleForm = ({
       toggleEdit,
       setLoading,
       router,
+      successMessage,
+      api,
     });
   };
 
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
-        Course slug
+        Slug
         <Button onClick={toggleEdit} variant="ghost">
           {isEditing ? (
             <>Cancel</>

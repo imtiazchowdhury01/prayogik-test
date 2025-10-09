@@ -7,8 +7,8 @@ const RoadmapBenefits = () => {
   return (
     <div>
       <SectionTitle
-        title="আপনার জন্য বাস্তব শেখার সুবিধা"
-        description="বাস্তব প্রোজেক্ট ও দক্ষতা উন্নয়নের মাধ্যমে আপনার ক্যারিয়ারকে নতুন উচ্চতায় নিয়ে যান।"
+        title="রিয়েল লাইফ লার্নিং-এর সুবিধা"
+        description="রিয়েল লাইফ প্রজেক্ট ও দক্ষতা উন্নয়নের মাধ্যমে আপনার ক্যারিয়ারকে নতুন উচ্চতায় নিয়ে যান।"
       />
       <FeatureList features={featuresRoadmapData} FeatureTitle="" />
     </div>

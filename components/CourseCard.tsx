@@ -13,6 +13,7 @@ import { GradientBorderBadge } from "./ui/badge";
 import { CourseMode } from "@prisma/client";
 import LiveCourseIcon from "./LiveCourseIcon";
 import LiveCourseTime from "./liveCourseTime";
+import CertificationBadge from "@/app/(site)/certifications/_components/CertificationBadge";
 
 const CourseCard = ({
   variant = "dark",
@@ -20,6 +21,7 @@ const CourseCard = ({
   className,
   instructor,
   pathname,
+  certificationslug,
 }: {
   variant?: "light" | "dark";
   className?: string;
@@ -28,6 +30,7 @@ const CourseCard = ({
   userId?: string;
   purchasedCourseIds?: string[];
   pathname?: string;
+  certificationslug?: string;
 }) => {
   const { slug, imageUrl, progress, lessons, nextLessonSlug = null } = course;
   const freeLesson = lessons?.find(
@@ -64,6 +67,9 @@ const CourseCard = ({
             quality={75}
           />
         )}
+        {/* certification badge */}
+        {certificationslug && <CertificationBadge />}
+
         {/* Live course badge - positioned at top right */}
         {course?.courseMode === CourseMode.LIVE && <LiveCourseIcon />}
         <FreeLessonPreviewButton course={course} freeLesson={freeLesson} />
@@ -193,19 +199,19 @@ const CourseCard = ({
         )}
 
         {/* action button */}
-          <CourseCardButton
-            courseId={course.id}
-            progress={progress}
-            nextLessonSlug={nextLessonSlug}
-            slug={slug}
-            lessons={lessons}
-            variant={variant}
-            courseMode={course?.courseMode}
-          />
+        <CourseCardButton
+          courseId={course.id}
+          progress={progress}
+          nextLessonSlug={nextLessonSlug}
+          slug={slug}
+          lessons={lessons}
+          variant={variant}
+          courseMode={course?.courseMode}
+          certificationslug={certificationslug}
+        />
       </div>
     </div>
   );
 };
 
 export default CourseCard;
-

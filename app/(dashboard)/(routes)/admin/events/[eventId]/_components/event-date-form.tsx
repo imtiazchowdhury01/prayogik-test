@@ -7,12 +7,12 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { Event } from "@prisma/client";
-import { Pencil, Loader, Calendar } from "lucide-react";
+import { Pencil, Loader, Calendar, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { updateEvent } from "@/lib/event/event";
-import { format } from "date-fns";
+import { format, set } from "date-fns";
 
 interface EventDateFormProps {
   initialData: Event;
@@ -20,23 +20,7 @@ interface EventDateFormProps {
 }
 
 const formSchema = z.object({
-  date: z.string().refine(
-    (dateString) => {
-      const date = new Date(dateString);
-      const now = new Date();
-
-      // Check if the date is valid
-      if (isNaN(date.getTime())) {
-        return false;
-      }
-
-      // Check if the date is in the future
-      return date > now;
-    },
-    {
-      message: "Event date must be in the future",
-    }
-  ),
+  date: z.string().optional(),
 });
 
 export const EventDateForm = ({ initialData, eventId }: EventDateFormProps) => {
@@ -46,26 +30,27 @@ export const EventDateForm = ({ initialData, eventId }: EventDateFormProps) => {
   const toggleEdit = () => setIsEditing((current) => !current);
   const router = useRouter();
 
-  // Helper function to convert Date to datetime-local format
+  // Helper function to convert UTC Date to local datetime-local format
   const formatDateForInput = (date: Date | string): string => {
     const dateObj = typeof date === "string" ? new Date(date) : date;
     if (isNaN(dateObj.getTime())) return "";
 
-    const year = dateObj.getFullYear();
-    const month = String(dateObj.getMonth() + 1).padStart(2, "0");
-    const day = String(dateObj.getDate()).padStart(2, "0");
-    const hours = String(dateObj.getHours()).padStart(2, "0");
-    const minutes = String(dateObj.getMinutes()).padStart(2, "0");
+    // Get local timezone offset in minutes
+    const timezoneOffset = dateObj.getTimezoneOffset();
+    // Create new date adjusted for local timezone
+    const localDate = new Date(dateObj.getTime() - timezoneOffset * 60000);
 
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
+    // Format as YYYY-MM-DDTHH:MM for datetime-local input
+    return localDate.toISOString().slice(0, 16);
   };
 
-  // Helper function to format display date
+  // Helper function to format display date in local timezone
   const formatDisplayDate = (date: Date | string): string => {
     const dateObj = typeof date === "string" ? new Date(date) : date;
     if (isNaN(dateObj.getTime())) return "Invalid date";
 
     try {
+      // This will automatically display in user's local timezone
       return format(dateObj, "PPPp"); // e.g., "January 1st, 2024 at 2:30 PM"
     } catch {
       return dateObj.toLocaleString();
@@ -83,19 +68,30 @@ export const EventDateForm = ({ initialData, eventId }: EventDateFormProps) => {
   const {
     register,
     formState: { errors, isValid },
+    setValue,
+    watch,
+    reset,
   } = form;
+
+  // Watch the date field to track changes
+  const watchedDate = watch("date");
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setLoading(true);
     try {
-      // Convert the datetime-local string to ISO string for the backend
-      const finalValues = {
-        date: new Date(values.date).toISOString(),
-      };
+      let finalValues: { date?: string | null } = {};
+
+      if (!values.date || values.date === "") {
+        // Set to null to remove the date from database
+        finalValues = { date: null };
+      } else {
+        finalValues.date = new Date(values.date).toISOString();
+      }
 
       await updateEvent({
         eventId,
         values: finalValues,
+        slug: initialData.slug,
         toggleEdit,
         setLoading,
         router,
@@ -107,19 +103,35 @@ export const EventDateForm = ({ initialData, eventId }: EventDateFormProps) => {
     }
   };
 
-  // Check if the event date has passed
+  // Check if the event date has passed (compare in local timezone)
   const isEventPast = initialData?.date
     ? new Date(initialData.date) < new Date()
     : false;
+
+  // Clear the date field
+  const clearDate = () => {
+    setValue("date", "", { shouldValidate: true, shouldDirty: true });
+  };
+
+  // Reset form when starting to edit
+  const handleEditToggle = () => {
+    if (!isEditing) {
+      // Reset form to initial values when starting to edit
+      reset({
+        date: initialData?.date ? formatDateForInput(initialData.date) : "",
+      });
+    }
+    toggleEdit();
+  };
 
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
         <div className="flex items-center">
           Schedule
-          <span className="text-red-500">*</span>
+          {/* <span className="text-red-500">*</span> */}
         </div>
-        <Button onClick={toggleEdit} variant="ghost">
+        <Button onClick={handleEditToggle} variant="ghost">
           {isEditing ? (
             <>Cancel</>
           ) : (
@@ -175,34 +187,50 @@ export const EventDateForm = ({ initialData, eventId }: EventDateFormProps) => {
       {isEditing && (
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
           <div className="space-y-2">
-            <Input
-              type="datetime-local"
-              className="h-12 text-base w-fit max-w-md"
-              {...register("date", {
-                required: "Event date is required",
-                validate: (value) => {
-                  const date = new Date(value);
-                  const now = new Date();
+            <div className="relative w-fit max-w-md">
+              <Input
+                type="datetime-local"
+                className="h-12 text-base pr-10"
+                {...register("date", {
+                  validate: (value) => {
+                    if (!value || value === "") return true; // allow empty
+                    const date = new Date(value);
+                    const now = new Date();
 
-                  if (isNaN(date.getTime())) {
-                    return "Please enter a valid date and time";
-                  }
+                    if (isNaN(date.getTime())) {
+                      return "Please enter a valid date and time";
+                    }
 
-                  if (date <= now) {
-                    return "Event date must be in the future";
-                  }
+                    if (date <= now) {
+                      return "Event date must be in the future";
+                    }
 
-                  return true;
-                },
-              })}
-            />
+                    return true;
+                  },
+                })}
+              />
+              {/* Clear button */}
+              {watchedDate && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-gray-100"
+                  onClick={clearDate}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
             {errors.date && (
               <div className="text-red-500 text-sm">{errors.date.message}</div>
             )}
             <p className="text-xs text-gray-500">
               Select the date and time when your event will take place. Time
               will be displayed in your local timezone (
-              {Intl.DateTimeFormat().resolvedOptions().timeZone}).
+              {Intl.DateTimeFormat().resolvedOptions().timeZone}). The time you
+              set here will be preserved for all users regardless of their
+              timezone. Leave empty to remove the date.
             </p>
           </div>
 
@@ -217,7 +245,7 @@ export const EventDateForm = ({ initialData, eventId }: EventDateFormProps) => {
           )}
 
           <div className="flex items-center gap-x-2 pt-4">
-            <Button disabled={!isValid || loading} type="submit">
+            <Button disabled={loading} type="submit">
               {loading ? <Loader className="animate-spin h-4 w-4" /> : "Save"}
             </Button>
           </div>

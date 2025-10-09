@@ -1,9 +1,6 @@
-// @ts-nocheck
-import { useStudentProfile } from "@/hooks/useStudentProfile";
-import { useTeacherProfile } from "@/hooks/useTeacherProfile";
+// api/courses/freecourse/route.ts
+import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
-const { PrismaClient } = require("@prisma/client");
-const db = new PrismaClient();
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,41 +24,65 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Get student profile
+    const studentProfile = await db.studentProfile.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+
+    if (!studentProfile) {
+      return NextResponse.json(
+        { error: "Student profile not found" },
+        { status: 404 }
+      );
+    }
+
     const course = await db.course.findUnique({
       where: { id: courseId },
-      include: { enrolledStudents: true },
+      select: {
+        id: true,
+        teacherProfileId: true,
+      },
     });
+
+    if (!course) {
+      return NextResponse.json({ error: "Course not found" }, { status: 404 });
+    }
 
     const teacherProfileId = course.teacherProfileId;
 
-    const studentProfileId = await useStudentProfile(userId);
-
-    const enrollmentCheck =
-      Array.isArray(course.enrolledStudents) &&
-      course.enrolledStudents.find(
-        (student) => student.studentProfileId === studentProfileId
-      );
+    // Check if already enrolled
+    const enrollmentCheck = await db.enrolledStudents.findFirst({
+      where: {
+        studentProfileId: studentProfile.id,
+        courseId: courseId,
+      },
+    });
 
     const isUserEnrolled = !!enrollmentCheck;
 
     if (isUserEnrolled) {
       return NextResponse.json(
         { error: true, message: "Course already purchased" },
-        { status: 500 }
+        { status: 409 }
       );
     }
+
+    // Create purchase with required fields
     const purchase = await db.purchase.create({
       data: {
-        studentProfileId,
+        studentProfileId: studentProfile.id,
         teacherProfileId,
         courseId: courseId,
         purchaseType: "SINGLE_COURSE",
-
-        TeacherRevenue: {
+        totalAmountTk: 0,
+        creditsUsedTk: 0,
+        totalPaidTk: 0,
+        remainingAmountTk: 0,
+        paymentStatus: "COMPLETED",
+        teacherRevenue: {
           create: {
-            // userId: user.id,
             teacherProfileId: teacherProfileId,
-            // courseId: courseId,
             amount: 0,
             month: new Date().getMonth() + 1,
             year: new Date().getFullYear(),
@@ -70,59 +91,55 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    if (!isUserEnrolled) {
-      await db.enrolledStudents.create({
-        data: {
-          courseId: courseId,
-          studentProfileId: studentProfileId,
+    // Enroll student
+    await db.enrolledStudents.create({
+      data: {
+        courseId: courseId,
+        studentProfileId: studentProfile.id,
+      },
+    });
+
+    // Update teacher's total sales
+    const updatedTeacherProfile = await db.teacherProfile.update({
+      where: {
+        id: teacherProfileId,
+      },
+      data: {
+        totalSales: {
+          increment: 1,
         },
-      });
+      },
+      select: {
+        totalSales: true,
+      },
+    });
 
-      // Update the totalSales in the TeacherProfile model
-      await db.teacherProfile.update({
-        where: {
-          id: teacherProfileId,
-        },
-        data: {
-          totalSales: {
-            increment: 1,
-          },
-        },
-      });
+    const teachersTotalSales = updatedTeacherProfile.totalSales;
 
-      // Find totalSales of the teacher
-      const teacherProfile = await db.teacherProfile.findUnique({
-        where: {
-          id: teacherProfileId,
-        },
-        select: { totalSales: true },
-      });
+    // Fetch all ranks and sort by numberOfSales
+    const ranks = await db.teacherRank.findMany({
+      orderBy: {
+        numberOfSales: "asc",
+      },
+    });
 
-      // Ensure totalSales has a value before accessing it
-      const teachersTotalSales = teacherProfile ? teacherProfile.totalSales : 0;
+    let newRankId: string | undefined;
 
-      // Fetch all ranks
-      const unsortedRanks = await db.teacherRank.findMany();
-      const ranks = unsortedRanks.sort(
-        (a, b) => a.numberOfSales - b.numberOfSales
-      );
-
-      let newRankId;
-
-      // Calculate the new rank based on the total sales
-      if (teachersTotalSales === 0) {
-        newRankId = ranks[0].id; // Assuming ranks array is not empty
-      } else {
-        // Assign rank ID based on totalSales
-        for (const rank of ranks) {
-          if (rank.numberOfSales <= teachersTotalSales) {
-            newRankId = rank.id;
-          }
+    // Calculate the new rank based on the total sales
+    if (teachersTotalSales === 0) {
+      newRankId = ranks[0]?.id;
+    } else {
+      // Assign rank ID based on totalSales
+      for (const rank of ranks) {
+        if (rank.numberOfSales <= teachersTotalSales) {
+          newRankId = rank.id;
         }
       }
+    }
 
-      // Update the teacher's rank based on the totalSales
-      const updateTeacherRanksPromise = await db.teacherProfile.update({
+    // Update the teacher's rank if a new rank was determined
+    if (newRankId) {
+      await db.teacherProfile.update({
         where: {
           id: teacherProfileId,
         },
@@ -136,8 +153,8 @@ export async function POST(req: NextRequest) {
       { success: true, message: "Course purchased successfully!" },
       { status: 200 }
     );
-  } catch (error) {
-    console.error("[CALLBACK_ERROR]", error);
+  } catch (error: any) {
+    console.error("[FREE_COURSE_PURCHASE_ERROR]", error);
 
     if (error.code === "P2002") {
       return NextResponse.json(

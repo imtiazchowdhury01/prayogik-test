@@ -1,3 +1,4 @@
+// api/admin/event/[id]/publish/route.ts
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 import { NextResponse } from "next/server";
@@ -7,9 +8,9 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { userId } = await getServerUserSession(req);
+    const { userId, isAdmin } = await getServerUserSession(req);
 
-    if (!userId) {
+    if (!userId || !isAdmin) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
@@ -23,9 +24,7 @@ export async function PATCH(
       return new NextResponse("Event not found", { status: 404 });
     }
 
-    // Check required fields for publishing
-    const hasRequiredFields =
-      event.title && event.slug && event.type && event.date;
+    const hasRequiredFields = event.title && event.slug && event.type;
 
     if (!hasRequiredFields) {
       return new NextResponse("Missing required fields for publishing", {

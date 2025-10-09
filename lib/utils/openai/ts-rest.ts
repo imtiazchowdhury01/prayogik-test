@@ -14,6 +14,7 @@ export const OpenAPIV1 = generateOpenApi(ApiContractV1, {
     { name: "TeacherCourse", description: "Teacher Course" },
     { name: "TeacherEarnings", description: "Teacher Earnings" },
     { name: "Course", description: "Course" },
+    { name: "Certification", description: "Certification" },
     { name: "CourseLessons", description: "CourseLessons" },
     { name: "AdminCourse", description: "Admin Course" },
     { name: "AdminUser", description: "Admin User" },
@@ -42,6 +43,7 @@ OpenAPIV1.paths["/api/user/profile/{userId}"].get.tags = ["User"];
 OpenAPIV1.paths["/api/user/profile/{userId}"].put.tags = ["User"];
 OpenAPIV1.paths["/api/user/userprogress"].get.tags = ["User"];
 OpenAPIV1.paths["/api/user/subscription"].get.tags = ["User"];
+OpenAPIV1.paths["/api/user/subscription/courses"].post.tags = ["User"];
 OpenAPIV1.paths["/api/auth/role"].post.tags = ["User"];
 
 // Courses endpoints
@@ -51,7 +53,7 @@ OpenAPIV1.paths["/api/courses/freecourse"].post.tags = ["Course"];
 OpenAPIV1.paths["/api/courses/{courseId}/publish"].patch.tags = ["Course"];
 OpenAPIV1.paths["/api/courses/{courseId}/unpublish"].patch.tags = ["Course"];
 OpenAPIV1.paths["/api/courses/access/free"].post.tags = ["Course"];
-
+OpenAPIV1.paths["/api/courses/search"].get.tags = ["Course"];
 // Course Lessons
 OpenAPIV1.paths["/api/front/lessons/lesson"].post.tags = ["CourseLessons"];
 OpenAPIV1.paths["/api/courses/{courseId}/lessons/reorder"].put.tags = [
@@ -156,11 +158,27 @@ OpenAPIV1.paths["/api/user/profile/reset-password"].post.tags = [
 OpenAPIV1.paths["/api/teacher/verified"].get.tags = ["Teacher"];
 
 // Bkash payment
-OpenAPIV1.paths["/api/bkash-manual-payment"].post.tags = ["BkashPayment"];
-OpenAPIV1.paths["/api/bkash-manual-payment/{id}"].delete.tags = [
-  "BkashPayment",
-];
+// OpenAPIV1.paths["/api/bkash-manual-payment"].post.tags = ["BkashPayment"];
+// OpenAPIV1.paths["/api/bkash-manual-payment/{id}"].delete.tags = [
+//   "BkashPayment",
+// ];
 // subscribers
 OpenAPIV1.paths["/api/subscribers"].get.tags = ["Subscribers"];
 OpenAPIV1.paths["/api/subscribers/{id}"].get.tags = ["Subscribers"];
 OpenAPIV1.paths["/api/subscribers/{id}"].put.tags = ["Subscribers"];
+
+// CERTIFICATION
+OpenAPIV1.paths["/api/certifications"].get.tags = ["Certification"];
+OpenAPIV1.paths["/api/certifications/{certificationId}"].get.tags = [
+  "Certification",
+];
+OpenAPIV1.paths["/api/certifications"].post.tags = ["Certification"];
+OpenAPIV1.paths["/api/certifications/{certificationId}"].patch.tags = [
+  "Certification",
+];
+OpenAPIV1.paths["/api/certifications/{certificationId}"].delete.tags = [
+  "Certification",
+];
+OpenAPIV1.paths["/api/certifications/{certificationId}/access"].get.tags = [
+  "Certification",
+];

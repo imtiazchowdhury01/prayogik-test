@@ -1,3 +1,4 @@
+// api/admin/teachers/route.ts
 export const dynamic = "force-dynamic";
 
 import { db } from "@/lib/db";
@@ -47,6 +48,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(teachers);
   } catch (error) {
     console.error("Error fetching teachers details:", error);
-    return NextResponse.error();
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

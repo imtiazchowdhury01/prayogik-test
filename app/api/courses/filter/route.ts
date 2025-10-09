@@ -1,35 +1,35 @@
-// Create this file: app/api/courses/filter/route.ts
-import { NextRequest, NextResponse } from 'next/server';
+// app/api/courses/filter/route.ts
+import { NextRequest, NextResponse } from "next/server";
 import {
   getCategoriesDBCall,
   getCategoryCoursesDBCall,
   getCategoryCoursesCountDBCall,
 } from "@/lib/data-access-layer/categories";
-import { 
-  getPrimeCoursesDBCall, 
-  getPrimeCoursesByCategoryDBCall, 
+import {
+  getPrimeCoursesDBCall,
+  getPrimeCoursesByCategoryDBCall,
   getCoursesDbCall,
   getLiveCoursesDBCall,
-  getCategoryLiveCoursesDBCall
+  getCategoryLiveCoursesDBCall,
 } from "@/lib/data-access-layer/course";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const page = parseInt(searchParams.get('page') || '1');
-  const type = searchParams.get('type'); // 'category', 'filter', 'category-filter'
-  const categorySlug = searchParams.get('categorySlug');
-  const filter = searchParams.get('filter');
+  const page = parseInt(searchParams.get("page") || "1");
+  const type = searchParams.get("type");
+  const categorySlug = searchParams.get("categorySlug");
+  const filter = searchParams.get("filter");
 
   try {
     let courses: any[] = [];
 
-    if (type === 'category' && categorySlug) {
+    if (type === "category" && categorySlug) {
       // Category page pagination
       courses = await getCategoryCoursesDBCall(categorySlug, page);
-    } else if (type === 'filter' && filter) {
+    } else if (type === "filter" && filter) {
       // Filter page pagination
       switch (filter) {
-        case "recent":
+        case "recent": {
           const recentCoursesResponse = await getCoursesDbCall({
             page: page,
             limit: page === 1 ? 24 : 6,
@@ -37,8 +37,8 @@ export async function GET(request: NextRequest) {
           });
           courses = recentCoursesResponse?.courses ?? [];
           break;
-
-        case "older":
+        }
+        case "older": {
           const olderCoursesResponse = await getCoursesDbCall({
             page: page,
             limit: page === 1 ? 24 : 6,
@@ -46,45 +46,51 @@ export async function GET(request: NextRequest) {
           });
           courses = olderCoursesResponse?.courses ?? [];
           break;
-
+        }
         case "prime":
           courses = await getPrimeCoursesDBCall(page);
           break;
-
         case "live":
           courses = await getLiveCoursesDBCall(page);
           break;
-
         default:
           courses = [];
       }
-    } else if (type === 'category-filter' && categorySlug && filter) {
+    } else if (type === "category-filter" && categorySlug && filter) {
       // Category-filter page pagination
       switch (filter) {
-        case "recent":
-          const recentCourses = await getCategoryCoursesDBCall(categorySlug, page);
+        case "recent": {
+          const recentCourses = await getCategoryCoursesDBCall(
+            categorySlug,
+            page
+          );
           courses = recentCourses.sort(
             (a: any, b: any) =>
               new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
           );
           break;
-          
-        case "older":
-          const olderCourses = await getCategoryCoursesDBCall(categorySlug, page);
+        }
+
+        case "older": {
+          const olderCourses = await getCategoryCoursesDBCall(
+            categorySlug,
+            page
+          );
           courses = olderCourses.sort(
             (a: any, b: any) =>
               new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
           );
           break;
-          
+        }
+
         case "prime":
           courses = await getPrimeCoursesByCategoryDBCall(categorySlug, page);
           break;
-          
+
         case "live":
           courses = await getCategoryLiveCoursesDBCall(categorySlug, page);
           break;
-          
+
         default:
           courses = [];
       }
@@ -99,9 +105,9 @@ export async function GET(request: NextRequest) {
       currentPage: page,
     });
   } catch (error) {
-    console.error('Error fetching courses:', error);
+    console.error("[FILTER_COURSES_ERROR]", error);
     return NextResponse.json(
-      { error: 'Failed to fetch courses' },
+      { error: "Failed to fetch courses" },
       { status: 500 }
     );
   }

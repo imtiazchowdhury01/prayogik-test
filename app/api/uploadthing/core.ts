@@ -1,14 +1,12 @@
-// @ts-nocheck
-
+// api/uploadthing/core.ts
 import { createUploadthing, type FileRouter } from "uploadthing/next";
-
 import { getServerUserSession } from "@/lib/getServerUserSession";
 import { isTeacher } from "@/lib/teacher";
 
 const f = createUploadthing();
 
-const handleAuth = async (req: Request) => {
-  const { userId } = await getServerUserSession(req);
+const handleAuth = async () => {
+  const { userId } = await getServerUserSession();
 
   const isAuthorized = await isTeacher(userId);
 
@@ -19,15 +17,15 @@ const handleAuth = async (req: Request) => {
 
 export const ourFileRouter = {
   courseImage: f({ image: { maxFileSize: "4MB", maxFileCount: 1 } })
-    .middleware(async (req) => handleAuth(req))
+    .middleware(() => handleAuth())
     .onUploadComplete(() => {}),
 
   courseAttachment: f(["text", "image", "video", "audio", "pdf"])
-    .middleware(async (req) => handleAuth(req))
+    .middleware(() => handleAuth())
     .onUploadComplete(() => {}),
 
   chapterVideo: f({ video: { maxFileCount: 1, maxFileSize: "512GB" } })
-    .middleware(async (req) => handleAuth(req))
+    .middleware(() => handleAuth())
     .onUploadComplete(() => {}),
 } satisfies FileRouter;
 

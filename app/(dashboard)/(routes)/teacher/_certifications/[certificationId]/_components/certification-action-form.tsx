@@ -1,0 +1,163 @@
+// @ts-nocheck
+"use client";
+import { Eye, Trash } from "lucide-react";
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { ConfirmModal } from "@/components/modals/confirm-modal";
+import { useConfettiStore } from "@/hooks/use-confetti-store";
+import { Loader } from "lucide-react";
+import Link from "next/link";
+import { revalidatePage } from "@/actions/revalidatePage";
+import { clientApi } from "@/lib/utils/openai/client";
+
+interface CertificationActionsProps {
+  disabled: boolean;
+  certificationId: string;
+  isPublished: boolean;
+  isCoTeacher?: {
+    id: string;
+    user: {
+      name: string;
+      email: string;
+    };
+  };
+  isAdmin?: boolean;
+  isCertificationAuthor?: boolean;
+  certificationSlug: string;
+}
+
+export const CertificationActions = ({
+  disabled,
+  certificationId,
+  isPublished,
+  isCoTeacher,
+  isAdmin = false,
+  isCertificationAuthor,
+  certificationSlug,
+}: CertificationActionsProps) => {
+  const router = useRouter();
+  const confetti = useConfettiStore();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const onClick = async () => {
+    try {
+      setIsLoading(true);
+      if (isPublished) {
+        const response = await clientApi.unpublishCertification({
+          params: { certificationId },
+          body: {},
+        });
+        if (response.status === 200) {
+          toast.success("Certification unpublished");
+        } else {
+          throw new Error("Failed to unpublish certification");
+        }
+      } else {
+        const response = await clientApi.publishCertification({
+          params: { certificationId },
+          body: {},
+        });
+        if (response.status === 200) {
+          toast.success("Certification published");
+          confetti.onOpen();
+        } else {
+          throw new Error("Failed to publish certification");
+        }
+      }
+      await revalidatePage([
+        { route: "/" },
+        { route: "/home" },
+        { route: "/live" },
+        { route: "/certifications" },
+        { route: "/(course)/courses", type: "layout" },
+      ]);
+      router.refresh();
+    } catch (error) {
+      if (error.body && error.status === 400) {
+        toast.error(
+          error.body.message || error.body.error || "Missing required fields"
+        );
+      } else {
+        toast.error("Something went wrong");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onDelete = async () => {
+    try {
+      setIsLoading(true);
+      const response = await clientApi.deleteCertification({
+        params: { certificationId },
+      });
+
+      if (response.status === 200) {
+        toast.success("Certification deleted");
+        await revalidatePage([
+          { route: "/" },
+          { route: "/live" },
+          { route: "/certifications" },
+          { route: "/(course)/courses", type: "layout" },
+        ]);
+        if (isAdmin) {
+          router.replace(`/admin/certifications`);
+        } else {
+          router.replace(`/teacher/certifications`);
+        }
+      } else {
+        throw new Error("Failed to delete certification");
+      }
+    } catch (error) {
+      if (error.body && error.status === 400) {
+        toast.error(
+          error.body.message ||
+            error.body.error ||
+            "Cannot delete certification"
+        );
+      } else {
+        toast.error("Something went wrong");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-x-2">
+      <Link
+        href={`/preview/certifications/${certificationSlug}`}
+        title="Certification Preview"
+        target="_blank"
+        className="mr-4"
+      >
+        <Eye className="h-5 w-5 text-sm text-gray-700 animate-pulse" />
+      </Link>
+
+      <Button
+        onClick={onClick}
+        disabled={disabled || isLoading}
+        variant="outline"
+        size="sm"
+      >
+        {isLoading ? (
+          <Loader className="animate-spin h-4 w-4" />
+        ) : isPublished ? (
+          "Unpublish"
+        ) : (
+          "Publish"
+        )}
+      </Button>
+
+      {isCertificationAuthor && (
+        <ConfirmModal onConfirm={onDelete}>
+          <Button size="sm" disabled={isLoading}>
+            <Trash className="h-4 w-4" />
+          </Button>
+        </ConfirmModal>
+      )}
+    </div>
+  );
+};

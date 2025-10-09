@@ -116,7 +116,7 @@ const StudentFeedback = () => {
   return (
     <div>
       <SectionTitle
-        title="কোর্স সম্পর্কে অংশগ্রহনকারীদের  মতামত"
+        title="কোর্সে অংশগ্রহণকারী শিক্ষার্থীদের মতামত"
         description="আমাদের কোর্স সম্পর্কে অংশগ্রহণকারীদের নিজস্ব মতামত নিশ্চিত করে যে প্রায়োগিক প্রাইম আপনার ডিজিটাল মার্কেটিং ক্যারিয়ার তৈরিতে প্রয়োজনীয় দক্ষতা ও এক্সপার্টাইজ দেবে।"
       />
       <div className="px-6 md:px-8 lg:px-8 xl:px-8 2xl:px-0 max-w-7xl mx-auto ">
@@ -125,7 +125,7 @@ const StudentFeedback = () => {
           {primeTestimonials.map((testimonial) => (
             <Card
               key={testimonial.id}
-              className={`${testimonial.bgColor} border-0 shadow-sm break-inside-avoid mb-6`}
+              className={`${testimonial.bgColor} border-0 shadow-sm break-inside-avoid mb-4`}
             >
               <CardContent className="p-6 flex flex-col h-full">
                 {/* Quote Icon */}

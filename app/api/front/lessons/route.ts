@@ -1,5 +1,12 @@
-import { NextResponse } from "next/server";
+// api/front/lessons/route.ts
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: Request) {
+interface EmptyResponse {
+  message: string;
+}
+
+export async function GET(
+  request: NextRequest
+): Promise<NextResponse<EmptyResponse>> {
   return NextResponse.json({ message: "This is an empty API route" });
 }

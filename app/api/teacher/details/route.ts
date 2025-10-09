@@ -1,10 +1,7 @@
-// @ts-nocheck
-
+// api/teacher/details/route.ts
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-
-// get all teachers 
 export async function GET(request: Request) {
   const usersWithTeacherDetails = await db.user.findMany({
     where: {
@@ -16,7 +13,7 @@ export async function GET(request: Request) {
       teacherProfile: {
         include: {
           teacherRank: true,
-           createdCourses: true, 
+          createdCourses: true,
         },
       },
     },

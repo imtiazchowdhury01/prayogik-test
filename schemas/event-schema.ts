@@ -1,9 +1,10 @@
-
 import { z } from "zod";
 
 // Event type schema with message
-export const EventTypeSchema = z.enum(["PAID", "FREE"], {
-  errorMap: () => ({ message: "Event type must be either 'PAID' or 'FREE'." }),
+export const EventTypeSchema = z.enum(["PAID", "FREE", "EOI"], {
+  errorMap: () => ({
+    message: "Event type must be either 'PAID','FREE' or 'EOI'.",
+  }),
 });
 
 // Event status schema with message
@@ -44,7 +45,7 @@ const BaseEventSchema = z.object({
       "Slug can only contain lowercase letters, numbers, and hyphens"
     )
     .trim(),
-  description: z.string().max(2000, "Description too long").optional(),
+  description: z.string().optional(),
   price: z.preprocess((val) => {
     if (val === "" || val === undefined || val === null) return undefined;
     if (typeof val === "string") {
@@ -52,8 +53,9 @@ const BaseEventSchema = z.object({
       return isNaN(num) ? undefined : num;
     }
     return val;
-  }, z.number().positive().optional()),
-  date: z.string({ required_error: "Date is required" }).min(1, "Date is required"),
+  }, z.number().optional()),
+  date: z.string().nullable().optional(),
+  // .min(1, "Date is required"),
   type: EventTypeSchema,
   status: EventStatusSchema,
   isOnline: z.boolean().default(false),
@@ -99,22 +101,22 @@ export const CreateEventSchema = BaseEventSchema.refine(
       path: ["zoomLink"],
     }
   )
-  .refine(
-    (data) => {
-      // Price is required for paid events
-      if (
-        data.type === "PAID" &&
-        (data.price === null || data.price === undefined || data.price <= 0)
-      ) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: "Price is required and must be greater than 0 for paid events",
-      path: ["price"],
-    }
-  )
+  // .refine(
+  //   (data) => {
+  //     // Price is required for paid events
+  //     if (
+  //       data.type === "PAID" &&
+  //       (data.price === null || data.price === undefined || data.price <= 0)
+  //     ) {
+  //       return false;
+  //     }
+  //     return true;
+  //   },
+  //   {
+  //     message: "Price is required and must be greater than 0 for paid events",
+  //     path: ["price"],
+  //   }
+  // )
   .refine(
     (data) => {
       // Validate zoom link format for online events (only if provided)
@@ -131,22 +133,22 @@ export const CreateEventSchema = BaseEventSchema.refine(
 
 // Update Event Schema - all fields are optional but conditional validation still applies
 export const UpdateEventSchema = BaseEventSchema.partial()
-  .refine(
-    (data) => {
-      // If isOnline is explicitly set to false, location is required
-      if (
-        data.isOnline === false &&
-        (!data.location || data.location.trim() === "")
-      ) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: "Location is required when setting event to offline",
-      path: ["location"],
-    }
-  )
+  // .refine(
+  //   (data) => {
+  //     // If isOnline is explicitly set to false, location is required
+  //     if (
+  //       data.isOnline === false &&
+  //       (!data.location || data.location.trim() === "")
+  //     ) {
+  //       return false;
+  //     }
+  //     return true;
+  //   },
+  //   {
+  //     message: "Location is required when setting event to offline",
+  //     path: ["location"],
+  //   }
+  // )
   .refine(
     (data) => {
       // If isOnline is explicitly set to true, zoom link is required
@@ -163,23 +165,23 @@ export const UpdateEventSchema = BaseEventSchema.partial()
       path: ["zoomLink"],
     }
   )
-  .refine(
-    (data) => {
-      // Only validate price if type is being set to PAID
-      if (
-        data.type === "PAID" &&
-        (data.price === null || data.price === undefined || data.price <= 0)
-      ) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message:
-        "Price is required and must be greater than 0 when setting event to paid",
-      path: ["price"],
-    }
-  )
+  // .refine(
+  //   (data) => {
+  //     // Only validate price if type is being set to PAID
+  //     if (
+  //       data.type === "PAID" &&
+  //       (data.price === null || data.price === undefined || data.price <= 0)
+  //     ) {
+  //       return false;
+  //     }
+  //     return true;
+  //   },
+  //   {
+  //     message:
+  //       "Price is required and must be greater than 0 when setting event to paid",
+  //     path: ["price"],
+  //   }
+  // )
   .refine(
     (data) => {
       // Validate zoom link format if provided for online events
@@ -199,77 +201,88 @@ export const createUpdateEventSchemaWithContext = (existingEvent?: {
   isOnline: boolean;
   location?: string | null;
   zoomLink?: string | null;
-  type: "PAID" | "FREE";
+  type: "PAID" | "FREE" | "EOI";
   price?: number | null;
 }) => {
-  return BaseEventSchema.partial()
-    .refine(
-      (data) => {
-        const finalIsOnline = data.isOnline ?? existingEvent?.isOnline ?? false;
-        const finalLocation = data.location ?? existingEvent?.location ?? "";
+  return (
+    BaseEventSchema.partial()
+      .refine(
+        (data) => {
+          const finalIsOnline =
+            data.isOnline ?? existingEvent?.isOnline ?? false;
+          const finalLocation = data.location ?? existingEvent?.location ?? "";
 
-        // If final state is offline, location is required
-        if (!finalIsOnline && (!finalLocation || finalLocation.trim() === "")) {
-          return false;
+          // If final state is offline, location is required
+          if (
+            !finalIsOnline &&
+            (!finalLocation || finalLocation.trim() === "")
+          ) {
+            return false;
+          }
+          return true;
+        },
+        {
+          message: "Location is required for offline events",
+          path: ["location"],
         }
-        return true;
-      },
-      {
-        message: "Location is required for offline events",
-        path: ["location"],
-      }
-    )
-    .refine(
-      (data) => {
-        const finalIsOnline = data.isOnline ?? existingEvent?.isOnline ?? false;
-        const finalZoomLink = data.zoomLink ?? existingEvent?.zoomLink ?? "";
+      )
+      .refine(
+        (data) => {
+          const finalIsOnline =
+            data.isOnline ?? existingEvent?.isOnline ?? false;
+          const finalZoomLink = data.zoomLink ?? existingEvent?.zoomLink ?? "";
 
-        // If final state is online, zoom link is required
-        if (finalIsOnline && (!finalZoomLink || finalZoomLink.trim() === "")) {
-          return false;
+          // If final state is online, zoom link is required
+          if (
+            finalIsOnline &&
+            (!finalZoomLink || finalZoomLink.trim() === "")
+          ) {
+            return false;
+          }
+          return true;
+        },
+        {
+          message: "Zoom link is required for online events",
+          path: ["zoomLink"],
         }
-        return true;
-      },
-      {
-        message: "Zoom link is required for online events",
-        path: ["zoomLink"],
-      }
-    )
-    .refine(
-      (data) => {
-        const finalType = data.type ?? existingEvent?.type ?? "FREE";
-        const finalPrice = data.price ?? existingEvent?.price ?? 0;
+      )
+      // .refine(
+      //   (data) => {
+      //     const finalType = data.type ?? existingEvent?.type ?? "FREE";
+      //     const finalPrice = data.price ?? existingEvent?.price ?? 0;
 
-        // If final state is PAID, price is required
-        if (
-          finalType === "PAID" &&
-          (finalPrice === null || finalPrice === undefined || finalPrice <= 0)
-        ) {
-          return false;
-        }
-        return true;
-      },
-      {
-        message: "Price is required and must be greater than 0 for paid events",
-        path: ["price"],
-      }
-    )
-    .refine(
-      (data) => {
-        const finalIsOnline = data.isOnline ?? existingEvent?.isOnline ?? false;
-        const finalZoomLink = data.zoomLink ?? existingEvent?.zoomLink ?? "";
+      //     // If final state is PAID, price is required
+      //     if (
+      //       finalType === "PAID" &&
+      //       (finalPrice === null || finalPrice === undefined || finalPrice <= 0)
+      //     ) {
+      //       return false;
+      //     }
+      //     return true;
+      //   },
+      //   {
+      //     message: "Price is required and must be greater than 0 for paid events",
+      //     path: ["price"],
+      //   }
+      // )
+      .refine(
+        (data) => {
+          const finalIsOnline =
+            data.isOnline ?? existingEvent?.isOnline ?? false;
+          const finalZoomLink = data.zoomLink ?? existingEvent?.zoomLink ?? "";
 
-        // Validate zoom link format if provided for online events
-        if (finalIsOnline && finalZoomLink && finalZoomLink !== "") {
-          return z.string().url().safeParse(finalZoomLink).success;
+          // Validate zoom link format if provided for online events
+          if (finalIsOnline && finalZoomLink && finalZoomLink !== "") {
+            return z.string().url().safeParse(finalZoomLink).success;
+          }
+          return true;
+        },
+        {
+          message: "Please provide a valid Zoom link URL for online events",
+          path: ["zoomLink"],
         }
-        return true;
-      },
-      {
-        message: "Please provide a valid Zoom link URL for online events",
-        path: ["zoomLink"],
-      }
-    );
+      )
+  );
 };
 
 // Type exports
@@ -284,6 +297,7 @@ export type EventStatus = z.infer<typeof EventStatusSchema>;
 export const EVENT_TYPES = [
   { value: "FREE" as const, label: "Free Event" },
   { value: "PAID" as const, label: "Paid Event" },
+  { value: "EOI" as const, label: "EOI Event" },
 ];
 
 export const EVENT_STATUS_OPTIONS = [
@@ -334,7 +348,7 @@ export const validateEventData = (
     isOnline: boolean;
     location?: string | null;
     zoomLink?: string | null;
-    type: "PAID" | "FREE";
+    type: "PAID" | "FREE" | "EOI";
     price?: number | null;
   }
 ) => {

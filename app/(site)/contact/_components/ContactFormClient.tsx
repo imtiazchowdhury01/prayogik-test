@@ -801,7 +801,7 @@ export default function ContactFormClient({
                       height="100%"
                     />
                   ) : (
-                    <>{formType === "contact" ? "জমা দিন" : "সাবমিট করুন"}</>
+                    <>{formType === "contact" ? "সাবমিট করুন" : "সাবমিট করুন"}</>
                   )}
                 </Button>
               </form>

@@ -1,4 +1,4 @@
-// @ts-nocheck
+// api/admin/teachers/ranks/route.ts
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 import { NextResponse } from "next/server";
@@ -20,44 +20,47 @@ export async function GET(req: Request) {
     });
     return NextResponse.json(ranks, { status: 200 });
   } catch (error) {
-    console.error("Error fetching teacher ranks", {
-      error: error.message,
-      stack: error.stack,
-    });
+    console.error("Error fetching teacher ranks", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { message: error.message || "Error fetching teacher ranks" },
+      { message: errorMessage || "Error fetching teacher ranks" },
       { status: 500 }
     );
   }
 }
 
 export async function POST(req: Request) {
-  const { name, description, feePercentage, numberOfSales } = await req.json();
-
-  // Validate input
-  if (
-    !name ||
-    typeof feePercentage !== "number" ||
-    feePercentage < 0 ||
-    feePercentage > 100 ||
-    numberOfSales < 0
-  ) {
-    return NextResponse.json(
-      { message: "Invalid input data" },
-      { status: 400 }
-    );
-  }
-
-  const { isAdmin } = await getServerUserSession();
-  if (!isAdmin) {
-    return NextResponse.json(
-      { message: "You are not authorized to perform this action" },
-      { status: 401 }
-    );
-  }
-
   try {
-    // Check if teacher rank already exists
+    const body = await req.json();
+    const { name, description, feePercentage, numberOfSales } = body as {
+      name: string;
+      description: string;
+      feePercentage: number;
+      numberOfSales: number;
+    };
+
+    if (
+      !name ||
+      typeof feePercentage !== "number" ||
+      feePercentage < 0 ||
+      feePercentage > 100 ||
+      numberOfSales < 0
+    ) {
+      return NextResponse.json(
+        { message: "Invalid input data" },
+        { status: 400 }
+      );
+    }
+
+    const { isAdmin } = await getServerUserSession();
+    if (!isAdmin) {
+      return NextResponse.json(
+        { message: "You are not authorized to perform this action" },
+        { status: 401 }
+      );
+    }
+
     const existingRank = await db.teacherRank.findUnique({
       where: {
         name,
@@ -81,12 +84,11 @@ export async function POST(req: Request) {
     });
     return NextResponse.json(newRank, { status: 201 });
   } catch (error) {
-    console.error("Error creating new teacher rank", {
-      error: error.message,
-      stack: error.stack,
-    });
+    console.error("Error creating new teacher rank", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { message: error.message || "Error creating new teacher rank" },
+      { message: errorMessage || "Error creating new teacher rank" },
       { status: 500 }
     );
   }

@@ -1,3 +1,5 @@
+// lib/utils/stringUtils.ts
+
 export const capitalizeFirstLetter = (str: string): string => {
   if (!str) return "";
 
@@ -15,6 +17,17 @@ export const generateUsername = (name: string) => {
   const randomNumber = Math.floor(Math.random() * 10000); // Random number between 0-9999
   const usernameBase = name.toLowerCase().replace(/\s+/g, ""); // Remove spaces and make lowercase
   return `${usernameBase}${randomNumber}`;
+};
+
+export const generateReferralCode = async (): Promise<string> => {
+  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let code = "";
+
+  for (let i = 0; i < 8; i++) {
+    code += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+
+  return code;
 };
 
 export const toSlug = (str: string): string => {

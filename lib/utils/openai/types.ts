@@ -636,3 +636,8 @@ export const courseRoadmapSchema = z
       path: ["courseLink"],
     }
   );
+
+export const tiralCourseAccessSchema = z.object({
+  courseIds: z.array(z.string()).min(1, "অন্তত একটি কোর্স নির্বাচন করতে হবে"),
+  subscriptionId: z.string().optional(), // Optional if passed in URL params
+});

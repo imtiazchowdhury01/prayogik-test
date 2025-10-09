@@ -1,38 +1,43 @@
-// @ts-nocheck
-import { NextResponse } from "next/server";
-
+// api/courses/[courseId]/lessons/[lessonId]/unpublish/route.ts
+import { useCourseByTeacherOrCoTeacher } from "@/hooks/useTeacherProfile";
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
-import {
-  useCoTeacherProfileId,
-  useCourseByTeacherOrCoTeacher,
-  useTeacherProfile,
-} from "@/hooks/useTeacherProfile";
-import updateCourseDuration from "@/lib/utils/updateCourseDuration";
 import { isTeacher } from "@/lib/teacher";
+import updateCourseDuration from "@/lib/utils/updateCourseDuration";
+import { NextRequest, NextResponse } from "next/server";
+
+interface RouteParams {
+  params: {
+    courseId: string;
+    lessonId: string;
+  };
+}
 
 export async function PATCH(
-  req: Request,
-  { params }: { params: { courseId: string; lessonId: string } }
-) {
+  req: NextRequest,
+  { params }: RouteParams
+): Promise<NextResponse> {
   try {
-    const { userId, isAdmin } = await getServerUserSession(req);
+    const { courseId, lessonId } = params;
+
+    if (!courseId || !lessonId) {
+      return new NextResponse("Missing courseId or lessonId", { status: 400 });
+    }
+
+    const { userId, isAdmin } = await getServerUserSession();
 
     if (!userId) {
       return new NextResponse("Not Authenticated", { status: 401 });
     }
 
-    // Check if user is admin or teacher
-    if (!isAdmin && !isTeacher(userId)) {
+    const userIsTeacher = await isTeacher(userId);
+
+    if (!isAdmin && !userIsTeacher) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    // If not admin, check if user has permission to unpublish this lesson
     if (!isAdmin) {
-      const ownCourse = await useCourseByTeacherOrCoTeacher(
-        userId,
-        params.courseId
-      );
+      const ownCourse = await useCourseByTeacherOrCoTeacher(userId, courseId);
 
       if (!ownCourse) {
         return new NextResponse("Unauthorized", { status: 401 });
@@ -41,8 +46,8 @@ export async function PATCH(
 
     const unpublishedLesson = await db.lesson.update({
       where: {
-        id: params.lessonId,
-        courseId: params.courseId,
+        id: lessonId,
+        courseId,
       },
       data: {
         isPublished: false,
@@ -50,18 +55,16 @@ export async function PATCH(
       },
     });
 
-    const publishedChaptersInCourse = await db.lesson.findMany({
+    const publishedLessonsCount = await db.lesson.count({
       where: {
-        courseId: params.courseId,
+        courseId,
         isPublished: true,
       },
     });
 
-    if (!publishedChaptersInCourse.length) {
+    if (publishedLessonsCount === 0) {
       await db.course.update({
-        where: {
-          id: params.courseId,
-        },
+        where: { id: courseId },
         data: {
           isPublished: false,
           updatedAt: new Date(),
@@ -69,11 +72,11 @@ export async function PATCH(
       });
     }
 
-    // update total duration of the course by using the helper function
-    await updateCourseDuration(params.courseId);
+    await updateCourseDuration(courseId);
+
     return NextResponse.json(unpublishedLesson);
   } catch (error) {
-    console.error("[CHAPTER_UNPUBLISH]", error);
+    console.error("[LESSON_UNPUBLISH_ERROR]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client";
 import * as z from "zod";
 import { Pencil, PlusCircle, ImageIcon, Loader } from "lucide-react";
@@ -42,13 +41,14 @@ export const EventImageForm = ({ initialData, eventId }: ImageFormProps) => {
     await updateEvent({
       eventId,
       values,
+      slug: initialData.slug,
       toggleEdit,
       setLoading: setIsUploading,
       router,
     });
   };
   //for handling course image upload
-  const handleImageUpload = async (e) => {
+  const handleImageUpload = async (e: any) => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -77,7 +77,7 @@ export const EventImageForm = ({ initialData, eventId }: ImageFormProps) => {
         setIsUploading(false);
         setIsEditing(false);
       }
-    } catch (error) {
+    } catch (error: any) {
       // console.log(error);
       toast.error(
         "Error uploading file: " + (error?.message || "Unknown error")

@@ -1,5 +1,5 @@
 //@ts-nocheck
-import SingleCoursePriceTab from "./single-course-price-tab";
+import SingleCoursePriceTab from "./course-price-section";
 import { fetchSubscriptionDisounts } from "@/services";
 import { fetchUserSubscription } from "@/services/user";
 import { clientApi } from "@/lib/utils/openai/client";

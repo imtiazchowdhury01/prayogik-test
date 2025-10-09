@@ -14,6 +14,9 @@ import { useRouter } from "next/navigation";
 import { slugToReadable } from "@/lib/generateSlug";
 import { SubscriptionCheck } from "./home/SubscriptionCheck";
 import UserProfileMenus from "@/components/userProfileMenus";
+import PurchasePlanButton from "../prime/_components/PurchasePlanButton";
+import { trialPlanStaticData } from "@/constants/trial-plan";
+import TrialCheckoutButton from "@/components/trial-checkout-button";
 
 interface ClientHeaderProps {
   navigation: { name: string; href: string }[];
@@ -40,15 +43,17 @@ export default function ClientHeader({ navigation }: ClientHeaderProps) {
     }
   };
 
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+
   return (
-    <>
+    <div className="flex items-center justify-center gap-2">
       {/* Subscription Check - only renders if session exists */}
       {session && <SubscriptionCheck />}
 
       {/* Desktop Search and User Menu */}
-      <div className="items-center justify-end hidden lg:flex gap-x-3">
+      <div className="flex items-center justify-end gap-x-0">
         {/* Search Form */}
-        <form
+        {/* <form
           onSubmit={searchHandler}
           className="border-[#E2E8F0] border-[1px] rounded-md px-3 w-[240px] py-3 flex items-center space-x-1"
         >
@@ -60,23 +65,72 @@ export default function ClientHeader({ navigation }: ClientHeaderProps) {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="flex-1 p-0 text-sm text-slate-600 bg-transparent border-none outline-none focus-visible:ring-0"
           />
-        </form>
+        </form> */}
+        {/* Search Form */}
+        <div className="flex items-center justify-center gap-2">
+          <div className="relative">
+            {!isSearchExpanded ? (
+              <button
+                onClick={() => setIsSearchExpanded(true)}
+                className="p-2 border-[#E2E8F0] border-[1px] rounded-md  hover:bg-gray-100 transition-colors"
+              >
+                <CiSearch className="text-slate-600 text-xl" />
+              </button>
+            ) : (
+              <form
+                onSubmit={(e) => {
+                  searchHandler(e);
+                  setIsSearchExpanded(false);
+                }}
+                className="absolute right-0 z-50 border-[#E2E8F0] border-[1px] rounded-md px-3 w-[240px] py-3 flex items-center space-x-1 bg-white shadow-lg -top-6"
+              >
+                <CiSearch className="text-slate-600 text-xl" />
+                <input
+                  type="text"
+                  placeholder="কোর্স সার্চ করুন..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="flex-1 p-0 text-sm text-slate-600 bg-transparent border-none outline-none focus-visible:ring-0"
+                  autoFocus
+                  onBlur={() => {
+                    // Delay to allow form submission if clicking search icon
+                    setTimeout(() => {
+                      if (!searchTerm.trim()) {
+                        setIsSearchExpanded(false);
+                      }
+                    }, 100);
+                  }}
+                />
+              </form>
+            )}
+          </div>
+          {/* User Authentication */}
+          <div className="hidden xl:flex items-center">
+            {status === "authenticated" && session?.user?.id ? (
+              <>
+                <UserProfileMenus session={session} pathName="" />
+              </>
+            ) : (
+              <>
+                <Link href="/signin" className="px-5">
+                  লগইন
+                </Link>
 
-        {/* User Authentication */}
-        {status === "authenticated" && session?.user?.id ? (
-          <UserProfileMenus session={session} pathName="" />
-        ) : (
-          <Link
-            href="/signin"
-            className="bg-brand hover:bg-teal-700 text-white block rounded-md px-5 py-3 transition-all duration-300 shadow-sm font-medium text-sm"
-          >
-            লগইন
-          </Link>
-        )}
+                <TrialCheckoutButton
+                  size={"lg"}
+                  variant={"primary"}
+                  className="bg-brand hover:bg-teal-700 text-white block rounded-md transition-all duration-300 shadow-sm font-medium text-sm"
+                >
+                  <span>প্রাইম ট্রায়াল</span>
+                </TrialCheckoutButton>
+              </>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Mobile Menu Button */}
-      <div className="flex items-center space-x-2 lg:hidden">
+      <div className="flex items-center space-x-2 xl:hidden">
         <button
           type="button"
           className="inline-flex items-center justify-center text-slate rounded-md"
@@ -180,6 +234,6 @@ export default function ClientHeader({ navigation }: ClientHeaderProps) {
           </div>
         </DialogPanel>
       </Dialog>
-    </>
+    </div>
   );
 }

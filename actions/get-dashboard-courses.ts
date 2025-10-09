@@ -1,34 +1,83 @@
-import { Category, Lesson, Course, Purchase } from "@prisma/client";
+// actions/get-dashboard-courses.ts
+"use server";
+
 import { db } from "@/lib/db";
 import { getProgress } from "@/actions/get-progress";
-import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { cache } from "react";
+import type { Prisma } from "@prisma/client";
 
-type CourseWithProgressWithCategory = Course & {
-  category: Category | null;
-  chapters: Lesson[];
+type LessonResult = {
+  id: string;
+  slug: string;
+  title: string;
+  isPublished: boolean;
+  isFree: boolean;
+  videoUrl: string | null;
+  position: number;
+  Progress: Prisma.ProgressGetPayload<true>[];
+};
+
+type CourseResult = {
+  id: string;
+  title: string;
+  slug: string;
+  totalDuration: number | null;
+  imageUrl: string | null;
+  isPublished: boolean;
+  isUnderSubscription: boolean;
+  purchases: Prisma.PurchaseGetPayload<true>[];
+  teacherProfile: {
+    user: {
+      name: string;
+    };
+  };
+  prices: Array<{
+    regularAmount: number;
+    isFree: boolean;
+  }>;
+  _count: {
+    enrolledStudents: number;
+  };
+  lessons: LessonResult[];
+};
+
+type CourseWithProgress = CourseResult & {
   progress: number | null;
+  nextLessonSlug: string | null;
 };
 
 type DashboardCourses = {
-  completedCourses: CourseWithProgressWithCategory[];
-  coursesInProgress: CourseWithProgressWithCategory[];
+  completedCourses: CourseWithProgress[];
+  coursesInProgress: CourseWithProgress[];
   purchasedCourseIds: string[];
 };
 
 export const getDashboardCourses = cache(
   async (userId: string): Promise<DashboardCourses> => {
     try {
-      const studentProfileId = await useStudentProfile(userId);
-      // Check if studentProfileId is valid
-      if(Object.keys(studentProfileId!).length === 0) {
-        throw new Error("Student profile not found");
-      }
-      // Fetch purchased courses for the student
-      let purchasedCourseIds: string[] = [];
-      const purchases = await db.enrolledStudents.findMany({
+      // Get the student profile for the user
+      const studentProfile = await db.studentProfile.findUnique({
         where: {
-          studentProfileId,
+          userId: userId,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      // Return empty result if student profile doesn't exist
+      if (!studentProfile) {
+        return {
+          completedCourses: [],
+          coursesInProgress: [],
+          purchasedCourseIds: [],
+        };
+      }
+
+      // Fetch enrolled courses for the student
+      const enrollments = await db.enrolledStudents.findMany({
+        where: {
+          studentProfileId: studentProfile.id,
           course: {
             isPublished: true,
           },
@@ -84,58 +133,59 @@ export const getDashboardCourses = cache(
         },
       });
 
-      purchasedCourseIds = purchases
+      // Extract course IDs and courses
+      const purchasedCourseIds = enrollments
         .filter((item) => item.course !== null)
-        .map((item) => item.course.id);
+        .map((item) => item.course!.id);
 
-      const coursesArray = purchases
+      const coursesArray = enrollments
         .filter((item) => item.course !== null)
-        .map((item) => item.course);
+        .map((item) => item.course!);
 
-      let completedCourses: CourseWithProgressWithCategory[] = [];
-      let coursesInProgress: CourseWithProgressWithCategory[] = [];
+      let completedCourses: CourseWithProgress[] = [];
+      let coursesInProgress: CourseWithProgress[] = [];
 
+      // Calculate progress for each course
       const progressPromises = coursesArray.map(async (course) => {
         const progress = await getProgress(userId, course.id);
 
-        const courseWithProgress: any = {
+        const courseWithProgress: CourseResult & { progress: number | null } = {
           ...course,
           progress,
         };
 
         if (progress === 100) {
-          completedCourses.push(courseWithProgress);
+          completedCourses.push(courseWithProgress as CourseWithProgress);
         } else {
-          coursesInProgress.push(courseWithProgress);
+          coursesInProgress.push(courseWithProgress as CourseWithProgress);
         }
       });
 
       await Promise.all(progressPromises);
 
-      // Helper function to process courses and add nextLessonSlug
-      const addNextLessonSlug = async (course: any) => {
-        let nextLessonSlug = null;
+      // Helper function to add next lesson slug
+      const addNextLessonSlug = async (
+        course: CourseResult & { progress: number | null }
+      ): Promise<CourseWithProgress> => {
+        let nextLessonSlug: string | null = null;
 
-        if (userId && course.lessons && course.lessons.length > 0) {
-          const totalLessons = course.lessons.length;
-
+        if (course.lessons && course.lessons.length > 0) {
           // Get completed lesson IDs
-          const completedLessonIds = await db.progress.findMany({
+          const completedLessons = await db.progress.findMany({
             where: {
+              studentProfileId: studentProfile.id,
               lesson: {
                 courseId: course.id,
                 isPublished: true,
               },
-              studentProfile: {
-                userId,
-              },
+              isCompleted: true,
             },
             select: {
               lessonId: true,
             },
           });
 
-          const completedIds = completedLessonIds.map((item) => item.lessonId);
+          const completedIds = completedLessons.map((item) => item.lessonId);
 
           // Find the first incomplete lesson
           const nextLesson = await db.lesson.findFirst({
@@ -154,7 +204,7 @@ export const getDashboardCourses = cache(
             },
           });
 
-          nextLessonSlug = nextLesson?.slug;
+          nextLessonSlug = nextLesson?.slug ?? null;
 
           // If no incomplete lesson found (all completed), get the first lesson
           if (!nextLessonSlug) {
@@ -171,7 +221,7 @@ export const getDashboardCourses = cache(
               },
             });
 
-            nextLessonSlug = firstLesson?.slug || null;
+            nextLessonSlug = firstLesson?.slug ?? null;
           }
         }
 

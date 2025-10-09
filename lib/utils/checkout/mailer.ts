@@ -428,6 +428,13 @@ async function getEmailResourceDetails(payload: any) {
     });
   }
 
+  if (payload.certificationId) {
+    courseForEmail = await db.certification.findUnique({
+      where: { id: payload.certificationId },
+      select: { title: true, prices: true },
+    });
+  }
+
   if (payload.subscriptionPlanId) {
     subscriptionPlanForEmail = await db.subscriptionPlan.findUnique({
       where: { id: payload.subscriptionPlanId },
@@ -509,10 +516,14 @@ class PurchaseEmailService {
       const isNewUserWithCredentials =
         isNewUser && temporaryPassword && username;
       const isEventRegistration = payload.purchaseType === PurchaseType.EVENT;
-
+      const isFreeCourse =
+        payload.purchaseType === PurchaseType.SINGLE_COURSE &&
+        !purchaseDetailsForEmail.coursePrice;
       let subject = "";
       if (isNewUserWithCredentials && isEventRegistration) {
         subject = "প্রায়োগিকে স্বাগতম! ইভেন্ট রেজিস্ট্রেশন সম্পন্ন হয়েছে।";
+      } else if (isNewUserWithCredentials && isFreeCourse) {
+        subject = "প্রায়োগিকে স্বাগতম! অ্যাকাউন্ট তৈরি হয়েছে।";
       } else if (isNewUserWithCredentials) {
         subject =
           "প্রায়োগিকে স্বাগতম! আপনার পেমেন্ট সফল হয়েছে এবং অ্যাকাউন্ট তৈরি হয়েছে।";

@@ -15,7 +15,7 @@ export const verifyEmailTemplate = (
                   <body style="background-color:#f6f9fc;padding:10px 0">
                     <div
                       style="display:none;overflow:hidden;line-height:1px;opacity:0;max-height:0;max-width:0">
-                      প্রয়োগিক-এর জন্য আপনার ইমেইল যাচাই করুন
+                      প্রায়োগিক-এর জন্য আপনার ইমেইল যাচাই করুন
                       <div></div>
                     </div>
                     <table
@@ -50,7 +50,7 @@ export const verifyEmailTemplate = (
                                     </p>
                                     <p
                                       style="font-size:16px;line-height:26px;margin:16px 0;font-family:'Open Sans', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;font-weight:300;color:#404040">
-                                      প্রয়োগিক-এ নিবন্ধনের জন্য আপনাকে ধন্যবাদ! অনুগ্রহ করে নিচের বাটনে ক্লিক করে আপনার ইমেইল ঠিকানা যাচাই করুন:
+                                      প্রায়োগিক-এ নিবন্ধনের জন্য আপনাকে ধন্যবাদ! অনুগ্রহ করে নিচের বাটনে ক্লিক করে আপনার ইমেইল ঠিকানা যাচাই করুন:
                                     </p>
                                     <!-- VERIFY_LINK -->
                                     <a

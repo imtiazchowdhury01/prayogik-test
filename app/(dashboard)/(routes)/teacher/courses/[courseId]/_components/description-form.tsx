@@ -29,6 +29,8 @@ import { updateCourse } from "@/lib/course/updateCourse";
 interface DescriptionFormProps {
   initialData: Course;
   courseId: string;
+  successMessage?: string;
+  api?: string;
 }
 
 const formSchema = z.object({
@@ -40,6 +42,8 @@ const formSchema = z.object({
 export const DescriptionForm = ({
   initialData,
   courseId,
+  api,
+  successMessage,
 }: DescriptionFormProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -60,12 +64,14 @@ export const DescriptionForm = ({
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     await updateCourse({
-          courseId,
-          values,
-          toggleEdit,
-          setLoading,
-          router,
-        });
+      courseId,
+      values,
+      toggleEdit,
+      setLoading,
+      router,
+      successMessage,
+      api,
+    });
   };
 
   const shortDescription = initialData?.description?.substring(0, 1200);
@@ -186,7 +192,7 @@ export const DescriptionForm = ({
     <div className="mt-6 border bg-slate-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
         <div>
-          Course description
+          Description
           <span className="text-red-500">*</span>
         </div>
         <Button onClick={toggleEdit} variant="ghost">

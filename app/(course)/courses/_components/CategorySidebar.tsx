@@ -32,7 +32,7 @@ const groupCategories = (categories: Category[]): GroupedCategories => {
   categories.forEach((category: any) => {
     if (category.parentCategoryId === null) {
       grouped.parentCategories.push(category);
-      console.log(grouped.parentCategories, "parent");
+      // console.log(grouped.parentCategories, "parent");
     } else {
       if (!grouped.childCategories[category.parentCategoryId]) {
         grouped.childCategories[category.parentCategoryId] = [];
@@ -52,7 +52,7 @@ const groupCategories = (categories: Category[]): GroupedCategories => {
   return grouped;
 };
 
-const CategorySidebar = ({ categories }: { categories: Category[] }) => {
+const CategorySidebar = ({ categories }: { categories: any }) => {
   try {
     const groupedCategories = groupCategories(categories);
 

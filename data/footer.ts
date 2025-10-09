@@ -5,14 +5,14 @@ export const footerSocialLinks = [
     path: "https://www.facebook.com/PrayogikHQ",
   },
   {
-    title: "youtube",
-    icon: "/icon/youtube.svg",
-    path: "https://www.youtube.com/@prayogikofficial",
-  },
-  {
     title: "linkedin",
     icon: "/icon/linkedin.svg",
     path: "https://www.linkedin.com/company/prayogikbd",
+  },
+  {
+    title: "youtube",
+    icon: "/icon/youtube.svg",
+    path: "https://www.youtube.com/@prayogikofficial",
   },
 ];
 export const footerOthersLinks = [
@@ -24,6 +24,18 @@ export const footerOthersLinks = [
     title: "প্রাইম",
     path: "/prime",
   },
+  {
+    title: "ইভেন্ট",
+    path: "/events",
+  },
+  {
+    title: "লাইভ কোর্স",
+    path: "/live",
+  },
+  // {
+  //   title: "সার্টিফিকেশন কোর্স",
+  //   path: "/certifications",
+  // },
   {
     title: "সকল প্রশিক্ষকগণ",
     path: "/teachers",

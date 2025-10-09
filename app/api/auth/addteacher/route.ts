@@ -1,21 +1,24 @@
-// @ts-nocheck
+// api/auth/addteacher/route.ts
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import jwt from "jsonwebtoken";
-import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
-import { generateUsername } from "@/lib/utils/stringUtils";
+import {
+  generateUsername,
+  generateReferralCode,
+} from "@/lib/utils/stringUtils";
 import nodemailer from "nodemailer";
-import { sendCredentialTemplate } from "@/lib/utils/emailTemplates/send-credential-template";
 import { accountCreationTemplate } from "@/lib/utils/emailTemplates/account-creation";
 
-export async function POST(req) {
+export async function POST(req: NextRequest) {
   const { name, email, password, teacherRankId, sendCredentials } =
     await req.json();
 
   if (!name || !email || !password || !teacherRankId) {
-    return new Response(JSON.stringify({ error: "All fields are required" }), {
-      status: 400,
-    });
+    return NextResponse.json(
+      { error: "All fields are required" },
+      { status: 400 }
+    );
   }
 
   try {
@@ -24,36 +27,59 @@ export async function POST(req) {
     });
 
     if (existingUser) {
-      return new Response(JSON.stringify({ error: "ব্যবহারকারী ইতোমধ্যে রয়েছে" }), {
-        status: 400,
-      });
+      return NextResponse.json(
+        { error: "ব্যবহারকারী ইতোমধ্যে রয়েছে" },
+        { status: 400 }
+      );
+    }
+
+    // Verify teacher rank exists
+    const teacherRank = await db.teacherRank.findUnique({
+      where: { id: teacherRankId },
+    });
+
+    if (!teacherRank) {
+      return NextResponse.json(
+        { error: "Invalid teacher rank ID" },
+        { status: 400 }
+      );
     }
 
     const token = jwt.sign(
       { name, email, password },
-      process.env.JWT_SECRET_KEY,
-      {
-        expiresIn: "1h",
-      }
+      process.env.JWT_SECRET_KEY as string,
+      { expiresIn: "1h" }
     );
 
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Username generate
+    // Generate unique username
     let username = generateUsername(name);
-
     let usernameExists = await db.user.findUnique({
       where: { username },
     });
 
     while (usernameExists) {
-      username = generateUsername(name); // Regenerate username if already taken
+      username = generateUsername(name);
       usernameExists = await db.user.findUnique({
         where: { username },
       });
     }
 
-    // Create the user
+    // Generate unique referral code
+    let referralCode = await generateReferralCode();
+    let codeExists = await db.user.findUnique({
+      where: { referralCode },
+    });
+
+    while (codeExists) {
+      referralCode = await generateReferralCode();
+      codeExists = await db.user.findUnique({
+        where: { referralCode },
+      });
+    }
+
+    // Create user with student and teacher profiles in a transaction
     const newUser = await db.user.create({
       data: {
         name,
@@ -63,26 +89,33 @@ export async function POST(req) {
         emailVerified: true,
         emailVerificationToken: token,
         tokenUsed: true,
+        role: "TEACHER",
+        accountStatus: "ACTIVE",
+        currentPlan: "NONE",
+        referralCode,
+        studentProfile: {
+          create: {},
+        },
+        teacherProfile: {
+          create: {
+            teacherRankId,
+            teacherStatus: "VERIFIED",
+            totalSales: 0,
+          },
+        },
+        wallet: {
+          create: {
+            totalCredits: 0,
+            availableCredits: 0,
+            expiredCredits: 0,
+            usedCredits: 0,
+            lifetimeEarnedCredits: 0,
+          },
+        },
       },
     });
 
-    // Create the student profile with the newly created userId
-    await db.studentProfile.create({
-      data: {
-        userId: newUser.id, // Set the userId to the created user's id
-      },
-    });
-
-    // Create the teacher profile with the newly created userId
-    await db.teacherProfile.create({
-      data: {
-        userId: newUser.id, // Set the userId to the created user's id
-        teacherRankId, // Use the provided teacherRankId from the request
-        teacherStatus: "VERIFIED",
-      },
-    });
-
-    // if sendCredentials is true then send the credentials to the user
+    // Send credentials email if requested
     if (sendCredentials) {
       const transporter = nodemailer.createTransport({
         service: "Gmail",
@@ -95,18 +128,22 @@ export async function POST(req) {
       const mailOptions = {
         from: `"প্রায়োগিক" <${process.env.SMTP_USERNAME}>`,
         to: email,
-        subject: "প্রয়োগিকে স্বাগতম! আপনার অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে।",
+        subject: "প্রয়োগিকে স্বাগতম! আপনার অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে।",
         html: accountCreationTemplate(name, email, username, password),
       };
 
       await transporter.sendMail(mailOptions);
     }
 
-    return NextResponse.json("সফলভাবে তৈরি হয়েছে!", { status: 201 });
+    return NextResponse.json(
+      { message: "সফলভাবে তৈরি হয়েছে!" },
+      { status: 201 }
+    );
   } catch (error) {
-    console.error("Error during signup:", error);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-    });
+    console.error("Error during teacher creation:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

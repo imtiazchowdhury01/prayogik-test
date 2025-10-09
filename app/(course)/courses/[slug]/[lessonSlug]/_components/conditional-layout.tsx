@@ -11,11 +11,11 @@ import TeacherIntro from "../../_components/TeacherIntro";
 import { TabNavigation } from "../../_components/details-tab-navigation";
 import { TabProvider, useTab } from "@/hooks/use-tab";
 import RelatedCourse from "../../_components/RelatedCourse";
+import { useSession } from "next-auth/react";
 
 interface ConditionalLayoutProps {
   children: React.ReactNode;
   courseResponse: any;
-  userId: string;
 }
 
 const ConditionalLayoutContent = ({
@@ -50,7 +50,7 @@ const ConditionalLayoutContent = ({
       <div className="flex flex-col w-full gap-4 lg:flex-row lg:gap-8">
         <div className="flex-[.65]">
           {/* PERSISTENT COURSE INFORMATION - Never re-renders on lesson change */}
-          <div className="mb-12">
+          <section className="mb-12">
             <div>
               <h2 className="text-3xl sm:text-4xl font-bold text-fontcolor-title -m-1 max-sm:leading-[2.2rem]">
                 {textLangChecker(courseResponse?.title)}
@@ -111,10 +111,10 @@ const ConditionalLayoutContent = ({
                 </>
               ) : null}
             </div>
-          </div>
+          </section>
 
           {/* PERSISTENT TAB NAVIGATION - Never re-renders on lesson change */}
-          <div className="flex items-center justify-between border-b-[1px] border-greyscale-200 mb-8">
+          <section className="flex items-center justify-between border-b-[1px] border-greyscale-200 mb-8">
             <TabNavigation
               tabs={tabs}
               activeTab={activeTab}
@@ -122,15 +122,13 @@ const ConditionalLayoutContent = ({
             />
             {/* Course progress button will be passed from children */}
             <div id="course-progress-button-container"></div>
-          </div>
-
+          </section>
           {/* DYNAMIC LESSON CONTENT - Only this part re-renders */}
-          <div className="lesson-content-container">{children}</div>
-          {/* <RelatedCourse course={courseResponse} /> */}
+          <section className="lesson-content-container">{children}</section>
           {/* PERSISTENT TEACHER INTRODUCTION - Never re-renders on lesson change */}
-          <div className="mt-16">
+          <section className="mt-16">
             <TeacherIntro course={courseResponse} />
-          </div>
+          </section>
         </div>
 
         {/* PERSISTENT SIDEBAR - Never re-renders, only highlights change */}

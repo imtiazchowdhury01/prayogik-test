@@ -24,22 +24,24 @@ const formSchema = z.object({
     required_error: "Event type is required",
   }),
   price: z.number().optional(),
-}).refine((data) => {
-  // If event type is PAID, price is required and must be greater than 0
-  if (data.type === EventType.PAID) {
-    return data.price !== undefined && data.price > 0;
-  }
-  return true;
-}, {
-  message: "Price is required for paid events and must be greater than 0",
-  path: ["price"],
 });
+// .refine((data) => {
+//   // If event type is PAID, price is required and must be greater than 0
+//   if (data.type === EventType.PAID) {
+//     return data.price !== undefined && data.price >= 0;
+//   }
+//   return true;
+// }, {
+//   message: "Price is required for paid events and must be greater than 0",
+//   path: ["price"],
+// });
 
 // Helper function to format enum values to readable labels
 const formatEventTypeLabel = (value: EventType): string => {
   const labelMap: Record<EventType, string> = {
     [EventType.FREE]: "Free Event",
     [EventType.PAID]: "Paid Event",
+    [EventType.EOI]: "EOI",
   };
   return labelMap[value];
 };
@@ -89,12 +91,12 @@ export const EventTypeForm = ({ initialData, eventId }: EventTypeFormProps) => {
   // Handle event type selection and trigger validation
   const handleEventTypeSelect = (value: EventType) => {
     setValue("type", value, { shouldValidate: true });
-    
+
     // Clear price if switching to free event
-    if (value === EventType.FREE) {
+    if (value === EventType.FREE || value === EventType.EOI) {
       setValue("price", undefined, { shouldValidate: true });
     }
-    
+
     setIsDropdownOpen(false);
   };
 
@@ -104,12 +106,15 @@ export const EventTypeForm = ({ initialData, eventId }: EventTypeFormProps) => {
       // Prepare the final values, ensuring price is null for free events
       const finalValues = {
         ...values,
-        price: values.type === EventType.FREE ? undefined : values.price,
+        price: values.type === EventType.PAID ? values.price : undefined,
       };
-      
+
+      // console.log('finalValues result:', values);
+
       await updateEvent({
         eventId,
         values: finalValues,
+        slug: initialData.slug,
         toggleEdit,
         setLoading,
         router,
@@ -173,9 +178,8 @@ export const EventTypeForm = ({ initialData, eventId }: EventTypeFormProps) => {
             )}
           >
             {initialData.type
-              ? eventTypeOptions.find(
-                  (opt) => opt.value === initialData.type
-                )?.label
+              ? eventTypeOptions.find((opt) => opt.value === initialData.type)
+                  ?.label
               : "No event type"}
           </p>
           {initialData.type === EventType.PAID && initialData.price && (
@@ -197,9 +201,8 @@ export const EventTypeForm = ({ initialData, eventId }: EventTypeFormProps) => {
               className="flex items-center justify-between w-full p-2 border rounded-md bg-white text-sm text-left focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {watch("type")
-                ? eventTypeOptions.find(
-                    (opt) => opt.value === watch("type")
-                  )?.label
+                ? eventTypeOptions.find((opt) => opt.value === watch("type"))
+                    ?.label
                 : "Select an event type"}
               <svg
                 className="h-4 w-4 ml-2"
@@ -217,7 +220,7 @@ export const EventTypeForm = ({ initialData, eventId }: EventTypeFormProps) => {
 
             {/* Dropdown Content */}
             {isDropdownOpen && (
-              <div className="absolute z-10 mt-2 w-full bg-white border rounded-md shadow-lg">
+              <div className="absolute z-20 mt-2 w-full bg-white border rounded-md shadow-lg">
                 {/* Search Bar */}
                 {/* <div className="p-2 border-b">
                   <Input
@@ -275,18 +278,17 @@ export const EventTypeForm = ({ initialData, eventId }: EventTypeFormProps) => {
                 </span>
                 <Input
                   type="number"
-                  step="0.01"
                   min="0"
                   placeholder="0.00"
                   className="pl-6"
-                  {...register("price", { 
+                  {...register("price", {
                     valueAsNumber: true,
                     validate: (value) => {
                       if (isPaidEvent && (!value || value <= 0)) {
                         return "Price must be greater than 0 for paid events";
                       }
                       return true;
-                    }
+                    },
                   })}
                 />
               </div>

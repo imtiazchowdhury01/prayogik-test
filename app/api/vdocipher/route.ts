@@ -1,3 +1,4 @@
+// api/vdocipher/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { Urls } from "@/constants/urls";
 import {
@@ -8,7 +9,6 @@ import axios from "axios";
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 
-// Helper function to delete video from VdoCipher
 async function deleteVideoFromVdoCipher(videoId: string): Promise<boolean> {
   try {
     const deleteUrl = `https://dev.vdocipher.com/api/videos?videos=${videoId}`;
@@ -27,7 +27,6 @@ async function deleteVideoFromVdoCipher(videoId: string): Promise<boolean> {
   }
 }
 
-// Helper function to rollback database changes
 async function rollbackDatabaseChanges(
   lessonId: string | null,
   courseId: string,
@@ -37,7 +36,6 @@ async function rollbackDatabaseChanges(
 
   try {
     await db.$transaction(async (prisma) => {
-      // Remove lesson video reference
       await prisma.lesson.update({
         where: { id: lessonId },
         data: {
@@ -46,19 +44,7 @@ async function rollbackDatabaseChanges(
           videoStatus: "PROCESSING",
         },
       });
-
-      // Remove vdocipher upload record if it exists
-      // await prisma.vdocipherUploads.deleteMany({
-      //   where: {
-      //     courseId: courseId,
-      //     lessonId: lessonId,
-      //     videoId: videoId,
-      //   },
-      // });
     });
-    // console.log(
-    //   `Successfully rolled back database changes for lesson ${lessonId}`
-    // );
   } catch (error) {
     console.error(
       `Failed to rollback database changes for lesson ${lessonId}:`,
@@ -67,23 +53,18 @@ async function rollbackDatabaseChanges(
   }
 }
 
-// Handle upload initiation
 async function handleInitiate(data: any) {
   const { videoTitle, courseId, lessonId, isReplacing, originalVideoId } = data;
   let videoId: string | null = null;
   let videoReplacementAttempted = false;
 
   try {
-    // Step 1: Handle video replacement and get/create folder in parallel
     const [, folderId] = await Promise.all([
-      // Handle video replacement
       (async () => {
         if (isReplacing && originalVideoId && originalVideoId.trim() !== "") {
           try {
-            // console.log(`Attempting to replace video: ${originalVideoId}`);
             videoReplacementAttempted = true;
 
-            // Check if video exists
             const videoCheckResponse = await fetch(
               `${Urls.vdocipherDevUrl}/${originalVideoId}`,
               {
@@ -96,15 +77,8 @@ async function handleInitiate(data: any) {
             );
 
             if (videoCheckResponse.ok) {
-              // console.log(
-              //   `Video ${originalVideoId} exists, proceeding with deletion`
-              // );
               const deleted = await deleteVideoFromVdoCipher(originalVideoId);
               if (deleted) {
-                // console.log(
-                //   `Successfully deleted old video: ${originalVideoId}`
-                // );
-                // Add delay to ensure VdoCipher processes the deletion
                 await new Promise((resolve) => setTimeout(resolve, 3000));
               }
             } else {
@@ -120,7 +94,6 @@ async function handleInitiate(data: any) {
         }
       })(),
 
-      // Get or create folder
       (async () => {
         const folderFetchByCourseId = await vdocipherFolderSearchByCourseId(
           courseId
@@ -140,7 +113,6 @@ async function handleInitiate(data: any) {
       })(),
     ]);
 
-    // Step 2: Get upload credentials from VdoCipher
     const credentialsOptions = {
       method: "PUT",
       url: `${Urls.vdocipherDevUrl}?title=${encodeURIComponent(
@@ -160,11 +132,10 @@ async function handleInitiate(data: any) {
       throw new Error("Failed to get upload credentials");
     }
 
-    // Step 3: Create initial database record if lessonId provided
-    if (lessonId) {
+    if (lessonId && videoId) {
       await db.$transaction(async (prisma) => {
         await prisma.lesson.update({
-          where: { id: lessonId! },
+          where: { id: lessonId },
           data: {
             videoUrl: videoId,
             duration: 0,
@@ -172,19 +143,15 @@ async function handleInitiate(data: any) {
           },
         });
 
-        // Create initial vdocipher upload record
         await prisma.vdocipherUploads.create({
           data: {
-            courseId: courseId!,
-            lessonId: lessonId!,
-            videoId: videoId!,
+            courseId: courseId,
+            lessonId: lessonId,
+            videoId: videoId,
             duration: 0,
           },
         });
       });
-      // console.log(
-      //   `Created initial database record for lesson ${lessonId} with video ${videoId}`
-      // );
     }
 
     return {
@@ -194,7 +161,6 @@ async function handleInitiate(data: any) {
       replaced: videoReplacementAttempted,
     };
   } catch (error) {
-    // Cleanup on error
     if (videoId) {
       await deleteVideoFromVdoCipher(videoId);
     }
@@ -202,55 +168,21 @@ async function handleInitiate(data: any) {
   }
 }
 
-// Handle upload finalization
 async function handleFinalize(data: any) {
   const { videoId, duration, courseId, lessonId } = data;
 
   try {
-    // Update database with final video info
     if (lessonId) {
       await db.$transaction(async (prisma) => {
-        // Update lesson with final video info and create vdocipher upload record
-        const [lessonUpdate] = await Promise.all([
-          prisma.lesson.update({
-            where: { id: lessonId! },
-            data: {
-              videoUrl: videoId,
-              duration: duration,
-              videoStatus: "PROCESSING",
-            },
-          }),
-
-          // Upsert vdocipher upload record (update if exists, create if not)
-          // await prisma.vdocipherUploads.upsert({
-          //   where: {
-          //     courseId: courseId!,
-          //     lessonId: lessonId!,
-          //     videoId: videoId!,
-          //   },
-          //   update: {
-          //     duration: duration,
-          //     videoStatus: "PROCESSING",
-          //     updatedAt: new Date(),
-          //   },
-          //   create: {
-          //     courseId: courseId!,
-          //     lessonId: lessonId!,
-          //     videoId: videoId!,
-          //     duration: duration,
-          //     videoStatus: "PROCESSING",
-          //     createdAt: new Date(),
-          //     updatedAt: new Date(),
-          //   },
-          // }),
-        ]);
-
-        return { lessonUpdate };
+        await prisma.lesson.update({
+          where: { id: lessonId },
+          data: {
+            videoUrl: videoId,
+            duration: duration,
+            videoStatus: "PROCESSING",
+          },
+        });
       });
-
-      // console.log(
-      //   `Successfully completed all database operations for video ${videoId}`
-      // );
     }
 
     return {
@@ -260,7 +192,6 @@ async function handleFinalize(data: any) {
       duration,
     };
   } catch (error) {
-    // Cleanup on error
     await deleteVideoFromVdoCipher(videoId);
     if (lessonId) {
       await rollbackDatabaseChanges(lessonId, courseId, videoId);
@@ -269,7 +200,6 @@ async function handleFinalize(data: any) {
   }
 }
 
-// Handle cleanup
 async function handleCleanup(data: any) {
   const {
     videoId,
@@ -281,7 +211,6 @@ async function handleCleanup(data: any) {
 
   const cleanupPromises = [];
 
-  // Clean up VdoCipher video if upload was successful or credentials were obtained
   if (videoId && (clientUploadSuccessful || uploadCredentialsObtained)) {
     cleanupPromises.push(
       deleteVideoFromVdoCipher(videoId).then((success) => {
@@ -294,12 +223,10 @@ async function handleCleanup(data: any) {
     );
   }
 
-  // Clean up database record if it was created
   if (lessonId && videoId) {
     cleanupPromises.push(rollbackDatabaseChanges(lessonId, courseId, videoId));
   }
 
-  // Execute cleanup operations
   if (cleanupPromises.length > 0) {
     await Promise.allSettled(cleanupPromises);
   }
@@ -307,20 +234,17 @@ async function handleCleanup(data: any) {
   return { success: true, message: "Cleanup completed" };
 }
 
-export async function POST(request: any) {
+export async function POST(request: NextRequest) {
   try {
-    // Authentication
-    const { role } = await getServerUserSession(request);
+    const { role } = await getServerUserSession();
     if (role !== "ADMIN" && role !== "TEACHER") {
       console.log("Unauthorized access");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Parse request data
     const data = await request.json();
     const { action } = data;
 
-    // Route to appropriate handler based on action
     let result;
     switch (action) {
       case "initiate":

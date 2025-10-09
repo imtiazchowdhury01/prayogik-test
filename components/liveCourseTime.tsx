@@ -10,7 +10,7 @@ const LiveCourseTime = ({ CourseMode, course }: any) => {
   // console.log("courses result:", course);
   return (
     <div>
-      {pathname === "/courses" ? null : (
+      {pathname.includes('/courses') ? null : (
         <>
           {course?.courseMode === CourseMode.LIVE ? (
             <>

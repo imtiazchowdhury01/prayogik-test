@@ -9,6 +9,7 @@ async function getSubscriptionDBCall() {
     const subscriptions = await db.subscriptionPlan.findMany({
       include: {
         subscriptionDiscount: true,
+        subscription: true,
         _count: {
           select: {
             subscription: true,
@@ -16,7 +17,7 @@ async function getSubscriptionDBCall() {
         },
       },
     });
-
+    // console.log("subscriptions result:", subscriptions);
     return subscriptions;
   } catch (error) {
     console.error("Error fetching subscriptions:", error);

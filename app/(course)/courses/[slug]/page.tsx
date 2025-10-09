@@ -16,7 +16,7 @@ import {
   getCourseDBCall,
 } from "@/lib/data-access-layer/course";
 import { getSubscriptionDBCall } from "@/lib/data-access-layer/subscriptions";
-import SingleCoursePriceTab from "./_components/single-course-price-tab";
+import CoursePriceSection from "./_components/course-price-section";
 import CourseBreadCrumb from "./_components/CourseBreadCrumb";
 import RelatedCourse from "./_components/RelatedCourse";
 import { CourseMode } from "@prisma/client";
@@ -45,7 +45,7 @@ export async function generateMetadata({
 
   return {
     title: `${course?.title} কোর্স | প্রায়োগিক`,
-    description: `প্রায়োগিক থেকে ${course?.title} শিখুন। হাতেকলমে প্রজেক্ট এবং বিশেষজ্ঞ নির্দেশনায় ${course?.category?.name} দক্ষতা উন্নত করুন। আধুনিক টেকনোলজি আয়ত্ত করতে এখনই এনরোল করুন!`,
+    description: `প্রায়োগিক থেকে ${course?.title} শিখুন। হাতে কলমে প্রজেক্ট এবং বিশেষজ্ঞ নির্দেশনায় ${course?.category?.name} দক্ষতা উন্নত করুন। আধুনিক টেকনোলজি আয়ত্ত করতে এখনই এনরোল করুন!`,
   };
 }
 
@@ -190,7 +190,7 @@ const CourseDetailsPage = async ({ params }: { params: { slug: string } }) => {
           </div>
           {/* -------------------on mobile screen ------------------- */}
           <div className="mt-10 md:bg-gray-50 md:p-4 rounded-lg md:hidden block">
-            <SingleCoursePriceTab
+            <CoursePriceSection
               course={course}
               plan={plan}
               defaultDiscount={plan?.subscriptionDiscount}
@@ -264,7 +264,7 @@ const CourseDetailsPage = async ({ params }: { params: { slug: string } }) => {
         {/* right grid-- */}
         <div className="w-full md:mt-8 mb-16 md:top-20 md:sticky md:w-[40%] lg:w-[30%] md:pl-2 pl-0">
           <div className="md:mt-6 bg-gray-50 p-4 rounded-lg hidden md:block">
-            <SingleCoursePriceTab
+            <CoursePriceSection
               course={course}
               plan={plan}
               defaultDiscount={plan?.subscriptionDiscount}

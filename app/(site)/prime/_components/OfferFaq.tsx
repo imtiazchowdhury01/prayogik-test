@@ -1,8 +1,20 @@
 import SectionTitle from "@/components/common/SectionTitle";
 import React from "react";
 import FaqComponent from "@/components/FaqComponent";
+import TrialCheckoutButton from "@/components/trial-checkout-button";
+import PrimeActionBanner from "./PrimeActionBanner";
 
-const OfferFaq = () => {
+const OfferFaq = ({
+  trialPlan,
+  trialPlanDuration,
+  trialPlanPrice,
+  courseLimit,
+}: {
+  trialPlan: any;
+  trialPlanDuration: any;
+  trialPlanPrice: any;
+  courseLimit: any;
+}) => {
   const primefaqs = [
     {
       question: "প্রায়োগিক প্রাইম কী?",
@@ -36,7 +48,7 @@ const OfferFaq = () => {
     {
       question: "কীভাবে সাবস্ক্রিপশন নিতে পারি?",
       answer:
-        "ওয়েবসাইটে Prayogik Prime পেজে গিয়ে ১, ২, বা ৩ বছরের সাবস্ক্রিপশন সিলেক্ট করে পেমেন্ট করুন।",
+        "ওয়েবসাইটে প্রায়োগিক প্রাইম পেজে গিয়ে ১, ২, বা ৩ বছরের সাবস্ক্রিপশন সিলেক্ট করে পেমেন্ট করুন।",
     },
     {
       question: "কোর্সের অগ্রগতি (প্রগ্রেস) কি সংরক্ষণ থাকবে?",
@@ -56,14 +68,32 @@ const OfferFaq = () => {
   ];
   return (
     <div>
+      <SectionTitle
+        title="প্রায়োগিক প্রাইম নিয়ে প্রশ্নোত্তর"
+        description="কোর্স, সাবস্ক্রিপশন বিষয়ে আপনার সকল প্রশ্নের নির্ভরযোগ্য উত্তর এক জায়গায়।"
+      />
+      <div className="px-6 xl:px-0">
+        <FaqComponent faqItems={primefaqs} showRightSection={false} />
+      </div>
       <div>
-        <SectionTitle
-          title="প্রায়োগিক প্রাইম নিয়ে প্রশ্নোত্তর"
-          description="কোর্স, সাবস্ক্রিপশন বিষয়ে আপনার সকল প্রশ্নের নির্ভরযোগ্য উত্তর এক জায়গায়।"
+        <PrimeActionBanner
+          trialPlanPrice={trialPlanPrice}
+          trialPlanDuration={trialPlanDuration}
+          courseLimit={courseLimit}
+          backgroundImage="/images/teacher/teacher-cta-bg.webp"
+          className="mb-0 xl:mb-28"
+          customButton={
+            <TrialCheckoutButton
+              trialPlan={trialPlan}
+              size={"lg"}
+              variant={"primary"}
+              className="bg-secondary-button hover:bg-secondary-button hover:opacity-95 text-white block rounded-md transition-all duration-300 shadow-sm text-base font-semibold px-4"
+              subTextNode=""
+            >
+              এখনই শুরু করুন
+            </TrialCheckoutButton>
+          }
         />
-        <div className="px-6 xl:px-0">
-          <FaqComponent faqItems={primefaqs} showRightSection={false} />
-        </div>
       </div>
     </div>
   );

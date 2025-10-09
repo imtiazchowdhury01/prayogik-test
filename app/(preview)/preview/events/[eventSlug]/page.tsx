@@ -1,3 +1,4 @@
+//@ts-nocheck
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
@@ -11,7 +12,7 @@ import {
 } from "@/components/ui/breadcrumb";
 
 import Link from "next/link";
-import { Calendar } from "lucide-react";
+import { Calendar, Clock, MapPin } from "lucide-react";
 import { textLangChecker } from "@/lib/utils/textLangChecker";
 import FaqComponent from "@/components/FaqComponent";
 import { formatEventTime } from "@/lib/utils/formatLiveCourseTime";
@@ -21,6 +22,7 @@ import EventOverview from "@/app/(site)/events/[eventSlug]/_components/EventOver
 import EventSpeakers from "@/app/(site)/events/[eventSlug]/_components/EventSpeakers";
 import EventRegisterForm from "@/app/(site)/events/[eventSlug]/_components/EventRegisterForm";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
 export async function generateMetadata({
   params,
@@ -57,6 +59,135 @@ const EventPreviewDetailsPage = async ({
   if (!event) {
     return notFound();
   }
+  // Create a client-side safe date formatter for Bangla
+  function formatEventDateTime(eventDate: Date | string) {
+    if (!dateObj) {
+      return ""; // or any fallback string
+    }
+    const dateObj =
+      typeof eventDate === "string" ? new Date(eventDate) : eventDate;
+
+    // Get the date in Bangladesh timezone (Asia/Dhaka)
+    const bangladeshTime = new Intl.DateTimeFormat("bn-BD", {
+      timeZone: "Asia/Dhaka",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      weekday: "long",
+    }).format(dateObj);
+
+    return bangladeshTime;
+  }
+
+  function formatEventBanglaTime(eventDate: Date | string) {
+    if (!dateObj) {
+      return ""; // or any fallback string
+    }
+    const dateObj =
+      typeof eventDate === "string" ? new Date(eventDate) : eventDate;
+
+    // Get time components in Bangladesh timezone
+    const bangladeshDateTime = new Date(
+      dateObj?.toLocaleString("en-US", { timeZone: "Asia/Dhaka" })
+    );
+    const hour = bangladeshDateTime.getHours();
+    const minute = bangladeshDateTime.getMinutes();
+
+    let period = "";
+    if (hour >= 4 && hour < 12) {
+      period = "সকাল";
+    } else if (hour >= 12 && hour < 16) {
+      period = "দুপুর";
+    } else if (hour >= 16 && hour < 19) {
+      period = "বিকেল";
+    } else {
+      period = "রাত";
+    }
+
+    // convert to 12-hour format
+    let displayHour = hour % 12;
+    if (displayHour === 0) displayHour = 12;
+
+    // Bangla number formatter
+    const numberFormatter = new Intl.NumberFormat("bn-BD");
+    const hourText = numberFormatter.format(displayHour);
+    const minuteText =
+      minute > 0 ? `:${numberFormatter.format(minute).padStart(2, "০")}` : "";
+
+    return `${period} ${hourText}${minuteText} টা`;
+  }
+
+  // Alternative function that works better for consistent timezone handling
+  function getConsistentBangladeshTime(eventDate: Date | string) {
+    const dateObj =
+      typeof eventDate === "string" ? new Date(eventDate) : eventDate;
+    if (!dateObj) {
+      return "Invalid date"; // or any fallback string
+    }
+    // Create date formatter for Bangladesh timezone
+    const timeFormatter = new Intl.DateTimeFormat("bn-BD", {
+      timeZone: "Asia/Dhaka",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: false,
+    });
+
+    const dateFormatter = new Intl.DateTimeFormat("bn-BD", {
+      timeZone: "Asia/Dhaka",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      weekday: "long",
+    });
+
+    // Get the hour in Bangladesh timezone for period determination
+    const bangladeshHour = parseInt(
+      dateObj?.toLocaleString("en-US", {
+        timeZone: "Asia/Dhaka",
+        hour: "2-digit",
+        hour12: false,
+      })
+    );
+
+    const bangladeshMinute = parseInt(
+      dateObj.toLocaleString("en-US", {
+        timeZone: "Asia/Dhaka",
+        minute: "2-digit",
+      })
+    );
+
+    let period = "";
+    if (bangladeshHour >= 4 && bangladeshHour < 12) {
+      period = "সকাল";
+    } else if (bangladeshHour >= 12 && bangladeshHour < 16) {
+      period = "দুপুর";
+    } else if (bangladeshHour >= 16 && bangladeshHour < 19) {
+      period = "বিকেল";
+    } else {
+      period = "রাত";
+    }
+
+    // Convert to 12-hour format
+    let displayHour = bangladeshHour % 12;
+    if (displayHour === 0) displayHour = 12;
+
+    // Format numbers in Bangla
+    const numberFormatter = new Intl.NumberFormat("bn-BD");
+    const hourText = numberFormatter.format(displayHour);
+    const minuteText =
+      bangladeshMinute > 0
+        ? `:${numberFormatter.format(bangladeshMinute).padStart(2, "০")}`
+        : "";
+
+    const timeString = `${period} ${hourText}${minuteText} টা`;
+    const dateString = dateFormatter.format(dateObj);
+
+    return { timeString, dateString };
+  }
+
+  const { timeString, dateString } = getConsistentBangladeshTime(event?.date);
+
+  // console.log("event.date result:", event);
 
   return (
     <section className="min-h-[70vh] w-full">
@@ -127,31 +258,65 @@ const EventPreviewDetailsPage = async ({
           <Badge>Preview Mode</Badge>
           <div className="bg-brand-primary-light p-6 rounded-[10px]">
             <h2 className="text-2xl mb-4 font-bold">তারিখ এবং সময়</h2>
-            <p className="font-semibold flex items-center gap-2 text-gray-600 mb-4">
-              <Calendar size={16} />
-              {event.date
-                ? formatEventTime(String(event.date))
-                : "তারিখ নির্ধারণ করা হয়নি"}
-            </p>
-            <div className="border-t border-gray-200 pt-4">
-              <div className="flex items-center justify-between">
-                <span className="text-lg font-medium text-gray-700">
-                  ইভেন্ট ফি:
-                </span>
-                <div className="flex items-baseline gap-1">
-                  {event?.type === EventType.PAID ? (
-                    <>
-                      <span className="text-2xl font-bold text-primary-brand">
-                        {convertNumberToBangla(event?.price || 0)}
-                      </span>
-                      <span className="text-sm text-gray-600">টাকা</span>
-                    </>
-                  ) : (
-                    <p>ফ্রি</p>
-                  )}
-                </div>
-              </div>
-            </div>
+
+            {!event.date &&
+            !event.location &&
+            (!event.price || event.price <= 0) ? (
+              <p className="font-semibold text-gray-600">
+                তারিখ, সময়, স্থান এবং ফি এখনও নির্ধারণ হয়নি
+              </p>
+            ) : (
+              <>
+                <p className="font-semibold flex items-center gap-2 text-gray-600 mb-4">
+                  <Clock size={16} />
+                  {event.date ? timeString : "সময় এখনও নির্ধারণ হয়নি"}
+                </p>
+
+                <p className="font-semibold flex items-center gap-2 text-gray-600 mb-4">
+                  <Calendar size={16} />
+                  {event.date ? dateString : "তারিখ এখনও নির্ধারণ হয়নি"}
+                </p>
+
+                <p className="font-semibold flex items-center gap-2 text-gray-600 mb-4">
+                  <MapPin size={16} />
+                  {event.location
+                    ? `ভেন্যু: ${event.location}`
+                    : "ভেন্যু এখনও নির্ধারণ হয়নি"}
+                </p>
+
+                {event.type && (
+                  <p className="font-semibold flex items-center gap-2 text-gray-600 mb-4">
+                    {event?.type === EventType.PAID ? (
+                      event?.price && event.price > 0 ? (
+                        <>
+                          <span className="text-[17px] pl-0.5">৳</span>
+                          {convertNumberToBangla(event?.price)}
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-[17px] pl-0.5">৳</span>
+                          <span className="">ফি এখনও নির্ধারণ হয়নি</span>
+                        </>
+                      )
+                    ) : event?.type === EventType.FREE ? (
+                      <span className="">ফ্রি</span>
+                    ) : event?.type === EventType.EOI ? (
+                      event?.price && event.price > 0 ? (
+                        <>
+                          <span className="text-[17px] pl-0.5">৳</span>
+                          {convertNumberToBangla(event?.price)}
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-[17px] pl-0.5">৳</span>
+                          <span className="">ফি এখনও নির্ধারণ হয়নি</span>
+                        </>
+                      )
+                    ) : null}
+                  </p>
+                )}
+              </>
+            )}
           </div>
           {/* form Part */}
           <div className="bg-brand-primary-light p-6 rounded-[10px]">
@@ -160,7 +325,7 @@ const EventPreviewDetailsPage = async ({
               eventType={event.type}
               eventPrice={100}
               isPreviewMode={true}
-              eventStatus={event.status || EventStatus.WAITING}
+              eventStatus={event.status}
             />
           </div>
           {/* Location */}

@@ -45,7 +45,7 @@ export class RouteHandler {
       req,
       secret: process.env.NEXTAUTH_SECRET,
     });
-    console.log({ token });
+    // console.log({ token });
 
     if (!token) {
       throw new Error("Unauthorized");

@@ -1,5 +1,4 @@
-// @ts-nocheck
-import { useTeacherProfile } from "@/hooks/useTeacherProfile";
+// api/user/[courseId]/unpublish/route.ts
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 import { NextResponse } from "next/server";
@@ -9,41 +8,44 @@ export async function PATCH(
   { params }: { params: { courseId: string } }
 ) {
   try {
-    const { userId } = await getServerUserSession(req);
-       const teacherProfileId = await useTeacherProfile(userId);
+    const { userId } = await getServerUserSession();
 
-    // Check if userId is available
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    // Fetch the course belonging to the user (teacher)
-    const course = await db.course.findUnique({
+    const teacherProfile = await db.teacherProfile.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+
+    if (!teacherProfile) {
+      return new NextResponse("Teacher profile not found", { status: 404 });
+    }
+
+    const course = await db.course.findFirst({
       where: {
         id: params.courseId,
-        teacherProfileId, // Ensure the user (teacher) owns the course
+        teacherProfileId: teacherProfile.id,
       },
     });
 
-    // If the course is not found, return 404
     if (!course) {
       return new NextResponse("Not found", { status: 404 });
     }
 
-    // Update the course to unpublish it
     const unpublishedCourse = await db.course.update({
       where: {
         id: params.courseId,
-        teacherProfileId, // Ensure the user (teacher) owns the course
       },
       data: {
-        isPublished: false, // Unpublish the course
+        isPublished: false,
       },
     });
 
     return NextResponse.json(unpublishedCourse);
   } catch (error) {
-    console.error("[COURSE_ID_UNPUBLISH]", error); // Use console.error for errors
+    console.error("[COURSE_ID_UNPUBLISH]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

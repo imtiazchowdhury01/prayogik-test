@@ -17,14 +17,17 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { updateEvent } from "@/lib/event/event";
+import { updateCourse } from "@/lib/course/updateCourse";
 
 interface EventFAQFormProps {
   initialData: Event;
-  eventId: string;
+  eventId?: string;
+  certificateId?: string;
+  successMessage?: string;
+  api?: string;
 }
 
 const faqSchema = z.object({
@@ -37,9 +40,14 @@ const formSchema = z.object({
 });
 
 type FormData = z.infer<typeof formSchema>;
-type FAQ = z.infer<typeof faqSchema>;
 
-export const EventFAQForm = ({ initialData, eventId }: EventFAQFormProps) => {
+export const EventFAQForm = ({
+  initialData,
+  eventId,
+  certificateId,
+  successMessage,
+  api,
+}: EventFAQFormProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [expandedFAQs, setExpandedFAQs] = useState<Record<number, boolean>>({});
@@ -105,13 +113,26 @@ export const EventFAQForm = ({ initialData, eventId }: EventFAQFormProps) => {
           answer: faq.answer.trim(),
         }));
 
-      await updateEvent({
-        eventId,
-        values: { faqs: validFAQs },
-        toggleEdit,
-        setLoading,
-        router,
-      });
+      if (certificateId) {
+        await updateCourse({
+          courseId: certificateId,
+          values,
+          toggleEdit,
+          setLoading,
+          router,
+          successMessage,
+          api,
+        });
+      } else {
+        await updateEvent({
+          eventId: eventId as string,
+          values: { faqs: validFAQs },
+          slug: initialData.slug,
+          toggleEdit,
+          setLoading,
+          router,
+        });
+      }
     } catch {
       toast.error("Something went wrong");
     } finally {

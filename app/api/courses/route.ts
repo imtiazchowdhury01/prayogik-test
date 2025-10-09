@@ -1,15 +1,15 @@
+// api/courses/route.ts
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 import { NextRequest, NextResponse } from "next/server";
-
 import { isTeacher } from "@/lib/teacher";
-import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { getUserSubscription } from "@/lib/getUserSubscription";
 import { RouteHandler } from "@/lib/utils/server/route-handler";
 import { z } from "zod";
-import { Role } from "@prisma/client";
+import { Role, Prisma } from "@prisma/client";
 
 const routeHandler = new RouteHandler();
+
 routeHandler.addRoute(
   z.object({
     title: z.string(),
@@ -25,13 +25,17 @@ routeHandler.addRoute(
 
     const teacherProfile = await db.teacherProfile.findUnique({
       where: {
-        userId: userId, // Getting the teacher profile using userId
+        userId: userId,
       },
     });
 
+    if (!teacherProfile) {
+      throw new Error("Teacher profile not found");
+    }
+
     const course = await db.course.create({
       data: {
-        teacherProfileId: teacherProfile?.id!,
+        teacherProfileId: teacherProfile.id,
         title,
         slug,
       },
@@ -48,14 +52,14 @@ const courseFilters = ({
   title,
   category,
   teacherSlug,
-  categoryId,
+  isUnderSubscription,
 }: {
   title?: string;
   category?: string;
   teacherSlug?: string;
-  categoryId?: string;
-}) => {
-  const filters: any = {
+  isUnderSubscription?: boolean;
+}): Prisma.CourseWhereInput => {
+  const filters: Prisma.CourseWhereInput = {
     isPublished: true,
   };
 
@@ -83,68 +87,95 @@ const courseFilters = ({
     };
   }
 
+  if (isUnderSubscription !== undefined) {
+    filters.isUnderSubscription = isUnderSubscription;
+  }
+
   return filters;
 };
 
 export async function GET(req: Request) {
-  const { userId, role } = await getServerUserSession();
+  const { userId } = await getServerUserSession();
 
   try {
     const url = new URL(req.url);
     let page = parseInt(url.searchParams.get("page") || "1", 10);
     page = isNaN(page) || page < 1 ? 1 : page;
-    const limit =
-      parseInt(url.searchParams.get("limit") || "10") > 50
-        ? 10
-        : parseInt(url.searchParams.get("limit") || "10");
+    const limit = Math.min(
+      parseInt(url.searchParams.get("limit") || "10", 10),
+      50
+    );
     const title = url.searchParams.get("title") || undefined;
     const category = url.searchParams.get("category") || undefined;
     const teacherSlug = url.searchParams.get("teacher") || undefined;
+    const isUnderSubscription = url.searchParams.get("isUnderSubscription")
+      ? true
+      : undefined;
+
     const sort = url.searchParams.get("sort") === "asc" ? "asc" : "desc";
     const skip = (page - 1) * limit;
 
-    // Apply the filters without restricting to purchased courses
-    const filters = courseFilters({ title, category, teacherSlug });
+    // Apply the filters
+    const filters = courseFilters({
+      title,
+      category,
+      teacherSlug,
+      isUnderSubscription,
+    });
 
-    // Get purchased course IDs for logged-in user (for additional data like progress)
+    // Get purchased course IDs for logged-in user
     let purchasedCourseIds: string[] = [];
 
     if (userId) {
-      const studentProfileId = await useStudentProfile(userId);
-      const purchases = await db.enrolledStudents.findMany({
-        where: {
-          studentProfileId,
-          course: {
-            isPublished: true,
-          },
-        },
-        select: {
-          courseId: true,
-        },
+      // Get student profile
+      const studentProfile = await db.studentProfile.findUnique({
+        where: { userId },
+        select: { id: true },
       });
-      purchasedCourseIds = purchases.map((p) => p.courseId);
-      // Check if the user is subscribed
-      const userSubscription = await getUserSubscription();
-      // console.log(userSubscription, "FROM COURSES API");
 
-      if (userSubscription?.status === "ACTIVE") {
-        const isUnderSubscriptionsCourses = await db.course.findMany({
+      if (studentProfile) {
+        const enrollments = await db.enrolledStudents.findMany({
           where: {
-            isUnderSubscription: true,
+            studentProfileId: studentProfile.id,
+            course: {
+              isPublished: true,
+            },
+          },
+          select: {
+            courseId: true,
           },
         });
 
-        const isUnderSubscriptionsCoursesIDs = isUnderSubscriptionsCourses.map(
-          (course) => course.id
-        );
-        purchasedCourseIds = [
-          ...purchasedCourseIds,
-          ...isUnderSubscriptionsCoursesIDs,
-        ];
+        purchasedCourseIds = enrollments
+          .map((p) => p.courseId)
+          .filter((id): id is string => id !== null);
+
+        // Check if the user is subscribed
+        const userSubscription = await getUserSubscription();
+
+        if (userSubscription?.status === "ACTIVE") {
+          const subscriptionCourses = await db.course.findMany({
+            where: {
+              isUnderSubscription: true,
+              isPublished: true,
+            },
+            select: {
+              id: true,
+            },
+          });
+
+          const subscriptionCourseIds = subscriptionCourses.map(
+            (course) => course.id
+          );
+
+          // Merge and deduplicate course IDs
+          purchasedCourseIds = Array.from(
+            new Set([...purchasedCourseIds, ...subscriptionCourseIds])
+          );
+        }
       }
     }
 
-    // Use only the filters - don't restrict to purchased courses
     const whereClause = filters;
 
     // Fetch paginated courses
@@ -218,87 +249,93 @@ export async function GET(req: Request) {
 
     const processedCourses = await Promise.all(
       courses.map(async (course) => {
-        let progress = null;
-        let nextLessonSlug = null;
+        let progress: number | null = null;
+        let nextLessonSlug: string | null = null;
         const isPurchased = purchasedCourseIds.includes(course.id);
 
         // Only calculate progress and next lesson for purchased courses
         if (userId && isPurchased) {
-          const totalLessons = course._count.lessons;
-
-          const completedLessonsCount = await db.progress.count({
-            where: {
-              isCompleted: true,
-              lesson: {
-                courseId: course.id,
-                isPublished: true,
-              },
-              studentProfile: {
-                userId,
-              },
-            },
+          // Get student profile
+          const studentProfile = await db.studentProfile.findUnique({
+            where: { userId },
+            select: { id: true },
           });
 
-          if (totalLessons > 0) {
-            progress = Math.ceil((completedLessonsCount / totalLessons) * 100);
-          }
+          if (studentProfile) {
+            const totalLessons = course._count.lessons;
 
-          if (completedLessonsCount < totalLessons) {
-            const completedLessonIds = await db.progress.findMany({
+            const completedLessonsCount = await db.progress.count({
               where: {
+                isCompleted: true,
+                studentProfileId: studentProfile.id,
                 lesson: {
                   courseId: course.id,
                   isPublished: true,
                 },
-                studentProfile: {
-                  userId,
-                },
-                isCompleted: true,
-              },
-              select: {
-                lessonId: true,
               },
             });
 
-            const completedIds = completedLessonIds.map(
-              (item) => item.lessonId
-            );
-
-            const nextLesson = await db.lesson.findFirst({
-              where: {
-                courseId: course.id,
-                isPublished: true,
-                id: {
-                  notIn: completedIds,
-                },
-              },
-              orderBy: {
-                position: "asc",
-              },
-              select: {
-                slug: true,
-              },
-            });
-
-            if (nextLesson) {
-              nextLessonSlug = nextLesson.slug;
+            if (totalLessons > 0) {
+              progress = Math.ceil(
+                (completedLessonsCount / totalLessons) * 100
+              );
             }
-          } else if (totalLessons > 0) {
-            const firstLesson = await db.lesson.findFirst({
-              where: {
-                courseId: course.id,
-                isPublished: true,
-              },
-              orderBy: {
-                position: "asc",
-              },
-              select: {
-                slug: true,
-              },
-            });
 
-            if (firstLesson) {
-              nextLessonSlug = firstLesson.slug;
+            if (completedLessonsCount < totalLessons) {
+              const completedLessons = await db.progress.findMany({
+                where: {
+                  studentProfileId: studentProfile.id,
+                  lesson: {
+                    courseId: course.id,
+                    isPublished: true,
+                  },
+                  isCompleted: true,
+                },
+                select: {
+                  lessonId: true,
+                },
+              });
+
+              const completedIds = completedLessons.map(
+                (item) => item.lessonId
+              );
+
+              const nextLesson = await db.lesson.findFirst({
+                where: {
+                  courseId: course.id,
+                  isPublished: true,
+                  id: {
+                    notIn: completedIds,
+                  },
+                },
+                orderBy: {
+                  position: "asc",
+                },
+                select: {
+                  slug: true,
+                },
+              });
+
+              if (nextLesson) {
+                nextLessonSlug = nextLesson.slug;
+              }
+            } else if (totalLessons > 0) {
+              const firstLesson = await db.lesson.findFirst({
+                where: {
+                  courseId: course.id,
+                  isPublished: true,
+                },
+                orderBy: {
+                  position: "asc",
+                },
+                select: {
+                  slug: true,
+                },
+              });
+
+              if (firstLesson) {
+                nextLessonSlug = firstLesson.slug;
+              }
             }
           }
         }
@@ -307,7 +344,7 @@ export async function GET(req: Request) {
           ...course,
           progress,
           nextLessonSlug,
-          isPurchased, // Add this field to easily identify purchased courses on frontend
+          isPurchased,
         };
       })
     );
@@ -332,7 +369,7 @@ export async function GET(req: Request) {
       },
     });
   } catch (error) {
-    console.error("Error fetching courses:", error);
+    console.error("[GET_COURSES_ERROR]", error);
     return NextResponse.json(
       { error: true, message: "Failed to fetch courses." },
       { status: 500 }

@@ -1,6 +1,12 @@
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
+import { checkEventAccess, createEventRegistration } from "@/services/event";
+import {
+  calculateTotalInstallments,
+  isWithinReferralWindow,
+  processReferrerRewardsWithInstallment,
+} from "./subscription-purchase";
 
 // Helper function to get course and subscription details
 const getEmailResourceDetails = async (payload: any) => {
@@ -260,7 +266,65 @@ async function handleSingleCoursePurchase(
   }
 }
 
+// Purchase handler for CERTIFICATION
+async function handleCertificationCoursePurchase(
+  payload: any,
+  studentProfile: any,
+  executePaymentResult: any
+): Promise<{ purchase: any; subscription: null } | NextResponse> {
+  try {
+    if (!payload.certificationId) {
+      return createErrorResponse(
+        "Certification ID is required for single course purchase"
+      );
+    }
+
+    const certification = await db.certification.findUnique({
+      where: { id: payload.certificationId },
+      include: {
+        teacherProfile: true,
+        prices: true,
+      },
+    });
+
+    if (!certification) {
+      return createErrorResponse("Certification not found");
+    }
+
+    // Create purchase record
+    const purchase = await db.purchase.create({
+      data: {
+        studentProfileId: studentProfile.id,
+        teacherProfileId: certification.teacherProfileId,
+        certificationId: payload.certificationId,
+        purchaseType: "CERTIFICATION",
+        bkashData: JSON.parse(JSON.stringify(executePaymentResult)),
+      },
+    });
+
+    // Enroll student in the course
+    await db.enrolledStudents.create({
+      data: {
+        certificationId: payload.certificationId,
+        studentProfileId: studentProfile.id,
+      },
+    });
+
+    // Update teacher total sales
+    await db.teacherProfile.update({
+      where: { id: certification.teacherProfileId },
+      data: { totalSales: { increment: 1 } },
+    });
+
+    return { purchase, subscription: null };
+  } catch (error) {
+    console.error("Error in handleSingleCoursePurchase:", error);
+    return createErrorResponse("Failed to process single course purchase");
+  }
+}
+
 // Purchase handler for MEMBERSHIP/SUBSCRIPTION
+// Updated main function
 async function handleMembershipPurchase(
   payload: any,
   studentProfile: any,
@@ -282,32 +346,74 @@ async function handleMembershipPurchase(
       return createErrorResponse("Subscription plan not found");
     }
 
+    // Get user with referral information
+    const user = await db.user.findUnique({
+      where: { id: studentProfile.userId },
+      select: {
+        id: true,
+        referredByUserId: true,
+        primeUpgradedAt: true,
+        currentPlan: true,
+        createdAt: true,
+      },
+    });
+
     // Check existing subscription for upgrade calculation
     const existingSubscription = await db.subscription.findUnique({
       where: { studentProfileId: studentProfile.id },
     });
 
+    // Determine if this is an upgrade from trial to prime
+    const isUpgradingFromTrial =
+      existingSubscription?.isTrial === true &&
+      subscriptionPlan.isTrial === false &&
+      !user?.primeUpgradedAt;
+
+    // Check if installment is applicable
+    const REFERRAL_WINDOW_DAYS = parseInt(
+      process.env.REFERRAL_WINDOW_DAYS || "45"
+    );
+    const INSTALLMENT_AMOUNT = parseFloat(
+      process.env.INSTALLMENT_AMOUNT || "9999"
+    );
+
+    const isEligibleForInstallment =
+      isUpgradingFromTrial &&
+      user?.referredByUserId &&
+      isWithinReferralWindow(user?.createdAt!, REFERRAL_WINDOW_DAYS) &&
+      payload.paymentMethod === "INSTALLMENT"; // Assuming this is passed in payload
+
+    const totalAmount = payload.amount || 0;
+    const isInstallmentPayment =
+      isEligibleForInstallment && totalAmount > INSTALLMENT_AMOUNT;
+
+    let installmentInfo = null;
+    let actualPaymentAmount = totalAmount;
+
+    if (isInstallmentPayment) {
+      const totalInstallments = calculateTotalInstallments(
+        totalAmount,
+        INSTALLMENT_AMOUNT
+      );
+      installmentInfo = {
+        totalInstallments,
+        completedInstallments: 1,
+        installmentAmount: INSTALLMENT_AMOUNT,
+        remainingAmount: totalAmount - INSTALLMENT_AMOUNT,
+      };
+      actualPaymentAmount = INSTALLMENT_AMOUNT; // First installment
+    }
+
     // Calculate expiry date with upgrade logic
     const now = new Date();
     let expiresAt = new Date(now);
 
-    // UPGRADE LOGIC: Add remaining time from current subscription
     if (
       existingSubscription &&
       existingSubscription.status === "ACTIVE" &&
       new Date(existingSubscription.expiresAt) > now
     ) {
-      // Calculate remaining time from current subscription
-      const remainingTime =
-        new Date(existingSubscription.expiresAt).getTime() - now.getTime();
-      const remainingDays = Math.ceil(remainingTime / (1000 * 60 * 60 * 24));
-
-      // Start from current expiry date instead of now
       expiresAt = new Date(existingSubscription.expiresAt);
-
-      console.log(
-        `Upgrade detected: Adding ${remainingDays} days from current subscription`
-      );
     }
 
     // Add new subscription duration
@@ -319,74 +425,123 @@ async function handleMembershipPurchase(
       expiresAt.setFullYear(
         expiresAt.getFullYear() + (subscriptionPlan.durationInYears || 1)
       );
-    }
-
-    // Create purchase record
-    const purchase = await db.purchase.create({
-      data: {
-        studentProfileId: studentProfile.id,
-        subscriptionPlanId: payload.subscriptionPlanId,
-        purchaseType: payload.purchaseType, // MEMBERSHIP or SUBSCRIPTION
-        purchaseDuration:
-          subscriptionPlan.type === "MONTHLY"
-            ? subscriptionPlan.durationInMonths
-            : subscriptionPlan.durationInYears,
-        expiresAt,
-        bkashData: JSON.parse(JSON.stringify(executePaymentResult)),
-      },
-    });
-
-    // Handle trial subscription (NO TRIAL for upgrades/renewals)
-    const isSubscriptionHasTrial =
-      subscriptionPlan.isTrial && !existingSubscription;
-    let trialEndsAt = null;
-    let trialStartedAt = null;
-    if (isSubscriptionHasTrial) {
-      trialStartedAt = new Date();
-      trialEndsAt = new Date();
-      trialEndsAt.setDate(
-        trialEndsAt.getDate() + (subscriptionPlan.trialDurationInDays || 30)
+    } else {
+      expiresAt.setDate(
+        expiresAt.getDate() + (subscriptionPlan.trialDurationInDays || 30)
       );
     }
 
-    // Create or update subscription
-    let subscription;
-    if (existingSubscription) {
-      if (
-        existingSubscription.subscriptionPlanId === payload.subscriptionPlanId
-      ) {
-        return createErrorResponse(
-          "You already have an active subscription with a different plan. Please cancel it before purchasing a new one."
-        );
-      }
-      subscription = await db.subscription.update({
-        where: { studentProfileId: studentProfile.id },
-        data: {
-          subscriptionPlanId: payload.subscriptionPlanId,
-          expiresAt,
-          status: "ACTIVE",
-          trialStartedAt: null,
-          trialEndsAt: null,
-        },
-      });
-    } else {
-      subscription = await db.subscription.create({
-        data: {
-          studentProfileId: studentProfile.id,
-          subscriptionPlanId: payload.subscriptionPlanId,
-          expiresAt,
-          status: "ACTIVE",
-          isTrial: payload.purchaseType === "TRIAL" ? true : false,
-          trialStartedAt:
-            payload.purchaseType === "TRIAL" ? trialStartedAt : null,
-          trialEndsAt: payload.purchaseType === "TRIAL" ? trialEndsAt : null,
-        },
-      });
-    }
+    // Start transaction with timeout
+    const result = await db.$transaction(
+      async (tx) => {
+        // Create purchase record
+        const purchase = await tx.purchase.create({
+          data: {
+            studentProfileId: studentProfile.id,
+            subscriptionPlanId: payload.subscriptionPlanId,
+            purchaseType: payload.purchaseType,
+            purchaseDuration:
+              subscriptionPlan.type === "MONTHLY"
+                ? subscriptionPlan.durationInMonths
+                : subscriptionPlan.durationInYears,
+            expiresAt,
+            totalAmountTk: totalAmount,
+            totalPaidTk: actualPaymentAmount,
+            remainingAmountTk: isInstallmentPayment
+              ? installmentInfo?.remainingAmount
+              : 0,
+            paymentStatus: isInstallmentPayment ? "PENDING" : "COMPLETED",
+            fullyPaidAt: isInstallmentPayment ? null : now,
+          },
+        });
 
-    return { purchase, subscription };
+        // Handle trial subscription
+        const isSubscriptionHasTrial =
+          subscriptionPlan.isTrial && !existingSubscription;
+        let trialEndsAt = null;
+        let trialStartedAt = null;
+        if (isSubscriptionHasTrial) {
+          trialStartedAt = new Date();
+          trialEndsAt = new Date();
+          trialEndsAt.setDate(
+            trialEndsAt.getDate() + (subscriptionPlan.trialDurationInDays || 30)
+          );
+        }
+
+        // Create or update subscription
+        let subscription;
+        if (existingSubscription) {
+          if (
+            existingSubscription.subscriptionPlanId ===
+              payload.subscriptionPlanId &&
+            existingSubscription.isTrial === false
+          ) {
+            throw new Error(
+              "You already have an active subscription with this plan."
+            );
+          }
+          subscription = await tx.subscription.update({
+            where: { studentProfileId: studentProfile.id },
+            data: {
+              subscriptionPlanId: payload.subscriptionPlanId,
+              expiresAt,
+              status: "ACTIVE",
+              isTrial: subscriptionPlan.isTrial,
+              trialStartedAt: null,
+              trialEndsAt: null,
+            },
+          });
+        } else {
+          subscription = await tx.subscription.create({
+            data: {
+              studentProfileId: studentProfile.id,
+              subscriptionPlanId: payload.subscriptionPlanId,
+              expiresAt,
+              status: "ACTIVE",
+              isTrial: payload.purchaseType === "TRIAL" ? true : false,
+              trialStartedAt:
+                payload.purchaseType === "TRIAL" ? trialStartedAt : null,
+              trialEndsAt:
+                payload.purchaseType === "TRIAL" ? trialEndsAt : null,
+            },
+          });
+        }
+
+        // Update user plan status
+        if (isUpgradingFromTrial) {
+          await tx.user.update({
+            where: { id: user?.id },
+            data: {
+              currentPlan: "PRIME",
+              primeUpgradedAt: now,
+            },
+          });
+        }
+
+        // Process referrer rewards based on payment type
+        await processReferrerRewardsWithInstallment(
+          tx,
+          user,
+          purchase.id,
+          isUpgradingFromTrial,
+          !!isInstallmentPayment,
+          installmentInfo
+        );
+
+        return { purchase, subscription };
+      },
+      {
+        maxWait: 10000, // 10 seconds max wait
+        timeout: 30000, // 30 seconds timeout
+      }
+    );
+
+    return result;
   } catch (error) {
     console.error("Error in handleMembershipPurchase:", error);
+    if (error instanceof Error) {
+      return createErrorResponse(error.message);
+    }
     return createErrorResponse("Failed to process membership purchase");
   }
 }
@@ -684,64 +839,47 @@ async function handleEventPurchase(
     if (!event) {
       return createErrorResponse("Event not found");
     }
+    // ===============================
+    // previous code with trial access
+    // ===============================
+    // if (!studentProfile?.subscription?.id) {
+    //   try {
+    //     await handleTrialPurchase(payload, studentProfile);
+    //     subscription = await db.subscription.findUnique({
+    //       where: { studentProfileId: studentProfile.id },
+    //       include: { subscriptionPlan: true },
+    //     });
+    //   } catch (error) {
+    //     console.error("Failed to create trial subscription for event:", error);
+    //     return createErrorResponse(
+    //       "Failed to create required subscription for event registration"
+    //     );
+    //   }
+    // } else {
+    //   subscription = null;
+    // }
 
-    if (!studentProfile?.subscription?.id) {
-      try {
-        await handleTrialPurchase(payload, studentProfile);
-        subscription = await db.subscription.findUnique({
-          where: { studentProfileId: studentProfile.id },
-          include: { subscriptionPlan: true },
-        });
-      } catch (error) {
-        console.error("Failed to create trial subscription for event:", error);
-        return createErrorResponse(
-          "Failed to create required subscription for event registration"
-        );
-      }
-    } else {
-      subscription = null;
+    const isAlreadyRegistered = await checkEventAccess(
+      payload?.userId,
+      payload?.eventId
+    );
+
+    if (!isAlreadyRegistered) {
+      // Create event registration
+      await createEventRegistration(payload?.userId, payload?.eventId);
+      // create a entre in lead table
+      await db.lead.create({
+        data: {
+          email: payload.email,
+          name: payload.name,
+          eventId: payload.eventId,
+          linkedin: payload.linkedin,
+          facebookProfile: payload.facebook,
+          phone: payload.phoneNumber,
+          status: "INTERSTED",
+        },
+      });
     }
-
-    // Create event registration
-    await db.eventRegistration.create({
-      data: {
-        userId: payload.userId,
-        eventId: payload.eventId,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        event: {
-          select: {
-            id: true,
-            title: true,
-            date: true,
-            type: true,
-            price: true,
-            isOnline: true,
-            location: true,
-            zoomLink: true,
-          },
-        },
-      },
-    });
-    // create a entre in lead table
-    await db.lead.create({
-      data: {
-        email: payload.email,
-        name: payload.name,
-        eventId: payload.eventId,
-        linkedin: payload.linkedin,
-        facebookProfile: payload.facebook,
-        phone: payload.phoneNumber,
-        status: "INTERSTED",
-      },
-    });
     // Create trial purchase record
     const purchase = await db.purchase.create({
       data: {
@@ -773,4 +911,5 @@ export {
   handleSingleCoursePurchase,
   handleMembershipPurchase,
   handleOfferPurchase,
+  handleCertificationCoursePurchase,
 };

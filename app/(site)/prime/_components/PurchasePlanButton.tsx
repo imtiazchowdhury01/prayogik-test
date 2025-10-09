@@ -32,20 +32,22 @@ interface ActiveSubscription {
 
 interface PurchasePlanButtonProps {
   className?: string;
-  variant?: "primary" | "secondary";
+  variant?: "primary" | "secondary" | "trial";
   plan: SubscriptionPlan;
   children?: React.ReactNode;
 }
 
 // Constants
 const BUTTON_VARIANTS = {
-  primary: "hover:bg-primary-700 bg-brand text-white py-3",
+  primary:
+    "hover:bg-primary-700 hover:text-white bg-[#E7F5F4] text-gray-500 py-3",
   secondary:
     "bg-secondary-button hover:bg-secondary-button hover:opacity-85 text-white px-6 py-1.5 text-base",
   disable:
-    "bg-gray-400 text-white opacity-60 cursor-not-allowed px-6 py-1.5 text-base disabled:hover:bg-gray-300",
+    "bg-[#E6E8E8] text-gray-500 cursor-not-allowed px-6 py-1.5 text-base disabled:hover:bg-[#E6E8E8]",
   loading:
     "bg-gray-300 text-gray-600 cursor-wait px-6 py-1.5 text-base disabled:hover:bg-gray-300",
+  trial: "bg-[#E6E8E8] text-gray-500 hover:bg-[#E6E8E8] hover:bg-white  px-6 py-1.5 text-base",
 } as const;
 
 const LOADING_TEXT = "অপেক্ষা করুন...";
@@ -90,7 +92,7 @@ const PurchasePlanButton: React.FC<PurchasePlanButtonProps> = ({
     activeSubscription?.trialEndsAt &&
     new Date(activeSubscription.trialEndsAt) < currentDate;
 
-  const hasUsedTrial = !!activeSubscription;
+  const hasUsedTrial = !!activeSubscription?.id;
 
   // Button text logic
   const getButtonText = useCallback(() => {
@@ -99,7 +101,7 @@ const PurchasePlanButton: React.FC<PurchasePlanButtonProps> = ({
     // Unauthenticated or no subscription
     if (status === "unauthenticated" || !activeSubscription) {
       // return plan?.isTrial ? "ফ্রি ট্রায়াল" : "এখনই কিনুন";
-      return "ফ্রি ট্রায়াল নিন";
+      return "এখনই কিনুন";
     }
 
     // Active plan scenarios
@@ -187,7 +189,7 @@ const PurchasePlanButton: React.FC<PurchasePlanButtonProps> = ({
     <Button
       onClick={handlePlanAction}
       disabled={isDisabled || loading || actionLoading}
-      className={`${buttonClasses} transition-all duration-300 ease-linear`}
+      className={`${buttonClasses} transition-all duration-300 ease-linear h-12`}
       aria-label={getButtonText()}
     >
       {loading || actionLoading ? (

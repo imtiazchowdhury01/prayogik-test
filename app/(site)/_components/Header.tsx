@@ -17,6 +17,7 @@ const navigation = [
   { name: "কোর্স সমূহ", href: "/courses" },
   { name: "প্রাইম", href: "/prime" },
   { name: "লাইভ কোর্স", href: "/live" },
+  // { name: "সার্টিফিকেশন কোর্স", href: "/certifications" },
   { name: "কোর্স রোডম্যাপ", href: "/course-roadmap" },
   { name: "শেখাতে চাই", href: "/become-a-teacher" },
 ];

@@ -1,49 +1,68 @@
-// @ts-nocheck
+// actions/get-analytics.ts
+"use server";
 
 import { db } from "@/lib/db";
-import { Course, Purchase } from "@prisma/client";
 
-type PurchaseWithCourse = Purchase & {
-  course: Course;
+type AnalyticsData = {
+  name: string;
+  total: number;
 };
 
-const groupByCourse = (purchases: PurchaseWithCourse[]) => {
-  const grouped: { [courseTitle: string]: number } = {};
-
-  purchases.forEach((purchase) => {
-    const courseTitle = purchase.course.title;
-    const coursePrice = purchase.course.price ?? 0;
-
-    if (!grouped[courseTitle]) {
-      grouped[courseTitle] = 0;
-    }
-
-    grouped[courseTitle] += coursePrice;
-  });
-
-  return grouped;
+type AnalyticsResponse = {
+  data: AnalyticsData[];
+  totalRevenue: number;
+  totalSales: number;
 };
 
-export const getAnalytics = async (userId: string) => {
+export const getAnalytics = async (
+  userId: string
+): Promise<AnalyticsResponse> => {
   try {
-    const purchases = await db.purchase.findMany({
-      where: { userId },
-      include: {
-        course: {
-          include: {
-            teacher: true,
-          },
-        },
-        TeacherRevenue: true,
+    // Get teacher profile for the user
+    const teacherProfile = await db.teacherProfile.findUnique({
+      where: {
+        userId: userId,
+      },
+      select: {
+        id: true,
       },
     });
 
+    if (!teacherProfile) {
+      return {
+        data: [],
+        totalRevenue: 0,
+        totalSales: 0,
+      };
+    }
+
+    // Get all purchases for courses taught by this teacher
+    const purchases = await db.purchase.findMany({
+      where: {
+        teacherProfileId: teacherProfile.id,
+      },
+      include: {
+        course: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+        teacherRevenue: {
+          select: {
+            amount: true,
+          },
+        },
+      },
+    });
+
+    // Calculate revenue by course
     const courseRevenue: { [courseTitle: string]: number } = {};
 
     purchases.forEach((purchase) => {
       const courseTitle = purchase.course?.title || "Unknown Course";
       const teacherEarnings =
-        purchase.TeacherRevenue?.reduce(
+        purchase.teacherRevenue?.reduce(
           (sum, revenue) => sum + (revenue.amount || 0),
           0
         ) || 0;
@@ -51,16 +70,19 @@ export const getAnalytics = async (userId: string) => {
       if (!courseRevenue[courseTitle]) {
         courseRevenue[courseTitle] = 0;
       }
+
       courseRevenue[courseTitle] += teacherEarnings;
     });
 
-    const data = Object.entries(courseRevenue).map(([courseTitle, total]) => ({
-      name: courseTitle,
-      total: total || 0,
-    }));
+    // Transform data for charts
+    const data: AnalyticsData[] = Object.entries(courseRevenue).map(
+      ([courseTitle, total]) => ({
+        name: courseTitle,
+        total: total || 0,
+      })
+    );
 
     const totalRevenue = data.reduce((acc, curr) => acc + (curr.total || 0), 0);
-
     const totalSales = purchases.length;
 
     return {

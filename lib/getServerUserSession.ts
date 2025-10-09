@@ -14,11 +14,36 @@ export async function getServerUserSession(
   req?: Request
 ): Promise<UserSession> {
   const session = await getServerSession(authOptions);
-
   if (!session || !session.user) {
-    return { userId: null, role: null, isAdmin: null, accountStatus: null };
+    return {
+      userId: null,
+      role: null,
+      isAdmin: null,
+      accountStatus: null,
+      email: null,
+      name: null,
+      image: null,
+    };
   }
 
-  const { id: userId, role, isAdmin, accountStatus } = session.user;
-  return { userId, role, isAdmin, accountStatus };
+  const {
+    id: userId,
+    role,
+    isAdmin,
+    accountStatus,
+    email,
+    name,
+    image,
+    phoneNumber,
+  } = session.user;
+  return {
+    userId,
+    role,
+    isAdmin,
+    accountStatus,
+    email,
+    name,
+    image,
+    phoneNumber,
+  };
 }

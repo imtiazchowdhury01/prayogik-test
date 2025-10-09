@@ -13,33 +13,21 @@ import Link from "next/link";
 
 import {
   ChevronDown,
-  CirclePower,
-  CircleUser,
   LayoutDashboard,
   LogOut,
-  Menu,
-  Power,
   ShieldEllipsis,
   User,
 } from "lucide-react";
-import { convertNumberToBangla } from "@/lib/convertNumberToBangla";
 import { Badge } from "./ui/badge";
 import { cn } from "@/lib/utils";
 import { formatDateToBangla } from "@/lib/utils/stringUtils";
 import { useRouter } from "next/navigation";
-import { Button } from "./ui/button";
-import { useEffect, useState } from "react";
-import { clientApi } from "@/lib/utils/openai/client";
 import { useQuery } from "@tanstack/react-query";
 import { QueryKeys } from "@/constants/query-keys";
 import { clientSidefetchUserSubscription } from "@/lib/utils/openai/client/user";
 
 export default function UserProfileMenus({ session, pathName }: any) {
-  const {
-    data: subscription,
-    error,
-    isLoading,
-  } = useQuery<any>({
+  const { data: subscription } = useQuery<any>({
     queryKey: [QueryKeys.USER_SUBSCRIPTION],
     queryFn: clientSidefetchUserSubscription,
     staleTime: 5 * 60 * 1000,

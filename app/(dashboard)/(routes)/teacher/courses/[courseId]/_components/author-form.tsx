@@ -12,11 +12,13 @@ import { Pencil, Loader, Check } from "lucide-react"; // Import Check icon
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input"; // Import shadcn Input component
+import { updateCourse } from "@/lib/course/updateCourse";
 
 interface AuthorFormProps {
   initialData: Course;
   courseId: string;
   options: { label: string; value: string }[];
+  api?: string;
 }
 
 const formSchema = z.object({
@@ -27,6 +29,7 @@ export const AuthorForm = ({
   initialData,
   courseId,
   options,
+  api,
 }: AuthorFormProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -46,13 +49,24 @@ export const AuthorForm = ({
 
   const { isSubmitting, isValid } = form.formState;
 
+  const toggleEdit = () => setIsEditing(!isEditing);
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setLoading(true);
     try {
-      await axios.patch(`/api/admin/courses/${courseId}`, {
-        teacherProfileId: values.teacherProfileId,
+      await updateCourse({
+        courseId,
+        values: {
+          teacherProfileId: values.teacherProfileId,
+        },
+        toggleEdit,
+        setLoading,
+        router,
+        api,
       });
-      toast.success("Author updated");
+      // await axios.patch(`/api/admin/courses/${courseId}`, {
+      //   teacherProfileId: values.teacherProfileId,
+      // });
+      // toast.success("Author updated");
       setIsEditing(false); // Exit edit mode
       router.refresh();
     } catch {

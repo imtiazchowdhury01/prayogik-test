@@ -26,6 +26,8 @@ interface TitleFormProps {
     title: string;
   };
   courseId: string;
+  successMessage?: string;
+  api?: string;
 }
 
 // Helper function to convert a string to title case
@@ -42,7 +44,7 @@ const formSchema = z.object({
   }),
 });
 
-export const TitleForm = ({ initialData, courseId }: TitleFormProps) => {
+export const TitleForm = ({ initialData, courseId,api, successMessage }: TitleFormProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false); // State for loading
 
@@ -69,6 +71,8 @@ export const TitleForm = ({ initialData, courseId }: TitleFormProps) => {
       toggleEdit,
       setLoading,
       router,
+      successMessage,
+      api,
     });
   };
 
@@ -76,7 +80,7 @@ export const TitleForm = ({ initialData, courseId }: TitleFormProps) => {
     <div className="mt-6 border bg-slate-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
         <div>
-          Course title
+          Title
           <span className="text-red-500">*</span>
         </div>
         <Button onClick={toggleEdit} variant="ghost">

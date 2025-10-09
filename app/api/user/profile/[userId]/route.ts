@@ -1,12 +1,12 @@
-// @ts-nocheck
-
+// api/user/profile/[userId]/route.ts
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 
-// PUT
-export async function PUT(req, { params }) {
+export async function PUT(
+  req: Request,
+  { params }: { params: { userId: string } }
+) {
   const { userId } = params;
 
   try {
@@ -14,15 +14,13 @@ export async function PUT(req, { params }) {
 
     if (sessionUserId !== userId) {
       return NextResponse.json(
-        { message: "Unauthorize access!" },
-        { status: 404 }
+        { message: "Unauthorized access!" },
+        { status: 401 }
       );
     }
 
-    // Parse the request body
     const formData = await req.json();
 
-    // Validate userId
     if (!userId) {
       return NextResponse.json(
         { message: "User ID is required" },
@@ -30,11 +28,10 @@ export async function PUT(req, { params }) {
       );
     }
 
-    // Fetch the current user
     const currentUser = await db.user.findUnique({
       where: { id: userId },
       include: {
-        teacherProfile: true, // Include teacherProfile to check if it exists
+        teacherProfile: true,
       },
     });
 
@@ -42,8 +39,7 @@ export async function PUT(req, { params }) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    // Prepare update data for the User table
-    const userUpdateData = {};
+    const userUpdateData: any = {};
     const userFields = [
       "name",
       "dateOfBirth",
@@ -64,18 +60,16 @@ export async function PUT(req, { params }) {
       "others",
     ];
 
-    // Populate userUpdateData with fields that have changed
     userFields.forEach((field) => {
       if (
         formData[field] !== undefined &&
-        formData[field] !== currentUser[field] // Check if the field has changed
+        formData[field] !== currentUser[field as keyof typeof currentUser]
       ) {
         userUpdateData[field] = formData[field];
       }
     });
 
-    // Prepare update data for the TeacherProfile table
-    const teacherProfileUpdateData = {};
+    const teacherProfileUpdateData: any = {};
     const teacherProfileFields = [
       "subjectSpecializations",
       "certifications",
@@ -83,19 +77,21 @@ export async function PUT(req, { params }) {
       "expertiseLevel",
     ];
 
-    // Populate teacherProfileUpdateData with fields that have changed
     if (currentUser.teacherProfile) {
       teacherProfileFields.forEach((field) => {
         if (
           formData[field] !== undefined &&
           JSON.stringify(formData[field]) !==
-            JSON.stringify(currentUser.teacherProfile[field]) // Deep comparison for arrays/objects
+            JSON.stringify(
+              currentUser.teacherProfile![
+                field as keyof typeof currentUser.teacherProfile
+              ]
+            )
         ) {
           teacherProfileUpdateData[field] = formData[field];
         }
       });
     } else {
-      // If no TeacherProfile exists, include all provided fields
       teacherProfileFields.forEach((field) => {
         if (formData[field] !== undefined) {
           teacherProfileUpdateData[field] = formData[field];
@@ -103,9 +99,7 @@ export async function PUT(req, { params }) {
       });
     }
 
-    // Perform updates in a transaction to ensure data consistency
     await db.$transaction(async (prisma) => {
-      // Update the User table if there are changes
       if (Object.keys(userUpdateData).length > 0) {
         await prisma.user.update({
           where: { id: userId },
@@ -113,23 +107,19 @@ export async function PUT(req, { params }) {
         });
       }
 
-      // Update or create the TeacherProfile if there are changes
       if (Object.keys(teacherProfileUpdateData).length > 0) {
         if (currentUser.teacherProfile) {
-          // Update existing TeacherProfile
           await prisma.teacherProfile.update({
             where: { userId: userId },
             data: teacherProfileUpdateData,
           });
         } else {
-          // Create new TeacherProfile
           await prisma.teacherProfile.create({
             data: {
               userId: userId,
               ...teacherProfileUpdateData,
             },
           });
-          console.log("TeacherProfile created successfully");
         }
       }
     });
@@ -147,11 +137,12 @@ export async function PUT(req, { params }) {
   }
 }
 
-// GET
-export async function GET(request, { params }) {
+export async function GET(
+  request: Request,
+  { params }: { params: { userId: string } }
+) {
   const { userId } = params;
 
-  // Validate userId
   if (!userId || typeof userId !== "string") {
     return NextResponse.json(
       { error: "Invalid user ID provided" },
@@ -160,7 +151,6 @@ export async function GET(request, { params }) {
   }
 
   try {
-    // Fetch the user
     const currentUser = await db.user.findUnique({
       where: { id: userId },
       include: {
@@ -172,21 +162,17 @@ export async function GET(request, { params }) {
       },
     });
 
-    // Check if the user exists
     if (!currentUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Exclude sensitive fields
     const { emailVerificationToken, resetToken, password, ...userData } =
       currentUser;
 
-    // Return the user data with teacher profile if it exists
-    return NextResponse.json({...userData, hasPassword: !!password});
+    return NextResponse.json({ ...userData, hasPassword: !!password });
   } catch (error) {
     console.error("Error fetching user details:", error);
 
-    // Return a generic error message
     return NextResponse.json(
       { error: "An error occurred while fetching user details" },
       { status: 500 }

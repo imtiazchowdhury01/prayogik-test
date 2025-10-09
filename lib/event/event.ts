@@ -9,7 +9,7 @@ export interface EventResponse {
   title: string;
   slug: string;
   description?: string;
-  date: string;
+  date?: string | null;
   isOnline: boolean;
   location?: string;
   zoomLink?: string;
@@ -53,6 +53,7 @@ export interface ApiResponse<T = any> {
 interface UpdateEventOptions {
   eventId: string;
   values: UpdateEventInput;
+  slug: string;
   toggleEdit?: () => void;
   setLoading: (loading: boolean) => void;
   router: any; // Next.js router
@@ -85,6 +86,7 @@ export async function createEvent(eventData: { title: string; slug: string }) {
 export const updateEvent = async ({
   eventId,
   values,
+  slug,
   toggleEdit,
   setLoading,
   router,
@@ -97,7 +99,13 @@ export const updateEvent = async ({
   try {
     // Ensure date is properly formatted if provided
     const updateData = { ...values };
-    if (updateData.date) {
+    // if (updateData.date) {
+    //   updateData.date = new Date(updateData.date).toISOString();
+    // }
+    // allow null to clear date
+    if (updateData.date === "") {
+      updateData.date = null as any;
+    } else if (updateData.date) {
       updateData.date = new Date(updateData.date).toISOString();
     }
 
@@ -109,8 +117,9 @@ export const updateEvent = async ({
       { route: "/" },
       { route: "/home" },
       { route: "/events" },
+      { route: "/events/" + slug },
       { route: "/admin/events" },
-      { route: "/preview/events/" + values.slug },
+      { route: "/preview/events/" + slug },
     ]);
 
     if (toggleEdit) {

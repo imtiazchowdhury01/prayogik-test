@@ -10,6 +10,7 @@ type CourseCardButtonProps = {
   lessons: any;
   variant: "dark" | "light" | undefined;
   courseMode: string;
+  certificationslug?: string;
 };
 
 export const CourseCardButton = ({
@@ -20,10 +21,13 @@ export const CourseCardButton = ({
   lessons,
   variant,
   courseMode,
+  certificationslug,
 }: CourseCardButtonProps) => {
   return (
     <div className="">
-      {courseMode === CourseMode.RECORDED && progress !== null ? (
+      {courseMode === CourseMode.RECORDED &&
+      progress !== null &&
+      !certificationslug ? (
         <div className="flex flex-col gap-2">
           {
             <div className="">
@@ -39,7 +43,7 @@ export const CourseCardButton = ({
           {nextLessonSlug && (
             <Link href={`/courses/${slug}/${nextLessonSlug}`}>
               <div className="block w-full px-4 py-2 text-base font-semibold text-center text-white transition-all duration-300 rounded-md hover:bg-primary-700 sm:px-6 sm:py-3 bg-primary-brand">
-                "চালিয়ে যান"
+                চালিয়ে যান
               </div>
             </Link>
           )}
@@ -47,12 +51,18 @@ export const CourseCardButton = ({
       ) : (
         <div>
           <Link
-            href={`/courses/${slug}`}
+            href={
+              certificationslug
+                ? `/certifications/${certificationslug}`
+                : `/courses/${slug}`
+            }
             className="block w-full px-4 py-2 text-base font-semibold text-center text-white transition-all duration-300 rounded-sm hover:bg-primary-700 sm:px-6 sm:py-3 bg-primary-brand"
             prefetch={true}
           >
             <span className="ml-2">
-              {courseMode === CourseMode.RECORDED
+              {certificationslug
+                ? "বিস্তারিত দেখুন"
+                : courseMode === CourseMode.RECORDED
                 ? "কোর্সটি দেখুন"
                 : "বিস্তারিত দেখুন"}
             </span>

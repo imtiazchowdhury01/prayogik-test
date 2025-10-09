@@ -1,8 +1,6 @@
-// @ts-nocheck
-
+// api/teacher/[userId]/route.ts
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 
 export async function PUT(
   req: Request,
@@ -11,10 +9,8 @@ export async function PUT(
   const { userId } = params;
 
   try {
-    // Parse the request body
-    const { teacherRankId, teacherRank } = await req.json();
+    const { teacherRankId } = await req.json();
 
-    // Ensure that the teacherRankId is provided
     if (!teacherRankId) {
       return NextResponse.json(
         { message: "Teacher Rank ID is required" },
@@ -22,24 +18,19 @@ export async function PUT(
       );
     }
 
-    // Update the teacher's rank in the database
-    const result = await db.user.update({
-      where: { id: userId }, // Access the teacher by ID
+    const result = await db.teacherProfile.update({
+      where: { userId },
       data: {
         teacherRankId,
-        teacherRank,
       },
     });
 
-    // Check if the update was successful
     if (!result) {
       return NextResponse.json(
         { message: "Teacher not found or rank already updated" },
         { status: 404 }
       );
     }
-
-    // revalidatePath("/admin/teachers");
 
     return NextResponse.json(
       { message: "Teacher rank updated successfully" },
@@ -54,23 +45,23 @@ export async function PUT(
   }
 }
 
-// get single teacher details
-export async function GET(request, { params }) {
+export async function GET(
+  request: Request,
+  { params }: { params: { userId: string } }
+) {
   const { userId } = params;
 
   try {
-  const teacher = await db.user.findFirst({
-    where: { id: userId },
-    include: {
-      teacherProfile: {
-        include: {
-          teacherRank: true,
+    const teacher = await db.user.findFirst({
+      where: { id: userId },
+      include: {
+        teacherProfile: {
+          include: {
+            teacherRank: true,
+          },
         },
       },
-    },
-  });
-
-
+    });
 
     if (!teacher) {
       return NextResponse.json({ error: "Teacher not found" }, { status: 404 });
@@ -79,7 +70,10 @@ export async function GET(request, { params }) {
     return NextResponse.json(teacher);
   } catch (error) {
     console.error("Error fetching teacher details:", error);
-    return NextResponse.error();
+    return NextResponse.json(
+      { error: "Failed to fetch teacher" },
+      { status: 500 }
+    );
   }
 }
 
@@ -90,7 +84,6 @@ export async function DELETE(
   const { userId } = params;
 
   try {
-    // Ensure that the userId is provided
     if (!userId) {
       return NextResponse.json(
         { message: "Teacher ID is required" },
@@ -98,19 +91,16 @@ export async function DELETE(
       );
     }
 
-    // Delete the teacher from the database
     const result = await db.user.delete({
       where: { id: userId },
     });
 
-    // Check if the deletion was successful
     if (!result) {
       return NextResponse.json(
         { message: "Teacher not found" },
         { status: 404 }
       );
     }
-    // revalidatePath("/admin/teachers");
 
     return NextResponse.json(
       { message: "Teacher deleted successfully" },
@@ -124,4 +114,3 @@ export async function DELETE(
     );
   }
 }
-

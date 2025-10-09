@@ -1,9 +1,12 @@
-// @ts-nocheck
+// api/admin/teachers/[teacherId]/route.ts
 import { db } from "@/lib/db";
 import { getServerUserSession } from "@/lib/getServerUserSession";
 import { NextResponse } from "next/server";
 
-export async function GET(request, { params }) {
+export async function GET(
+  request: Request,
+  { params }: { params: { teacherId: string } }
+) {
   const { teacherId } = params;
 
   try {
@@ -29,7 +32,10 @@ export async function GET(request, { params }) {
     return NextResponse.json(teacher);
   } catch (error) {
     console.error("Error fetching teacher details:", error);
-    return NextResponse.error();
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
@@ -39,7 +45,6 @@ export async function PUT(
 ) {
   const { teacherId } = params;
 
-  // Get the updated data from the request body
   const updatedData = await request.json();
 
   try {
@@ -52,7 +57,6 @@ export async function PUT(
       );
     }
 
-    // Fetch the existing teacher data
     const existingUser = await db.user.findFirst({
       where: {
         teacherProfile: {
@@ -64,7 +68,6 @@ export async function PUT(
       },
     });
 
-    // If the teacher doesn't exist, return a not found error
     if (!existingUser) {
       return NextResponse.json(
         { message: "Teacher not found." },
@@ -72,16 +75,14 @@ export async function PUT(
       );
     }
 
-    // Create a new data object with only the fields that need to be updated
-    const dataToUpdateOnUserModel = {};
-    const dataToUpdateOnTeacherProfileModel = {};
+    const dataToUpdateOnUserModel: Record<string, any> = {};
+    const dataToUpdateOnTeacherProfileModel: Record<string, any> = {};
 
-    // Dynamically add fields from updatedData if they exist
     for (const key of Object.keys(updatedData)) {
       if (key in existingUser) {
         dataToUpdateOnUserModel[key] = updatedData[key];
       }
-      // Check if key is for TeacherProfile
+
       if (existingUser.teacherProfile && key in existingUser.teacherProfile) {
         dataToUpdateOnTeacherProfileModel[key] = updatedData[key];
       }
@@ -110,9 +111,10 @@ export async function PUT(
 
     return NextResponse.json(updatedTeacher, { status: 200 });
   } catch (error) {
-    // Return an error response
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { message: "Failed to update teacher.", error: error.message },
+      { message: "Failed to update teacher.", error: errorMessage },
       { status: 400 }
     );
   }

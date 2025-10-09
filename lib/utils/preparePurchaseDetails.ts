@@ -59,7 +59,7 @@ const preparePurchaseDetails = async (
 
   // Get course details if courseId exists
   if (payload.courseId && !course) {
-    console.log("FROM IF CONDITION: ", payload.courseId);
+    // console.log("FROM IF CONDITION: ", payload.courseId);
     const courseData = await db.course.findUnique({
       where: { id: payload.courseId },
       select: {
@@ -72,11 +72,11 @@ const preparePurchaseDetails = async (
         },
       },
     });
-    console.log("FROM IF CONDITION Course: ", courseData);
+    // console.log("FROM IF CONDITION Course: ", courseData);
     purchaseDetails.courseName = courseData?.title || null;
     purchaseDetails.coursePrice = getCoursePrice(courseData?.prices);
   } else if (course) {
-    console.log(course, "courseInfo");
+    // console.log(course, "courseInfo");
     purchaseDetails.courseName = course.title;
     purchaseDetails.coursePrice = getCoursePrice(course.prices);
   }
@@ -127,7 +127,7 @@ const preparePurchaseDetails = async (
     purchaseDetails.eventZoomLink = event.zoomLink;
     purchaseDetails.eventstatus = event.status;
   }
-  console.log(purchaseDetails, "Purchase details form prepareDatails fn");
+  // console.log(purchaseDetails, "Purchase details form prepareDatails fn");
   return purchaseDetails;
 };
 

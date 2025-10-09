@@ -1,53 +1,123 @@
-// @ts-nocheck
-
+// api/front/courses/route.ts
 import { getProgress } from "@/actions/get-progress";
 import { db } from "@/lib/db";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 
-export async function POST(req: Request) {
-  const { userId } = await req.json();
+// ========== TYPE DEFINITIONS ==========
 
+interface CoursesRequest {
+  userId?: string;
+}
+
+type CourseWithRelations = Prisma.CourseGetPayload<{
+  include: {
+    category: true;
+    lessons: true;
+    teacherProfile: {
+      select: {
+        user: {
+          select: {
+            name: true;
+            email: true;
+          };
+        };
+      };
+    };
+    prices: true;
+    rating: true;
+    review: true;
+    purchases: {
+      include: {
+        studentProfile: {
+          select: {
+            userId: true;
+          };
+        };
+      };
+    };
+  };
+}>;
+
+interface CourseWithProgress extends Omit<CourseWithRelations, "purchases"> {
+  progress: number | null;
+  purchases: CourseWithRelations["purchases"];
+}
+
+interface ErrorResponse {
+  error: string;
+}
+
+// ========== POST HANDLER ==========
+
+export async function POST(
+  req: NextRequest
+): Promise<NextResponse<CourseWithProgress[] | ErrorResponse>> {
   try {
-    const baseQuery = {
+    const body: CoursesRequest = await req.json();
+    const { userId } = body;
+
+    const courses = await db.course.findMany({
       where: { isPublished: true },
       include: {
         category: true,
-        lessons: { where: { isPublished: true } },
-        teacher: { select: { name: true, email: true } },
+        lessons: {
+          where: { isPublished: true },
+          orderBy: { position: "asc" },
+        },
+        teacherProfile: {
+          select: {
+            user: {
+              select: {
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
         prices: true,
-        Rating: true,
-        Review: true,
-        purchases: userId ? { where: { userId } } : false,
+        rating: true,
+        review: true,
+        purchases: {
+          where: {
+            paymentStatus: "COMPLETED",
+          },
+          include: {
+            studentProfile: {
+              select: {
+                userId: true,
+              },
+            },
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
-    };
-
-    const courses = await db.course.findMany(baseQuery);
+    });
 
     const coursesWithProgress = await Promise.all(
       courses.map(async (course) => {
-        let progressPercentage = null;
-        let purchases = [];
+        let progressPercentage: number | null = null;
 
-        if (userId) {
-          purchases = course.purchases || [];
+        // Filter purchases by userId if provided
+        const relevantPurchases = userId
+          ? course.purchases.filter((p) => p.studentProfile.userId === userId)
+          : course.purchases;
 
-          if (purchases.length > 0) {
-            progressPercentage = await getProgress(userId, course.id);
-          }
+        if (userId && relevantPurchases.length > 0) {
+          progressPercentage = await getProgress(userId, course.id);
         }
 
         return {
           ...course,
           progress: progressPercentage,
-          purchases,
+          purchases: relevantPurchases,
         };
       })
     );
 
     return NextResponse.json(coursesWithProgress, { status: 200 });
   } catch (error) {
-    console.error("Failed to fetch courses:", error);
+    console.error("[GET_COURSES_ERROR]", error);
     return NextResponse.json(
       { error: "Failed to fetch courses." },
       { status: 500 }

@@ -1,18 +1,35 @@
+// actions/get-course-access.ts
+"use server";
+
 import { db } from "@/lib/db";
 
-export async function checkCourseAccess(courseSlug: string, userId: string) {
+type CourseAccessResponse = {
+  access: boolean;
+  error?: string;
+};
+
+export async function checkCourseAccess(
+  courseSlug: string,
+  userId: string
+): Promise<CourseAccessResponse> {
   try {
     if (!courseSlug || !userId) {
       return { access: false, error: "Unauthorized" };
     }
 
-    // 1. Validate student profile
+    // 1. Validate student profile and get subscription
     const studentProfile = await db.studentProfile.findUnique({
       where: {
         userId,
       },
-      include: {
-        subscription: true,
+      select: {
+        id: true,
+        subscription: {
+          select: {
+            status: true,
+            expiresAt: true,
+          },
+        },
       },
     });
 
@@ -20,72 +37,60 @@ export async function checkCourseAccess(courseSlug: string, userId: string) {
       return { access: false, error: "Student profile not found" };
     }
 
-    const existingSubscription =
-      studentProfile?.subscription?.status === "ACTIVE";
-
-    // 2. Is the course under subscription and the user has a subscription?
-    //  return { access: true };
+    // 2. Get the course details
     const course = await db.course.findUnique({
       where: {
         slug: courseSlug,
+        isPublished: true,
       },
       select: {
+        id: true,
         isUnderSubscription: true,
       },
     });
 
-    // Check if access has expired
-    const isAccExpired = isAccessExpired(
-      studentProfile.subscription?.expiresAt!
+    if (!course) {
+      return { access: false, error: "Course not found" };
+    }
+
+    // 3. Check subscription access if course is under subscription
+    const hasActiveSubscription =
+      studentProfile.subscription?.status === "ACTIVE";
+    const subscriptionExpired = isAccessExpired(
+      studentProfile.subscription?.expiresAt ?? null
     );
 
-    // if (isAccExpired) {
-    //   return { access: false, error: "Access expired" };
-    // }
-
     if (
-      existingSubscription &&
-      course &&
       course.isUnderSubscription &&
-      !isAccExpired
+      hasActiveSubscription &&
+      !subscriptionExpired
     ) {
       return { access: true };
     }
 
-    //  3. Check if the user has purchased the course
-    const coursePurchase = await db.enrolledStudents.findFirst({
+    // 4. Check if the user has enrolled in the course (purchased)
+    const enrollment = await db.enrolledStudents.findFirst({
       where: {
-        studentProfileId: studentProfile.id, // Use studentProfileId instead of userId
-        course: {
-          slug: courseSlug,
-        },
+        studentProfileId: studentProfile.id,
+        courseId: course.id,
       },
-      include: {
-        course: true,
-        studentProfile: {
-          select: {
-            subscription: {
-              select: {
-                expiresAt: true,
-              },
-            },
-          },
-        },
+      select: {
+        id: true,
       },
     });
 
-    if (!coursePurchase) {
+    if (!enrollment) {
       return { access: false, error: "No purchase found" };
     }
 
     return { access: true };
   } catch (error) {
-    console.error("Error checking course access", error);
+    console.error("[CHECK_COURSE_ACCESS]", error);
     return { access: false, error: "Internal Server Error" };
   }
 }
 
-const isAccessExpired = (expiresAt: Date | null) => {
+const isAccessExpired = (expiresAt: Date | null): boolean => {
   if (!expiresAt) return false;
   const currentDate = new Date();
   return currentDate.getTime() > expiresAt.getTime();

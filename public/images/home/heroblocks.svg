@@ -908,7 +908,7 @@
 </mask>
 <path d="M0.624954 871H0.0786018V871.547H0.624954V871ZM53.075 871V870.454H0.624954V871V871.547H53.075V871ZM0.624954 871H1.17131V818.55H0.624954H0.0786018V871H0.624954Z" fill="#11C7B7" fill-opacity="0.08" mask="url(#path-443-inside-221_20271_21372)"/>
 </g>
-<rect x="787.102" y="-177.727" width="1048.45" height="786.204" transform="rotate(90 787.102 -177.727)" stroke="#11C7B7" stroke-opacity="0.08" stroke-width="0.546354"/>
+<rect x="787.102" y="-177.727" width="1048.45" height="786.204" transform="rotate(90 787.102 -177.727)" stroke="#11C7B7" stroke-opacity="0.08" strokeWidth="0.546354"/>
 <defs>
 <clipPath id="clip0_20271_21372">
 <rect x="787.375" y="-178" width="1049" height="786.75" transform="rotate(90 787.375 -178)" fill="white"/>
