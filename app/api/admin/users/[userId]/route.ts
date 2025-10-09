@@ -433,14 +433,6 @@ export async function DELETE(
       },
     });
 
-    await db.referrerStats.deleteMany({
-      where: { referrerUserId: userId },
-    });
-
-    await db.offerWindow.deleteMany({
-      where: { userId },
-    });
-
     await db.eventRegistration.deleteMany({
       where: { userId },
     });

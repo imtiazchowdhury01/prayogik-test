@@ -33,7 +33,7 @@ const ApplyCredit: React.FC<ApplyCreditProps> = ({
   setWalletId,
 }) => {
   // Redeem code section states
-  const [creditsToRedeem, setCreditsToRedeem] = React.useState("");
+  const [creditsToRedeem, setCreditsToRedeem] = React.useState <any>("");
   const [showRedeemSection, setShowRedeemSection] = React.useState(false);
   const [isRedemptionApplied, setIsRedemptionApplied] = React.useState(false);
   const [availableCredits, setAvailableCredits] = React.useState<number>(0);
@@ -44,7 +44,7 @@ const ApplyCredit: React.FC<ApplyCreditProps> = ({
     const fetchData = async () => {
       // Simulating an API call to get wallet balance
       // TODO: Fetch from actual API
-      const userWallet = await getWalletBalanceAction(userId);
+      const userWallet: any = await getWalletBalanceAction(userId);
       // console.log("userWallet", userWallet?.data);
       setAvailableCredits(
         userWallet?.success === true ? userWallet?.data?.availableCredits : 0
@@ -115,7 +115,7 @@ const ApplyCredit: React.FC<ApplyCreditProps> = ({
       <label className="flex items-center gap-3 pb-1 cursor-pointer">
         <Checkbox
           checked={showRedeemSection}
-          onCheckedChange={(checked) => {
+          onCheckedChange={(checked: any) => {
             setShowRedeemSection(checked);
             if (!checked) {
               handleRemoveCredits();

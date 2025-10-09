@@ -47,8 +47,8 @@ type UserWithProfile = Prisma.UserGetPayload<{
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const paymentID = "lkjdlaksdlkjalksd";
-    const status = "success";
+    const paymentID = searchParams.get("paymentID");
+    const status = searchParams.get("status");
 
     if (!paymentID) {
       return NextResponse.redirect(
@@ -58,21 +58,13 @@ export async function GET(req: NextRequest) {
 
     if (status === "success") {
       // Execute the payment
-      const executePaymentResult = {
-        trxID: "TRX123456",
-        amount: 100.0,
-        currency: "BDT",
-        payerAccount: "017XXXXXXXX",
-        paymentID: paymentID,
-      };
+      const executePaymentResult = await executePayment(bkashConfig, paymentID);
 
-      if (true) {
+      if (executePaymentResult && executePaymentResult.statusCode === "0000") {
         // Payload during the payment saved in DB
-        const payload = {
-          email: "sakib.rahman@example.com",
-          purchaseType: "SUBSCRIPTION",
-          subscriptionPlanId: "68e751454b086a73091f95ff"
-        };
+        const payload = await db.bkashPurchaseHistory.findFirst({
+          where: { bkashPaymentId: executePaymentResult.paymentID },
+        });
 
         if (payload) {
           // Get authenticated user (if any)
