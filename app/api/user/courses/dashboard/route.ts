@@ -247,7 +247,8 @@ async function handlePurchasedCourses(
   // Process courses with progress
   const processedCourses = courses.map((course) => {
     const lessons = course?.lessons || [];
-    const completedLessons = completedLessonsMap.get(course?.id as string) || new Set();
+    const completedLessons =
+      completedLessonsMap.get(course?.id as string) || new Set();
 
     const totalLessons = lessons.length;
     const completedCount = completedLessons.size;
@@ -298,6 +299,7 @@ async function handleSubscriptionCourses(
               expiresAt: true,
               isTrial: true,
               trialSelectedCourseIds: true,
+              trialSelectedCourses: true,
               subscriptionPlan: {
                 select: {
                   isTrial: true,
@@ -356,7 +358,8 @@ async function handleSubscriptionCourses(
   };
 
   // If it's a trial subscription, only show selected courses
-  if (isTrial && trialSelectedCourseIds.length > 0) {
+  // if (isTrial && trialSelectedCourseIds.length > 0) {
+  if (trialSelectedCourseIds.length > 0) {
     courseWhereCondition.id = {
       in: trialSelectedCourseIds,
       // notIn: purchasedCourseIds,

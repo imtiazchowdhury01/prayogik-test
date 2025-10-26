@@ -67,12 +67,14 @@ export const sendEventRegistrationEmail = (
                                   eventDetails?.date
                                     ? new Date(
                                         eventDetails.date
-                                      ).toLocaleDateString("bn-BD", {
+                                      ).toLocaleString("bn-BD", {
+                                        timeZone: "Asia/Dhaka",
                                         year: "numeric",
                                         month: "long",
                                         day: "numeric",
                                         hour: "2-digit",
                                         minute: "2-digit",
+                                        hour12: true,
                                       })
                                     : "তারিখ ও সময় নির্ধারণ করা হয়নি"
                                 }

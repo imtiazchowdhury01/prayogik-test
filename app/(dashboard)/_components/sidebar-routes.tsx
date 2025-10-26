@@ -28,6 +28,7 @@ import {
   LayoutGrid,
   CalendarRange,
   GraduationCap,
+  FileText,
 } from "lucide-react";
 
 import {
@@ -167,6 +168,11 @@ const adminRoute = [
     icon: Layers,
     label: "Course Roadmap",
     href: "/admin/manage/course-roadmap",
+  },
+  {
+    icon: FileText,
+    label: "Report",
+    href: "/admin/report",
   },
   {
     icon: Cog,

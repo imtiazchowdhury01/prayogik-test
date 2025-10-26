@@ -50,7 +50,7 @@ const PrimeActionBanner: React.FC<PrimeActionBannerProps> = ({
         <h2
           className={`sm:text-3xl md:text-4xl text-3xl lg:text-[40px] font-bold text-white mb-2 sm:mb-3 pb-0 leading-tight `}
         >
-          ট্রায়াল অ্যাক্সেস প্ল্যান
+          প্রাইম লাইট অ্যাক্সেস প্ল্যান
         </h2>
         <p className="text-sm sm:text-base md:text-lg font-light text-white max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl px-2 sm:px-4 leading-5 sm:leading-6 md:leading-7 mb-6 sm:mb-7 md:mb-8 mt-1 sm:mt-2">
           প্রায়োগিকের কোর্সের মান যাচাই করুন। মাত্র{" "}

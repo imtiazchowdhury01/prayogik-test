@@ -31,6 +31,7 @@ const ThirdPartyScripts = () => {
             }(window, document,'script','https://connect.facebook.net/en_US/fbevents.js');
             fbq('init', '${fbq.FB_PIXEL_ID}');
             fbq('track', 'PageView');
+            fbq('track', 'CompleteRegistration');
           `,
         }}
       />
@@ -59,6 +60,7 @@ const ThirdPartyScripts = () => {
             gtag('js', new Date());
             gtag('config', '${gtag.GA_TRACKING_ID}', {
               page_path: window.location.pathname,
+              debug_mode: true
             });
           `,
         }}

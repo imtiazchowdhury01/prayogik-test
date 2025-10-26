@@ -126,9 +126,9 @@ export default async function SubscriptionPlans({
   };
 
   return (
-    <div className="container mx-auto px-6 sm:px-8 md:px-8 lg:px-8 xl:px-8 2xl:px-1 max-w-6xl">
+    <div className="container mx-auto px-6 sm:px-8 md:px-8 lg:px-8 xl:px-8 2xl:px-1 max-w-6xl flex items-center justify-center">
       {/* Regular subscription plans */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
         {getSortedPlans(plans)?.map((plan: SubscriptionPlan, index) => (
           <SubscriptionPlanCard
             key={plan.id}

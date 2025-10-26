@@ -7,6 +7,9 @@ async function getSubscriptionDBCall() {
   try {
     // Fetching subscription plans along with subscription discounts
     const subscriptions = await db.subscriptionPlan.findMany({
+      where: {
+        visibility: true,
+      },
       include: {
         subscriptionDiscount: true,
         subscription: true,
@@ -15,6 +18,9 @@ async function getSubscriptionDBCall() {
             subscription: true,
           },
         },
+      },
+      orderBy: {
+        createdAt: "asc",
       },
     });
     // console.log("subscriptions result:", subscriptions);

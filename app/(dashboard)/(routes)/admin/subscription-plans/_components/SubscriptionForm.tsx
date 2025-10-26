@@ -29,6 +29,7 @@ import { useRouter } from "next/navigation";
 import { clientApi } from "@/lib/utils/openai/client";
 import { subscriptionPlan } from "@/services/admin";
 import { getSubscriptionDBCall } from "@/lib/data-access-layer/subscriptions";
+import { Switch } from "@/components/ui/switch";
 
 // More permissive schema - allows form to be valid before type selection
 const subscriptionSchema = z
@@ -55,6 +56,8 @@ const subscriptionSchema = z
       .positive("Trial duration must be > 0")
       .optional(),
     subscriptionDiscountId: z.string().min(1, "Please select a discount"),
+    visibility: z.boolean().optional(),
+    trialCourseLimit: z.coerce.number().optional(),
   })
   .refine(
     (data) => {
@@ -108,6 +111,8 @@ const SubscriptionForm = ({ subscription, onClose, onSave }) => {
         subscription?.subscriptionDiscount?.id ||
         subscription?.subscriptionDiscount_id ||
         defaultDiscountId,
+      visibility: subscription?.visibility ?? false,
+      trialCourseLimit: subscription?.trialCourseLimit ?? -1,
     },
   });
 
@@ -145,21 +150,21 @@ const SubscriptionForm = ({ subscription, onClose, onSave }) => {
   }, [form, isEditing, subscription]);
 
   // check trial available or not
-  useEffect(() => {
-    const checkTrialExist = async () => {
-      // Add function name
-      const subscriptionPlans = await getSubscriptionDBCall();
-      const trialSubscriptionPlan = subscriptionPlans.find(
-        (plan) => plan.isTrial
-      );
-      if (trialSubscriptionPlan) {
-        setIsTrialExist(true);
-      } else {
-        setIsTrialExist(false);
-      }
-    };
-    checkTrialExist(); // Call the function
-  }, []);
+  // useEffect(() => {
+  //   const checkTrialExist = async () => {
+  //     // Add function name
+  //     const subscriptionPlans = await getSubscriptionDBCall();
+  //     const trialSubscriptionPlan = subscriptionPlans.find(
+  //       (plan) => plan.isTrial
+  //     );
+  //     if (trialSubscriptionPlan) {
+  //       setIsTrialExist(true);
+  //     } else {
+  //       setIsTrialExist(false);
+  //     }
+  //   };
+  //   checkTrialExist(); // Call the function
+  // }, []);
 
   // submit handler
   const onSubmit = async (data) => {
@@ -202,6 +207,51 @@ const SubscriptionForm = ({ subscription, onClose, onSave }) => {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <div className="flex gap-2 items-center">
+            {/* Visibility */}
+            <FormField
+              control={form.control}
+              name="visibility"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                  <FormLabel>Visibility: </FormLabel>
+                  <FormControl>
+                    {/* <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  /> */}
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none"></div>
+                </FormItem>
+              )}
+            />
+
+            <span>|</span>
+            {/* Trial checkbox */}
+            {/* {!isTrialExist && subscription?.isTrial && ( */}
+            <FormField
+              control={form.control}
+              name="isTrial"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                  <FormLabel>Trial</FormLabel>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none"></div>
+                </FormItem>
+              )}
+            />
+            {/* )} */}
+          </div>
+
           {/* Name */}
           <FormField
             control={form.control}
@@ -219,26 +269,24 @@ const SubscriptionForm = ({ subscription, onClose, onSave }) => {
             )}
           />
 
-          {/* Trial checkbox */}
-          {!isTrialExist && subscription?.isTrial && (
-            <FormField
-              control={form.control}
-              name="isTrial"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>Enable trial</FormLabel>
-                  </div>
-                </FormItem>
-              )}
-            />
-          )}
+          {/* Course limit */}
+          <FormField
+            control={form.control}
+            name="trialCourseLimit"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Course Limit</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    placeholder="Enter course limit"
+                    {...numberInput(field.value, field.onChange)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           {/* Trial duration */}
           {watchedIsTrial && (
@@ -262,6 +310,7 @@ const SubscriptionForm = ({ subscription, onClose, onSave }) => {
               )}
             />
           )}
+
           {
             <>
               {/* Price */}
@@ -305,33 +354,35 @@ const SubscriptionForm = ({ subscription, onClose, onSave }) => {
               />
 
               {/* Type */}
-              <FormField
-                control={form.control}
-                name="type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      <RequiredFieldStar labelText="Billing Frequency" />
-                    </FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="NONE">None</SelectItem>
-                        <SelectItem value="MONTHLY">Monthly</SelectItem>
-                        <SelectItem value="YEARLY">Yearly</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {!watchedIsTrial && (
+                <FormField
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        <RequiredFieldStar labelText="Billing Frequency" />
+                      </FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="NONE">None</SelectItem>
+                          <SelectItem value="MONTHLY">Monthly</SelectItem>
+                          <SelectItem value="YEARLY">Yearly</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               {/* Duration fields */}
               {watchedType === "MONTHLY" && (

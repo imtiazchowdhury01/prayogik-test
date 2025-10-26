@@ -25,7 +25,7 @@ const UserTrialPlan = ({ trialPlan }: any) => {
           {/* Left Section */}
           <div className="flex items-center sm:items-center gap-2 text-left sm:text-center md:text-left">
             <span className="text-gray-700 text-sm md:text-base leading-snug ">
-              আপনি বর্তমানে প্রাইম ট্রায়াল প্ল্যানে আছেন।
+              আপনি বর্তমানে প্রাইম লাইট প্ল্যানে আছেন।
             </span>
           </div>
         </div>

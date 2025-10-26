@@ -88,7 +88,7 @@ const TrialCheckoutButton = ({
       type: "SUBSCRIPTION",
       items: [
         {
-          planId: trialPlanStaticData.id,
+          planId: plan?.id,
         },
       ],
     } as any);

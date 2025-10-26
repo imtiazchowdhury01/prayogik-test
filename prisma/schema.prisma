@@ -722,7 +722,8 @@ model SubscriptionPlan {
   isDefault              Boolean               @default(false)
   subscriptionDiscountId String                @db.ObjectId
   subscriptionDiscount   SubscriptionDiscount? @relation(fields: [subscriptionDiscountId], references: [id])
-
+  visibility             Boolean               @default(false)
+  
   // one to many realtion to Course model
   courses Course[]
 

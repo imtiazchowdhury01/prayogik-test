@@ -248,7 +248,7 @@ const EventDetailsPage = async ({
       {/* Main content */}
       <div className="relative flex flex-col items-start lg:space-x-12 lg:flex-row app-container">
         {/* left grid-- */}
-        <div className="w-full md:mt-10 mt-8 lg:w-[65%]">
+        <div className="w-full md:mt-6 mt-8 lg:w-[65%]">
           <div
             className={`flex gap-1 items-center flex-row bg-brand-primary-light text-brand text-xs font-semibold px-2 py-1 rounded-md w-fit lg:mt-0`}
           >
@@ -276,7 +276,7 @@ const EventDetailsPage = async ({
         </div>
 
         {/* right grid-- */}
-        <div className="w-full md:mt-8 mb-16 lg:top-20 lg:sticky lg:w-[35%] p-2 space-y-8">
+        <div className="w-full md:mt-8 mb-16 lg:top-20 lg:w-[35%] p-2 space-y-4">
           {/* Date and Time  */}
 
           <div className="bg-brand-primary-light p-6 rounded-[10px]">

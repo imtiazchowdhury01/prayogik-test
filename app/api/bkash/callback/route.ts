@@ -9,7 +9,6 @@ import {
   generateRandomPassword,
   generateUsernameFromEmail,
   getAuthenticatedUser,
-  getEmailResourceDetails,
   handleCertificationCoursePurchase,
   handleEventPurchase,
   handleMembershipPurchase,

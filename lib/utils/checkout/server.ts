@@ -200,23 +200,6 @@ async function handleSingleCoursePurchase(
       );
     }
 
-    // Check if user already has access to this course
-    const courseAccess = await checkCourseAccess(
-      studentProfile.id,
-      payload.courseId
-    );
-    // console.log(courseAccess, "courseAccess");
-    if (courseAccess.hasAccess) {
-      const accessMessage =
-        courseAccess.accessType === "direct_enrollment"
-          ? "previous purchase"
-          : "your active subscription";
-
-      return createErrorResponse(
-        `You already have access to this course through ${accessMessage}`
-      );
-    }
-
     const course = await db.course.findUnique({
       where: { id: payload.courseId },
       include: {
@@ -471,17 +454,6 @@ async function handleOfferPurchase(
       studentProfile.id,
       payload.courseId
     );
-
-    if (courseAccess.hasAccess) {
-      const accessMessage =
-        courseAccess.accessType === "direct_enrollment"
-          ? "previous purchase"
-          : "your active subscription";
-
-      return createErrorResponse(
-        `You already have access to this course through ${accessMessage}`
-      );
-    }
 
     // if (courseAccess.activeSubscription) {
     //   return createErrorResponse(

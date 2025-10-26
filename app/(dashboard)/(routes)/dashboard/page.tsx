@@ -21,10 +21,12 @@ export default function Dashboard() {
         <Suspense fallback={null}>
           <ProgressAndCompletedSection />
         </Suspense>
+
         {/* summary cards */}
         <Suspense fallback={<DashboardSummarySkeleton />}>
           <SummaryCardsWrapper />
         </Suspense>
+
         {/* courses tab - renders immediately */}
         <CoursesTabWrapper />
       </div>

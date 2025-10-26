@@ -3,19 +3,7 @@ import { Check } from "lucide-react";
 import { convertNumberToBangla } from "@/lib/convertNumberToBangla";
 import PurchasePlanButton from "./PurchasePlanButton";
 import HeaderBadge from "./HeaderBadge";
-
-interface SubscriptionPlan {
-  id: string;
-  name: string;
-  regularPrice: number;
-  offerPrice?: number;
-  durationInYears: number;
-  isDefault: boolean;
-  isTrial: boolean;
-  trialDurationInDays?: number;
-  type?: "YEARLY" | "MONTHLY" | "NONE";
-  durationInMonths?: number;
-}
+import { SubscriptionPlan } from "@prisma/client";
 
 interface SubscriptionPlanCardProps {
   plan: SubscriptionPlan;
@@ -32,9 +20,12 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
   index,
   courseLimit,
 }) => {
-  const isTrialPlan = plan?.type === "NONE";
+  // const isTrialPlan = plan?.type === "NONE";
+  const isTrialPlan = plan?.trialCourseLimit > 0;
   const isPopularPlan = plan.isDefault && !isTrialPlan;
   const hasOffer = plan?.offerPrice > 0;
+  const discountPercentage = plan?.subscriptionDiscount?.discountPercentage;
+  courseLimit = plan?.trialCourseLimit || courseLimit;
 
   // Price display component
   const PriceDisplay = () => {
@@ -78,6 +69,12 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
 
   const planNameTextColor = isTrialPlan ? "text-white" : "text-gray-600";
 
+  const daysOrYears = isTrialPlan
+    ? plan.trialDurationInDays > 1
+      ? `${convertNumberToBangla(plan.trialDurationInDays)} দিন`
+      : `${convertNumberToBangla(plan.durationInYears)} বছর`
+    : `${convertNumberToBangla(plan.durationInYears)} বছর`;
+
   return (
     <div className="relative">
       <HeaderBadge isTrialPlan={isTrialPlan} isPopularPlan={isPopularPlan} />
@@ -86,8 +83,8 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
         {/* Header */}
         <div className={`p-6 ${headerBgClass}`}>
           <div className="mb-6">
-            <div className="text-xs mb-2 font-medium">
-              <span>প্রাইম</span>
+            <div className="text-xl mb-2 font-medium">
+              <span>{plan.name}</span>
               {hasOffer && (
                 <span className="ml-2 text-[#FF6709] text-xs bg-[#FFF5E6] rounded w-fit px-1.5 py-0.5">
                   অফার চলছে
@@ -97,9 +94,9 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
 
             <PriceDisplay />
 
-            <div className={`${planNameTextColor} text-base font-normal`}>
+            {/* <div className={`${planNameTextColor} text-base font-normal`}>
               {plan.name}
-            </div>
+            </div> */}
           </div>
 
           <PurchasePlanButton
@@ -123,24 +120,22 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
           </div>
 
           <div className="space-y-3">
-            {isTrialPlan && (
+            {courseLimit > 0 && (
               <FeatureItem>
                 যে কোন {convertNumberToBangla(courseLimit)}টি কোর্স
               </FeatureItem>
             )}
 
-            <FeatureItem>
-              সময়কাল{" "}
-              {isTrialPlan
-                ? `${convertNumberToBangla(plan.trialDurationInDays)} দিন`
-                : `${convertNumberToBangla(plan.durationInYears)} বছর`}
-            </FeatureItem>
+            <FeatureItem>সময়কাল {daysOrYears}</FeatureItem>
 
-            {!isTrialPlan && (
-              <FeatureItem>সব স্ট্যান্ডার্ড কোর্সে ৫০% ডিসকাউন্ট</FeatureItem>
+            {!isTrialPlan && discountPercentage > 0 && (
+              <FeatureItem>
+                সব স্ট্যান্ডার্ড কোর্সে{" "}
+                {convertNumberToBangla(discountPercentage)}% ডিসকাউন্ট
+              </FeatureItem>
             )}
 
-            {isTrialPlan ? null : ( // <FeatureItem>ফ্রি গিফট (৳৪৯৯ ভ্যালু)</FeatureItem>
+            {courseLimit <= 0 && (
               <FeatureItem>সব প্রাইম কোর্স ফ্রি</FeatureItem>
             )}
           </div>

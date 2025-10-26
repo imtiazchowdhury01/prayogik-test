@@ -60,12 +60,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if it's a trial subscription
-    if (!subscription.subscriptionPlan?.isTrial) {
-      return NextResponse.json(
-        { success: false, message: "এটি একটি ট্রায়াল সাবস্ক্রিপশন নয়" },
-        { status: 400 }
-      );
-    }
+    // if (!subscription.subscriptionPlan?.isTrial) {
+    //   return NextResponse.json(
+    //     { success: false, message: "এটি একটি ট্রায়াল সাবস্ক্রিপশন নয়" },
+    //     { status: 400 }
+    //   );
+    // }
 
     // Get existing selected course IDs
     const existingCourseIds = subscription.trialSelectedCourseIds || [];

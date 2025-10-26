@@ -46,6 +46,8 @@ const convertData = (data: (SubscriptionPlan & SubscriptionDiscount)[]) => {
       isTrial: item.isTrial || false,
       trialDurationInDays: item.trialDurationInDays || 30,
       regularPrice: item.regularPrice || 0,
+      visibility: item.visibility || false,
+      trialCourseLimit: item.trialCourseLimit || 0,
     };
   });
 };

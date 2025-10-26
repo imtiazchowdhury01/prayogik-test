@@ -121,7 +121,7 @@ export default function ClientHeader({ navigation }: ClientHeaderProps) {
                   variant={"primary"}
                   className="bg-brand hover:bg-teal-700 text-white block rounded-md transition-all duration-300 shadow-sm font-medium text-sm"
                 >
-                  <span>প্রাইম ট্রায়াল</span>
+                  <span>প্রাইম লাইট</span>
                 </TrialCheckoutButton>
               </>
             )}

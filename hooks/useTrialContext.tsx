@@ -128,9 +128,16 @@ export function TrialProvider({ children }: TrialProviderProps) {
   }, []);
 
   // Determine if trial modal should be open
+  // const shouldShowModal = Boolean(
+  //   subscription &&
+  //     subscription?.subscriptionPlan?.isTrial &&
+  //     subscription.status === "ACTIVE" &&
+  //     subscription.trialSelectedCourseIds.length <
+  //       subscription?.subscriptionPlan?.trialCourseLimit
+  // );
   const shouldShowModal = Boolean(
     subscription &&
-      subscription?.subscriptionPlan?.isTrial &&
+      subscription?.subscriptionPlan?.trialCourseLimit > 0 &&
       subscription.status === "ACTIVE" &&
       subscription.trialSelectedCourseIds.length <
         subscription?.subscriptionPlan?.trialCourseLimit

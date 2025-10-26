@@ -23,7 +23,9 @@ export const metadata: Metadata = {
 
 const page = async () => {
   const plans: SubscriptionPlan[] = await getSubscriptionDBCall();
-  const trialPlan = plans?.find((plan: any) => plan.isTrial);
+  const trialPlan = plans?.find(
+    (plan: SubscriptionPlan) => plan.trialCourseLimit > 0
+  );
   const courseLimit = trialPlan?.trialCourseLimit ?? 0;
 
   // const trialPlanDuration = trialPlan?.trialDurationInDays
@@ -38,13 +40,32 @@ const page = async () => {
     if (days % 30 === 0) {
       return `${days / 30} মাসের`;
     }
+
+    if (days % 365 === 0) {
+      return `${days / 365} বছরের`;
+    }
+
     // Otherwise → show days
     return `${days} দিনের`;
   };
 
-  const trialPlanDuration = formatTrialDuration(
-    trialPlan?.trialDurationInDays ?? undefined
-  );
+  let trialPlanDuration = null;
+
+  switch (trialPlan?.type) {
+    case "YEARLY":
+      trialPlanDuration = trialPlan?.durationInYears + " বছরের";
+      break;
+
+    case "MONTHLY":
+      trialPlanDuration = trialPlan?.durationInMonths + " মাসের";
+      break;
+
+    default:
+      trialPlanDuration = formatTrialDuration(
+        trialPlan?.trialDurationInDays ?? undefined
+      );
+      break;
+  }
 
   return (
     <div className="min-h-screen space-y-24">

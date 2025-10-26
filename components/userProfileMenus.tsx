@@ -137,7 +137,7 @@ export default function UserProfileMenus({ session, pathName }: any) {
                       "select-text"
                     )}
                   >
-                    {`প্রাইম - ${subscriptionName} `}
+                    {`${subscriptionName} `}
                   </p>
                 </div>
 

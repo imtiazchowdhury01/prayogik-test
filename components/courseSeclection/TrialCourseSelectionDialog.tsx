@@ -72,9 +72,7 @@ export function TrialCourseSelectionDialog() {
         {/* Course Selection Content */}
         <div className="flex-1 overflow-hidden px-6 pb-6">
           <CourseSelection
-            maxSelections={
-              subscription?.subscriptionPlan?.trialCourseLimit
-            }
+            maxSelections={subscription?.subscriptionPlan?.trialCourseLimit}
             previouslySelectedIds={subscription?.trialSelectedCourseIds || []}
             onSubmit={handleSubmit}
             onClose={closeTrialModal}
@@ -85,10 +83,10 @@ export function TrialCourseSelectionDialog() {
             enableMobileToggle={true}
             // Optional: Custom texts for trial context
             texts={{
-              title: "ট্রায়াল কোর্স নির্বাচন করুন",
+              title: "কোর্স নির্বাচন করুন",
               subtitle:
-                "আপনার ট্রায়ালের জন্য সর্বোচ্চ {maxSelections}টি কোর্স বেছে নিন। নির্বাচিত: {selectedCount}/{maxSelections}",
-              submitButtonText: "ট্রায়াল শুরু করুন",
+                "সর্বোচ্চ {maxSelections}টি কোর্স বেছে নিন। নির্বাচিত: {selectedCount}/{maxSelections}",
+              submitButtonText: "নির্বাচন সম্পন্ন করুন",
             }}
           />
         </div>

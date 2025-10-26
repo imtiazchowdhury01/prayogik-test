@@ -253,7 +253,8 @@ const EventPreviewDetailsPage = async ({
         </div>
 
         {/* right grid-- */}
-        <div className="w-full md:mt-8 mb-16 lg:top-20 lg:sticky lg:w-[35%] p-2 space-y-8">
+        {/* <* className="w-full md:mt-8 mb-16 lg:top-20 lg:sticky lg:w-[35%] p-2 space-y-8"><*/}
+        <div className="w-full md:mt-8 mb-16 lg:top-20 lg:w-[35%] p-2 space-y-8">
           {/* Date and Time  */}
           <Badge>Preview Mode</Badge>
           <div className="bg-brand-primary-light p-6 rounded-[10px]">
@@ -319,7 +320,7 @@ const EventPreviewDetailsPage = async ({
             )}
           </div>
           {/* form Part */}
-          <div className="bg-brand-primary-light p-6 rounded-[10px]">
+          <div  className="bg-brand-primary-light p-6 rounded-[10px]">
             <EventRegisterForm
               eventId={event?.id}
               eventType={event.type}

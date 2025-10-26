@@ -257,15 +257,32 @@ export function CoursesTab({
         className="w-full"
       >
         {/* Fixed TabsList */}
-        <div className="w-full mb-6 sticky top-0 z-10 pb-2">
-          <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 bg-transparent max-w-full sm:max-w-2xl border-b rounded-none p-0 mb-12 lg:mb-0">
+        <div className="w-full mb-6 z-10 pb-2">
+          <TabsList className="bg-transparent max-w-full sm:max-w-2xl border-b rounded-none p-0 mb-12 lg:mb-0 ">
             {tabItems.map((item, index) => (
               <TabsTrigger
                 key={index}
                 value={item.value}
-                className="flex-1 min-w-[120px] text-center transition-all duration-200 data-[state=active]:text-primary-700 data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-b-brand py-2 px-3 text-md text-gray-600 hover:text-gray-900 font-medium rounded-none"
+                className="text-center transition-all duration-200 data-[state=active]:text-primary-700 data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-b-brand py-2 px-3 text-md text-gray-600 hover:text-gray-900 font-medium rounded-none"
               >
-                {item.label}
+                <span>{item.label}</span>
+
+                {/* <span>
+                  {item.value === "purchased" && (
+                    <span>({purchasedCourses.length})</span>
+                  )}
+
+                  {item.value === "subscription" && (
+                    <span>({subscriptionCourses.length})</span>
+                  )}
+                  {item.value === "certificate" && (
+                    <span>({certificateCourses.length})</span>
+                  )}
+
+                  {item.value === "event" && (
+                    <span>({registeredEvents.length})</span>
+                  )}
+                </span> */}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -277,11 +294,11 @@ export function CoursesTab({
             <TabContentSkeleton />
           ) : (
             <div className="space-y-6">
-              {purchasedCourses.length > 0 && (
+              {/* {purchasedCourses.length > 0 && (
                 <h2 className="text-lg sm:text-xl lg:text-xl font-semibold text-gray-600">
                   Your Purchased Courses ({getTotalCount(purchasedData)})
                 </h2>
-              )}
+              )} */}
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6">
                 {purchasedCourses.map((item: any, index: number) => (
@@ -343,9 +360,9 @@ export function CoursesTab({
                 <>
                   {subscriptionCourses.length > 0 && (
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                      <h2 className="text-lg sm:text-xl lg:text-xl font-semibold text-gray-600">
+                      {/* <h2 className="text-lg sm:text-xl lg:text-xl font-semibold text-gray-600">
                         Prime Courses ({getTotalCount(subscriptionData)})
-                      </h2>
+                      </h2> */}
                       <div className="flex items-center space-x-2 text-xs sm:text-sm text-teal-600 bg-teal-50 px-3 py-1.5 rounded-full">
                         <div className="w-2 h-2 bg-teal-500 rounded-full"></div>
                         <span className="font-medium">Active Subscription</span>
@@ -418,12 +435,12 @@ export function CoursesTab({
             <TabContentSkeleton />
           ) : (
             <div className="space-y-6">
-              {certificateCourses.length > 0 && (
+              {/* {certificateCourses.length > 0 && (
                 <h2 className="text-lg sm:text-xl lg:text-xl font-semibold text-gray-600">
                   Your Purchased Certificate Courses (
                   {getTotalCount(certificateData)})
                 </h2>
-              )}
+              )} */}
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6">
                 {certificateCourses.map((item: any, index: number) => (
@@ -475,11 +492,11 @@ export function CoursesTab({
             <TabContentSkeleton />
           ) : (
             <div className="space-y-6">
-              {registeredEvents.length > 0 && (
+              {/* {registeredEvents.length > 0 && (
                 <h2 className="text-lg sm:text-xl lg:text-xl font-semibold text-gray-600">
                   Your Registered Events ({getTotalCount(eventsData)})
                 </h2>
-              )}
+              )} */}
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6">
                 {registeredEvents.map((item: any, index: number) => (

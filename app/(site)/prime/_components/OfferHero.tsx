@@ -60,7 +60,7 @@ const OfferHero = ({
           }
         >
           <span>
-            ট্রায়াল এক্সেস - মাত্র{" "}
+            {trialPlan?.name} এক্সেস - মাত্র{" "}
             {convertNumberToBangla(trialPlan?.regularPrice)} টাকা
           </span>
         </TrialCheckoutButton>

@@ -54,7 +54,10 @@ const SubscriptionMessageContent = () => {
           : ""
       }। সকল কোর্সের ফ্রি এক্সেস পেতে অনুগ্রহ করে সাবস্ক্রাইব করুন।`;
     }
-    return `আপনার ট্রায়াল সাবস্ক্রিপশন চলছে। আপনার সাবস্ক্রিপশন আর ${convertNumberToBangla(
+
+    return `আপনার ${
+      subscription?.subscriptionPlan?.name
+    } সাবস্ক্রিপশন চলছে। আপনার সাবস্ক্রিপশন আর ${convertNumberToBangla(
       remainingDays
     )} দিন বাকি রয়েছে।`;
   };

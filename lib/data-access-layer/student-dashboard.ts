@@ -141,7 +141,7 @@ export const getDashboardMetricsWithTrendsDBCall = cache(
         // const purchasedCourseIds = enrolledCourseIds.map((item) => item.courseId);
 
         if (
-          activeSubscription.subscriptionPlan?.isTrial &&
+          // activeSubscription.subscriptionPlan?.isTrial &&
           activeSubscription.trialSelectedCourseIds?.length > 0
         ) {
           // For trial subscriptions, count only selected courses that aren't already purchased
@@ -183,9 +183,12 @@ export const getDashboardMetricsWithTrendsDBCall = cache(
         subscriptionInfo: {
           hasActiveSubscription: !!activeSubscription,
           isTrial: activeSubscription?.isTrial || false,
-          trialCoursesSelected: activeSubscription?.isTrial
-            ? activeSubscription.trialSelectedCourseIds?.length || 0
-            : 0,
+          // trialCoursesSelected: activeSubscription?.isTrial
+          trialCoursesSelected:
+            activeSubscription &&
+            activeSubscription.trialSelectedCourseIds?.length > 0
+              ? activeSubscription.trialSelectedCourseIds?.length || 0
+              : 0,
         },
       };
     } catch (error) {

@@ -311,7 +311,7 @@ const addEventAttendee = async (
         : `সফলভাবে রেজিস্ট্রেশন সম্পন্ন হয়েছে!`,
       data: responseData,
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Event registration error:", error);
 
     // Handle specific Prisma errors
@@ -325,7 +325,7 @@ const addEventAttendee = async (
         if (error.message.includes("username")) {
           return {
             success: false,
-            message: "এই ইউসারনেম ইতিমধ্যে ব্যবহৃত হয়েছে",
+            message: "এই ইউজারনেম ইতিমধ্যে ব্যবহৃত হয়েছে",
             error: "Username already exists",
           };
         }
@@ -340,7 +340,7 @@ const addEventAttendee = async (
       if (error.message.includes("P2003")) {
         return {
           success: false,
-          message: "অবৈধ ইভেন্ট বা ইউসার তথ্য",
+          message: "ইনভ্যালিড ইভেন্ট বা ইউজার তথ্য",
           error: "Invalid reference",
         };
       }
@@ -356,6 +356,16 @@ const addEventAttendee = async (
           error: "Database connection error",
         };
       }
+    }
+
+    if (
+      error?.message?.includes("https://support.google.com/mail") ||
+      error?.message?.includes("smtp")
+    ) {
+      return {
+        success: true,
+        message: "সফলভাবে রেজিস্ট্রেশন সম্পন্ন হয়েছে!",
+      };
     }
 
     return {
