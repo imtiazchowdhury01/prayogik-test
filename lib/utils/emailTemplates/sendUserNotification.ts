@@ -54,9 +54,7 @@ export const sendUserNotification = (
       "আপনার পেমেন্ট সফলভাবে সম্পন্ন হয়েছে! আপনার সাবস্ক্রিপশন সক্রিয় করা হয়েছে।";
   }
 
-
-
-    function getConsistentBangladeshTime(eventDate: Date | string) {
+  function getConsistentBangladeshTime(eventDate: Date | string) {
     const dateObj =
       typeof eventDate === "string" ? new Date(eventDate) : eventDate;
     if (!dateObj) {
@@ -123,10 +121,9 @@ export const sendUserNotification = (
     return { timeString, dateString };
   }
 
-  const { timeString, dateString } = getConsistentBangladeshTime(event?.date);
-
-
-
+  const { timeString, dateString } = getConsistentBangladeshTime(
+    eventInfo?.date
+  );
 
   // Block 1: Account Information (for new users)
   const accountInformationBlock = isNewUser
@@ -226,7 +223,7 @@ export const sendUserNotification = (
           <td style="padding:12px 0;font-size:15px;color:#2d3748;font-family:'Open Sans', Arial,sans-serif;font-weight:500;">
             ${
               eventInfo?.date
-                ? `${dateString}, ${time}`
+                ? `${dateString}, ${timeString}`
                 : "তারিখ ও সময় নির্ধারণ করা হয়নি"
             }
           </td>
