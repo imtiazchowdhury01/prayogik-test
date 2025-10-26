@@ -54,6 +54,80 @@ export const sendUserNotification = (
       "আপনার পেমেন্ট সফলভাবে সম্পন্ন হয়েছে! আপনার সাবস্ক্রিপশন সক্রিয় করা হয়েছে।";
   }
 
+
+
+    function getConsistentBangladeshTime(eventDate: Date | string) {
+    const dateObj =
+      typeof eventDate === "string" ? new Date(eventDate) : eventDate;
+    if (!dateObj) {
+      return "Invalid date"; // or any fallback string
+    }
+    // Create date formatter for Bangladesh timezone
+    const timeFormatter = new Intl.DateTimeFormat("bn-BD", {
+      timeZone: "Asia/Dhaka",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: false,
+    });
+
+    const dateFormatter = new Intl.DateTimeFormat("bn-BD", {
+      timeZone: "Asia/Dhaka",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      weekday: "long",
+    });
+
+    // Get the hour in Bangladesh timezone for period determination
+    const bangladeshHour = parseInt(
+      dateObj?.toLocaleString("en-US", {
+        timeZone: "Asia/Dhaka",
+        hour: "2-digit",
+        hour12: false,
+      })
+    );
+
+    const bangladeshMinute = parseInt(
+      dateObj.toLocaleString("en-US", {
+        timeZone: "Asia/Dhaka",
+        minute: "2-digit",
+      })
+    );
+
+    let period = "";
+    if (bangladeshHour >= 4 && bangladeshHour < 12) {
+      period = "সকাল";
+    } else if (bangladeshHour >= 12 && bangladeshHour < 16) {
+      period = "দুপুর";
+    } else if (bangladeshHour >= 16 && bangladeshHour < 19) {
+      period = "বিকেল";
+    } else {
+      period = "রাত";
+    }
+
+    // Convert to 12-hour format
+    let displayHour = bangladeshHour % 12;
+    if (displayHour === 0) displayHour = 12;
+
+    // Format numbers in Bangla
+    const numberFormatter = new Intl.NumberFormat("bn-BD");
+    const hourText = numberFormatter.format(displayHour);
+    const minuteText =
+      bangladeshMinute > 0
+        ? `:${numberFormatter.format(bangladeshMinute).padStart(2, "০")}`
+        : "";
+
+    const timeString = `${period} ${hourText}${minuteText} টা`;
+    const dateString = dateFormatter.format(dateObj);
+
+    return { timeString, dateString };
+  }
+
+  const { timeString, dateString } = getConsistentBangladeshTime(event?.date);
+
+
+
+
   // Block 1: Account Information (for new users)
   const accountInformationBlock = isNewUser
     ? `
@@ -152,13 +226,7 @@ export const sendUserNotification = (
           <td style="padding:12px 0;font-size:15px;color:#2d3748;font-family:'Open Sans', Arial,sans-serif;font-weight:500;">
             ${
               eventInfo?.date
-                ? new Date(eventInfo.date).toLocaleDateString("bn-BD", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
+                ? `${dateString}, ${time}`
                 : "তারিখ ও সময় নির্ধারণ করা হয়নি"
             }
           </td>
