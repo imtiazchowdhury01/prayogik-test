@@ -1,5 +1,5 @@
 // /api/events/event-notification/route.ts
-import { paymentReminderTemplate } from "@/lib/utils/emailTemplates/payment-reminder-template";
+import { EventreminderToAttendeeTemplate } from "@/lib/utils/emailTemplates/payment-reminder-template";
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
       const isPaidEvent = eventDetails.type === "PAID";
 
       // Generate appropriate email template based on event type
-      const emailHtml = paymentReminderTemplate(
+      const emailHtml = EventreminderToAttendeeTemplate(
         attendee.user?.name || "অংশগ্রহণকারী",
         eventDetails,
         baseUrl

@@ -1,4 +1,6 @@
-export const paymentReminderTemplate = (
+import { getConsistentBangladeshTime } from "../stringUtils";
+
+export const EventreminderToAttendeeTemplate = (
   recipientName: string,
   eventDetails: {
     title: string;
@@ -15,6 +17,17 @@ export const paymentReminderTemplate = (
 ) => {
   const isFreeEvent = eventDetails.type === "FREE";
   const isPaidEvent = eventDetails.type === "PAID";
+  let eventDate = "";
+  let eventTime = "";
+
+  if (eventDetails?.date) {
+    const { timeString, dateString }: any = getConsistentBangladeshTime(
+      eventDetails?.date
+    );
+    eventDate = dateString;
+    eventTime = eventTime;
+  }
+
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
   <html dir="ltr" lang="en">
       <head>
@@ -75,16 +88,7 @@ export const paymentReminderTemplate = (
                         তারিখ ও সময়:
                       </td>
                       <td style="padding:12px 0;font-size:15px;color:#2d3748;font-family:'Open Sans', Arial,sans-serif;font-weight:500;">
-                        ${new Date(eventDetails.date).toLocaleDateString(
-                          "bn-BD",
-                          {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          }
-                        )}
+                        ${`${eventDate}, ${eventTime}`}
                       </td>
                     </tr>
                     `
