@@ -24,8 +24,8 @@ interface ChartsSectionProps {
 export function ChartsSection({ data, topProducts }: ChartsSectionProps) {
   return (
     <Suspense fallback={<ChartsSkeleton />}>
-      <div className="flex gap-4">
-        <Card className="border-border/50 w-8/12">
+      <div className="flex gap-4 xl:flex-row flex-col">
+        <Card className="border-border/50 w-full xl:w-8/12">
           <CardHeader>
             <CardTitle className="text-lg">Daily Overview</CardTitle>
             <CardDescription>
@@ -37,7 +37,7 @@ export function ChartsSection({ data, topProducts }: ChartsSectionProps) {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-sm w-4/12">
+        <Card className="border-0 shadow-sm w-full xl:w-4/12">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">Top Selling Products</CardTitle>
           </CardHeader>

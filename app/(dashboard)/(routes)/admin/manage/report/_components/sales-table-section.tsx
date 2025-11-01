@@ -128,7 +128,7 @@ export function SalesTableSection({
             size="sm"
             className="gap-2 bg-transparent"
           >
-            <Download className="h-4 w-4" />
+            <Download className="h-4 w-4 " />
             {selectedRows.length > 0
               ? `Export Selected (${selectedRows.length})`
               : "Export All"}

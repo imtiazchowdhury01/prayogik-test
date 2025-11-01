@@ -51,7 +51,7 @@ export default function SearchPage() {
   }
 
   const { pagination } = searchResult;
-  // console.log(allCourses, "all courses");
+  console.log(allCourses, "all courses");
   return (
     <div className="app-container mx-auto px-4 py-8">
       <div className="mb-8">
@@ -68,7 +68,12 @@ export default function SearchPage() {
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
             {allCourses.map((course) => (
-              <CourseCard key={course.id} course={course} variant="light" />
+              <CourseCard
+                key={course.id}
+                course={course}
+                variant="light"
+                instructor={course?.teacherProfile?.user?.name}
+              />
             ))}
           </div>
           <LoadMoreButton

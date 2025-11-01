@@ -169,23 +169,18 @@ const adminRoute = [
     label: "Course Roadmap",
     href: "/admin/manage/course-roadmap",
   },
-  {
-    icon: FileText,
-    label: "Report",
-    href: "/admin/report",
-  },
-  {
-    icon: Cog,
-    label: "Manage",
-    isParent: true,
-    subroutes: [
-      {
-        icon: SquareEqual,
-        label: "Monthly Earnings",
-        href: "/admin/manage/monthly-earnings",
-      },
-    ],
-  },
+  // {
+  //   icon: Cog,
+  //   label: "Manage",
+  //   isParent: true,
+  //   subroutes: [
+  //     {
+  //       icon: SquareEqual,
+  //       label: "Monthly Earnings",
+  //       href: "/admin/manage/monthly-earnings",
+  //     },
+  //   ],
+  // },
   // {
   //   icon: Megaphone,
   //   label: "Marketing",
@@ -204,6 +199,26 @@ const adminRoute = [
   //   ],
   // },
 ];
+// SuperAdmin route - only has access to Report
+const superAdminRoute = [
+  {
+    icon: Cog,
+    label: "Manage",
+    isParent: true,
+    subroutes: [
+      {
+        icon: SquareEqual,
+        label: "Monthly Earnings",
+        href: "/admin/manage/monthly-earnings",
+      },
+      {
+        icon: FileText,
+        label: "Sales Report",
+        href: "/admin/manage/report",
+      },
+    ],
+  },
+];
 
 export const SidebarRoutes = () => {
   const pathname = usePathname();
@@ -213,6 +228,7 @@ export const SidebarRoutes = () => {
   // Determine the user routes based on roles
   const isTeacherPage = pathname?.includes("/teacher");
   const isAdminPage = pathname?.includes("/admin");
+  const isSuperAdmin = session?.user?.info?.isSuperAdmin;
 
   const routes = isAdminPage
     ? adminRoute
@@ -312,6 +328,69 @@ export const SidebarRoutes = () => {
           )}
         </div>
       ))}
+
+      {/* ONLY FOR SUPER ADMIN */}
+      {isAdminPage &&
+        isSuperAdmin &&
+        superAdminRoute.map((route, index) => (
+          <div key={index} className="mb-3">
+            {/* Check for subroutes to render the dropdown */}
+            {route.subroutes ? (
+              <Collapsible
+                key={route.label}
+                open={openItems[route.label]}
+                onOpenChange={(isOpen) => handleOpenChange(route.label, isOpen)}
+              >
+                <CollapsibleTrigger className="w-full flex items-center gap-x-2 pl-6 py-2 text-sm text-slate-500 hover:text-slate-600 justify-between">
+                  <div className="flex items-center gap-x-2">
+                    <route.icon className="text-slate-500" size="20" />
+                    <span
+                      className={`${route.isParent ? "text-base" : "text-sm"} ${
+                        isSubrouteActive(route.subroutes)
+                          ? "font-medium text-slate-700"
+                          : ""
+                      }`}
+                    >
+                      {route.label}
+                    </span>
+                  </div>
+                  <div className="ms-2 size-5 mr-2 overflow-hidden transition-transform duration-300">
+                    <ChevronDown
+                      className={`transform transition-transform duration-300 ease-in-out ${
+                        openItems[route.label] ||
+                        isSubrouteActive(route.subroutes)
+                          ? "rotate-0"
+                          : "-rotate-90"
+                      }`}
+                      size={20}
+                    />
+                  </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="pl-4">
+                    {route.subroutes.map((subroute, subIndex) => (
+                      <SidebarSubitem
+                        key={subIndex}
+                        icon={subroute.icon}
+                        label={subroute.label}
+                        href={subroute.href}
+                        active={isRouteActive(subroute.href)}
+                      />
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            ) : (
+              <SidebarItem
+                key={route.href}
+                icon={route.icon}
+                label={route.label}
+                href={route.href}
+                active={isRouteActive(route.href)}
+              />
+            )}
+          </div>
+        ))}
     </div>
   );
 };

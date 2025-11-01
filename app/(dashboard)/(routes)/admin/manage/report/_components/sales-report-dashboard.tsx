@@ -118,10 +118,10 @@ export function SalesReportDashboard({ salesData }: { salesData: any[] }) {
     <TooltipProvider>
       <div className="space-y-8 py-3">
         {/* Header with Global Date Filter */}
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex lg:flex-row flex-col items-start justify-between gap-4">
           <div className="space-y-2">
             <h1 className="text-3xl font-bold tracking-tight">Report</h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground sm:text-sm md:text-base text-sm">
              Monitor sales performance across all products over the last 30 days.
             </p>
           </div>

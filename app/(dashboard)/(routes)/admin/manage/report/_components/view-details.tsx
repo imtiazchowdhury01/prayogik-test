@@ -25,6 +25,7 @@ import {
   CheckCircle2,
   Clock,
   XCircle,
+  Phone,
 } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -34,9 +35,11 @@ interface ViewDetailsDrawerProps {
   onOpenChange: (open: boolean) => void;
   data: {
     date: string;
+    time: string;
     userName: string;
     email: string;
     itemName: string;
+    phoneNumber: string;
     type: string;
     amount: number;
     status: string;
@@ -122,7 +125,7 @@ export function ViewDetailsDrawer({
                 <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
                   <User className="h-5 w-5 text-blue-600 dark:text-blue-300" />
                 </div>
-                <h3 className="font-semibold text-lg">Customer Information</h3>
+                <h3 className="font-semibold text-lg">Student Information</h3>
               </div>
               <Separator />
               <div className="space-y-4">
@@ -154,6 +157,30 @@ export function ViewDetailsDrawer({
                         size="icon"
                         className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={() => copyToClipboard(data.email)}
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                <Separator className="opacity-50" />
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="col-span-1">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                      <Phone className="h-3 w-3 -mt-1" />
+                      Phone
+                    </p>
+                  </div>
+                  <div className="col-span-2">
+                    <div className="flex items-center justify-between group">
+                      <p className="font-medium text-sm break-all">
+                        {data.phoneNumber}
+                      </p>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => copyToClipboard(data.phoneNumber)}
                       >
                         <Copy className="h-3.5 w-3.5" />
                       </Button>
@@ -214,11 +241,8 @@ export function ViewDetailsDrawer({
                       })}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(data.date).toLocaleTimeString("en-US", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
+  {data.time}
+</p>
                   </div>
                 </div>
               </div>

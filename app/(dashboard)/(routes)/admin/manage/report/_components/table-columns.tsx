@@ -45,10 +45,12 @@ export const createColumns = (
   },
   {
     accessorKey: "date",
-    header: "Date & Time",
+     header: () => (
+    <div className="whitespace-nowrap">Date & Time</div>
+  ),
     cell: ({ row }) => {
       return (
-        <div className="flex flex-col">
+        <div className="flex flex-col w-full text-nowrap">
           <span className="font-medium">{row.getValue("date")}</span>
           <span className="text-xs text-muted-foreground">
             {row.original.time}
@@ -93,7 +95,7 @@ export const createColumns = (
       );
     },
     cell: ({ row }) => (
-      <div className="text-sm">{row.getValue("itemName")}</div>
+      <div className="text-sm text-nowrap">{row.getValue("itemName")}</div>
     ),
   },
   {

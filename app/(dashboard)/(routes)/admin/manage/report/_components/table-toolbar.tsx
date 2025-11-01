@@ -52,7 +52,7 @@ export function TableToolbar<TData>({
   return (
     <div className="flex flex-wrap justify-between gap-2">
       {/* Search */}
-      <div className="relative w-80">
+      <div className="relative md:w-80 w-full">
         <div className="absolute z-10 left-3 top-1/2 -translate-y-1/2 pointer-events-none">
           <Search className="h-4 w-4 text-muted-foreground" />
         </div>

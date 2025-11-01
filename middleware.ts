@@ -30,8 +30,18 @@ export default withAuth(
     }
 
     // Admin route protection
-    if (path.startsWith("/admin") && !user?.info?.isAdmin) {
+    if (
+      path.startsWith("/admin") &&
+      !user?.info?.isAdmin &&
+      !user?.info?.isSuperAdmin
+    ) {
       // console.log("Redirecting non-admin from admin route");
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+
+    // SuperAdmin Report route protection - Check this BEFORE general admin check
+    if (path.startsWith("/admin/manage") && !user?.info?.isSuperAdmin) {
+      // console.log("Redirecting non-superadmin from report route");
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 

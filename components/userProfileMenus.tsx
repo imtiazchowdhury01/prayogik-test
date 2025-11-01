@@ -225,7 +225,9 @@ export default function UserProfileMenus({ session, pathName }: any) {
             <span>
               প্রোফাইল{" "}
               {`(${
-                session.user.role === "ADMIN"
+                session?.user?.info?.isSuperAdmin
+                  ? "সুপার অ্যাডমিন"
+                  : session.user.role === "ADMIN"
                   ? "অ্যাডমিন"
                   : session.user.role === "TEACHER"
                   ? "প্রশিক্ষক"

@@ -157,7 +157,7 @@ export function SalesDataTable<TData, TValue>({
       {/* Pagination */}
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <div className="flex items-center gap-4">
-          <p>
+          <p className="hidden lg:block">
             Showing{" "}
             {table.getState().pagination.pageIndex *
               table.getState().pagination.pageSize +

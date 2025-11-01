@@ -415,6 +415,16 @@ const createEmailTransporter = () => {
   });
 };
 
+// Helper function to get BCC recipients (CEO and Manager)
+function getBccRecipients(): string {
+  const bccRecipients = [
+    process.env.CEO_RECIPIENT_EMAIL,
+    process.env.MANAGER_RECIPIENT_EMAIL,
+  ].filter(Boolean); // Remove any undefined/null values
+
+  return bccRecipients.join(", ");
+}
+
 // Helper function to get email resource details
 async function getEmailResourceDetails(payload: any) {
   let courseForEmail = null;
@@ -549,6 +559,8 @@ class PurchaseEmailService {
         ),
       };
 
+      // Get admin recipients
+      const bccRecipients = getBccRecipients();
       // Prepare admin email
       const adminSubject = isEventRegistration
         ? `প্রায়োগিক - ${
@@ -561,6 +573,7 @@ class PurchaseEmailService {
       const adminMailOptions = {
         from: `"প্রায়োগিক সিস্টেম" <${process.env.SMTP_USERNAME}>`,
         to: process.env.ADMIN_RECIPIENT_EMAIL,
+        ...(bccRecipients && { bcc: bccRecipients }), // Only add BCC if there are recipients
         subject: adminSubject,
         html: sendAdminNotification(
           payload.email,
@@ -585,23 +598,6 @@ class PurchaseEmailService {
       console.error("Failed to process unified emails:", error);
       throw error;
     }
-  }
-
-  // Keep these methods for backward compatibility but mark as deprecated
-  /** @deprecated Use handlePurchaseEmails instead */
-  async sendEventRegistrationEmails(...args: any[]) {
-    console.warn(
-      "sendEventRegistrationEmails is deprecated. Use handlePurchaseEmails instead."
-    );
-    return this.handlePurchaseEmails(...args);
-  }
-
-  /** @deprecated Use handlePurchaseEmails instead */
-  async sendPurchaseConfirmationEmails(...args: any[]) {
-    console.warn(
-      "sendPurchaseConfirmationEmails is deprecated. Use handlePurchaseEmails instead."
-    );
-    return this.handlePurchaseEmails(...args);
   }
 }
 

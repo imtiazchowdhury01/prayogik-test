@@ -56,7 +56,7 @@ export const sendMailToAttendees = async (attendees: Attendee[]) => {
     // Show loading toast
     const loadingToast = toast.loading("ইমেল পাঠানো হচ্ছে...");
 
-    const response = await fetch("/api/events/payment-notification", {
+    const response = await fetch("/api/events/event-notification", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

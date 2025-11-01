@@ -2,17 +2,6 @@
 import { db } from "@/lib/db";
 import type { PurchaseType } from "@prisma/client";
 
-export interface SalesData {
-  date: string;
-  time: string; // Add separate time field
-  userName: string;
-  email: string;
-  itemName: string;
-  type: PurchaseType;
-  amount: number;
-  status: string;
-}
-
 interface GetSalesDataParams {
   startDate?: Date;
   endDate?: Date;
@@ -20,9 +9,7 @@ interface GetSalesDataParams {
   limit?: number;
 }
 
-export async function getSalesData(
-  params?: GetSalesDataParams
-): Promise<SalesData[]> {
+export async function getSalesData(params?: GetSalesDataParams): Promise<any> {
   const { startDate, endDate, types, limit } = params || {};
 
   const purchases = await db.purchase.findMany({
@@ -48,6 +35,7 @@ export async function getSalesData(
             select: {
               name: true,
               email: true,
+              phoneNumber: true,
             },
           },
         },
@@ -108,7 +96,7 @@ export async function getSalesData(
     ...(limit && { take: limit }),
   });
 
-  const salesData: SalesData[] = purchases
+  const salesData: any = purchases
     .map((purchase) => {
       // Determine item name and amount based on purchase type
       let itemName = "";
@@ -192,13 +180,14 @@ export async function getSalesData(
         time, // Separate time field
         userName: purchase.studentProfile.user.name,
         email: purchase.studentProfile.user.email,
+        phoneNumber: purchase.studentProfile.user.phoneNumber,
         itemName,
         type: purchase.purchaseType,
         amount,
         status,
       };
     })
-    .filter((sale): sale is SalesData => sale !== null);
+    .filter((sale): sale is any => sale !== null);
 
   return salesData;
 }

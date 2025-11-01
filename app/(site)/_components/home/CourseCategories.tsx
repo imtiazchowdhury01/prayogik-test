@@ -109,7 +109,7 @@ const CourseCategories = async () => {
                       className="transition-all text-fontcolor-subtitle cursor-pointer  hover:text-primary-brand"
                     >
                       <Link
-                        href={`/courses?category=${childCategory.slug}`}
+                        href={`/courses/category/${childCategory.slug}`}
                         prefetch={false}
                       >
                         {textLangChecker(childCategory.name)}
@@ -132,7 +132,7 @@ const CourseCategories = async () => {
                     className="hover:text-primary-brand transition-all cursor-pointer "
                   >
                     <Link
-                      href={`/courses?category=${category.slug}`}
+                      href={`/courses/category/${category.slug}`}
                       prefetch={false}
                     >
                       {textLangChecker(category.name)}
@@ -154,7 +154,7 @@ const CourseCategories = async () => {
                     className="hover:text-primary transition-all cursor-pointer"
                   >
                     <Link
-                      href={`/courses?category=${category.slug}`}
+                      href={`/courses/category/${category.slug}`}
                       prefetch={false}
                     >
                       {textLangChecker(category.name)}

@@ -1,5 +1,4 @@
 // /api/events/event-notification/route.ts
-
 import { EventreminderToAttendeeTemplate } from "@/lib/utils/emailTemplates/event-reminder-to-attendee-template";
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
