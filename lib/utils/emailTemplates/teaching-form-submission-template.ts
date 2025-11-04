@@ -210,7 +210,7 @@ export const teachingFormSubmissionTemplate = (
                         <p
                           style="font-size:16px;line-height:26px;margin:16px 0;font-family:'Open Sans', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;font-weight:300;color:#404040">
                           ধন্যবাদ,<br>
-                          প্রয়োগিক সিস্টেম
+                          প্রায়োগিক সিস্টেম
                         </p>
                         
                         <!-- Footer -->

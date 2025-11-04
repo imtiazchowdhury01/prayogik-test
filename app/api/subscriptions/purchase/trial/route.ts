@@ -363,7 +363,7 @@ export async function POST(request: NextRequest) {
         const studentMailOptions = {
           from: `"প্রায়োগিক" <${process.env.SMTP_USERNAME}>`,
           to: payload?.email,
-          subject: "প্রয়োগিক - আপনার পেমেন্ট সফল হয়েছে!",
+          subject: "প্রায়োগিক - আপনার পেমেন্ট সফল হয়েছে!",
           html: sendSubscriptionCredential(
             payload.email,
             null, // No username for existing users

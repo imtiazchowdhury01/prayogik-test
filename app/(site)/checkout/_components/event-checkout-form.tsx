@@ -269,6 +269,12 @@ const EventCheckoutForm = ({ event, isSignedIn, isPaymentSuccessful }: any) => {
           router.push(result?.data?.url);
         } else {
           toast.success("পেমেন্ট সফলভাবে সম্পন্ন হয়েছে");
+          // META Tracking link
+          window.dataLayer = window.dataLayer || [];
+          window.dataLayer.push({
+            event: "form_submit_success",
+            form_name: `form-${event?.id}`,
+          });
           router.refresh();
           CheckoutStorage.clearEmail();
           UserStorage.clearName();

@@ -35,14 +35,14 @@ export const sendUserNotification = (
   if (isNewUser && isEventRegistration) {
     if (isFreeEvent) {
       mainMessage =
-        "প্রয়োগিক প্ল্যাটফর্মে আপনার অ্যাকাউন্ট সফলভাবে তৈরি করা হয়েছে এবং ইভেন্ট রেজিস্ট্রেশন সাবমিট হয়েছে। আমরা শীঘ্রই ইভেন্ট নিশ্চিতকরণ সম্পর্কে আপনাকে জানাব। প্ল্যাটফর্মে স্বাগতম!";
+        "প্রায়োগিক প্ল্যাটফর্মে আপনার অ্যাকাউন্ট সফলভাবে তৈরি করা হয়েছে এবং ইভেন্ট রেজিস্ট্রেশন সাবমিট হয়েছে। আমরা শীঘ্রই ইভেন্ট নিশ্চিতকরণ সম্পর্কে আপনাকে জানাব। প্ল্যাটফর্মে স্বাগতম!";
     } else {
       mainMessage =
-        "প্রয়োগিক প্ল্যাটফর্মে আপনার অ্যাকাউন্ট সফলভাবে তৈরি করা হয়েছে এবং ইভেন্ট রেজিস্ট্রেশন সম্পন্ন হয়েছে। প্ল্যাটফর্মে স্বাগতম!";
+        "প্রায়োগিক প্ল্যাটফর্মে আপনার অ্যাকাউন্ট সফলভাবে তৈরি করা হয়েছে এবং ইভেন্ট রেজিস্ট্রেশন সম্পন্ন হয়েছে। প্ল্যাটফর্মে স্বাগতম!";
     }
   } else if (isNewUser && !isEventRegistration) {
     mainMessage =
-      "প্রয়োগিক প্ল্যাটফর্মে আপনার অ্যাকাউন্ট সফলভাবে তৈরি করা হয়েছে। প্ল্যাটফর্মে স্বাগতম!";
+      "প্রায়োগিক প্ল্যাটফর্মে আপনার অ্যাকাউন্ট সফলভাবে তৈরি করা হয়েছে। প্ল্যাটফর্মে স্বাগতম!";
   } else if (!isNewUser && isEventRegistration) {
     if (isFreeEvent) {
       mainMessage =
@@ -557,7 +557,7 @@ export const sendUserNotification = (
                 }
                 <p style="font-size:16px;line-height:26px;margin:16px 0;font-family:'Open Sans', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;font-weight:300;color:#404040">
                   শুভেচ্ছাসহ,<br>
-                  প্রয়োগিক টিম
+                  প্রায়োগিক টিম
                 </p>
 
                 <!-- Footer -->
@@ -570,7 +570,7 @@ export const sendUserNotification = (
                           <a href="${
                             process.env.NEXT_PUBLIC_APP_URL
                           }" target="_blank" style="color:#4f46e5; text-decoration:none; font-weight:600;">
-                            প্রয়োগিক
+                            প্রায়োগিক
                           </a> 
                           থেকে স্বয়ংক্রিয়ভাবে পাঠানো হয়েছে।
                         </p>

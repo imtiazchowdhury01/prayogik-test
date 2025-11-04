@@ -201,6 +201,13 @@ const EventRegisterForm = ({
 
         if (result.success) {
           toast.success(result.message);
+
+          // META Tracking link
+          window.dataLayer = window.dataLayer || [];
+          window.dataLayer.push({
+            event: "form_submit_success",
+            form_name: `form-${eventId}`,
+          });
           setRegistrationSuccess(true);
         } else {
           toast.error(result.message);
@@ -227,7 +234,10 @@ const EventRegisterForm = ({
   // Scenario 1: User is not registered (includes guest users) - Show registration form
   if (!isRegistered) {
     return (
-      <div id="regform" className="bg-white rounded-xl shadow-sm border border-gray-100">
+      <div
+        id="regform"
+        className="bg-white rounded-xl shadow-sm border border-gray-100"
+      >
         <div className="p-5">
           <div className="mb-5">
             <h2 className="text-xl font-bold text-gray-900 leading-tight">

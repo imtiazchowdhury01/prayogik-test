@@ -111,7 +111,7 @@ const CourseProposals = async () => {
         {/* <div>
           <ActionBanner
             title="শিক্ষক হিসেবে যোগদান করতে চান?"
-            description="আপনার দক্ষতা শেয়ার করুন, আয় করুন নিজের নিয়মে, আর গড়ে তুলুন শিক্ষার্থীদের শেখার নতুন সম্ভাবনা প্রয়োগিকে প্ল্যাটফর্মে।"
+            description="আপনার দক্ষতা শেয়ার করুন, আয় করুন নিজের নিয়মে, আর গড়ে তুলুন শিক্ষার্থীদের শেখার নতুন সম্ভাবনা প্রায়োগিকে প্ল্যাটফর্মে।"
             buttonText=""
             buttonLink=""
             backgroundImage="/images/teacher/teacher-cta-bg.webp"

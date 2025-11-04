@@ -185,7 +185,7 @@ export const sendEventRegistrationEmail = (
                         
                         <p
                           style="font-size:16px;line-height:26px;margin:16px 0;font-family:'Open Sans', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;font-weight:300;color:#404040">
-                          যদি আপনার প্রয়োগিক প্ল্যাটফর্মে অ্যাকাউন্ট না থাকে, তাহলে একটি নতুন ইমেইল পাবেন যেখানে লগইন তথ্য থাকবে।
+                          যদি আপনার প্রায়োগিক প্ল্যাটফর্মে অ্যাকাউন্ট না থাকে, তাহলে একটি নতুন ইমেইল পাবেন যেখানে লগইন তথ্য থাকবে।
                         </p>
                         
                         <p
@@ -199,7 +199,7 @@ export const sendEventRegistrationEmail = (
                         <p
                           style="font-size:16px;line-height:26px;margin:16px 0;font-family:'Open Sans', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;font-weight:300;color:#404040">
                           শুভেচ্ছাসহ,<br>
-                          প্রয়োগিক টিম
+                          প্রায়োগিক টিম
                         </p>
                         <!-- Footer -->
                         <table

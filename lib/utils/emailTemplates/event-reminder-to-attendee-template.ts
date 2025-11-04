@@ -211,7 +211,7 @@ export const EventreminderToAttendeeTemplate = (
                 
                 <p style="font-size:16px;line-height:26px;margin:16px 0;font-family:'Open Sans', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;font-weight:300;color:#404040">
                   শুভেচ্ছাসহ,<br>
-                  প্রয়োগিক টিম
+                  প্রায়োগিক টিম
                 </p>
                 
                 <!-- Footer -->
@@ -228,7 +228,7 @@ export const EventreminderToAttendeeTemplate = (
                         <p style="margin:0;font-family:'Open Sans', 'Helvetica Neue', Arial;font-size:12px;color:#666;">
                           এই ইমেইলটি 
                           <a href="${baseUrl}" target="_blank" style="color:#4f46e5; text-decoration:none; font-weight:600;">
-                            প্রয়োগিক
+                            প্রায়োগিক
                           </a> 
                           থেকে স্বয়ংক্রিয়ভাবে পাঠানো হয়েছে। অনুগ্রহ করে এই ইমেইলে রিপ্লাই করবেন না।
                         </p>

@@ -56,7 +56,7 @@ export function LeadForm({
   const {
     register,
     handleSubmit,
-    formState: { errors,isDirty  },
+    formState: { errors, isDirty },
     reset,
     setValue,
   } = useForm<LeadFormValues>({
@@ -180,6 +180,7 @@ export function LeadForm({
         console.log(err, "submitting err");
       })}
       className="space-y-4"
+      id={`form-${eventId}`}
     >
       {/* Only show name field if user is not logged in */}
       {!userInfo?.name && (
