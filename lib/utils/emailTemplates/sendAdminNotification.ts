@@ -56,10 +56,12 @@ export const sendAdminNotification = (
     ? getConsistentBangladeshTime(purchaseDetailsForEmail.eventDate)
     : { timeString: "", dateString: "" };
 
-  const { timeString: userRegistrationTime, userRegistrationDate }: any =
-    purchaseDetailsForEmail?.eventDate
-      ? getConsistentBangladeshTime(new Date())
-      : { userRegistrationTime: "", userRegistrationDate: "" };
+  const {
+    timeString: userRegistrationTime,
+    dateString: userRegistrationDate,
+  }: any = purchaseDetailsForEmail?.eventDate
+    ? getConsistentBangladeshTime(new Date())
+    : { userRegistrationTime: "", userRegistrationDate: "" };
 
   // Block 1: User Information
   const userInformationBlock = `
@@ -519,22 +521,12 @@ export const sendAdminNotification = (
                       <td style="text-align:center;">
                         <p style="margin:0;font-family:'Open Sans', 'Helvetica Neue', Arial;font-size:12px;color:#666;">
                           এই ইমেইলটি 
-                          <a href="${
-                            process.env.NEXT_PUBLIC_APP_URL
-                          }" target="_blank" style="color:#4f46e5; text-decoration:none; font-weight:600;">
+                          <a href="${process.env.NEXT_PUBLIC_APP_URL}" target="_blank" style="color:#4f46e5; text-decoration:none; font-weight:600;">
                             প্রায়োগিক
                           </a> 
                           থেকে স্বয়ংক্রিয়ভাবে পাঠানো হয়েছে।
                         </p>
-                        <p style="margin:8px 0 0 0;font-family:'Open Sans', 'Helvetica Neue', Arial;font-size:11px;color:#999;">
-                          ${new Date().toLocaleString("bn-BD", {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                            hour: "numeric",
-                            minute: "2-digit",
-                          })}
-                        </p>
+                        
                       </td>
                     </tr>
                   </tbody>
