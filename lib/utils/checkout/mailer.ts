@@ -1,5 +1,4 @@
 
-// @ts-nocheck
 import nodemailer from "nodemailer";
 import { db } from "@/lib/db";
 import { sendUserNotification } from "@/lib/utils/emailTemplates/sendUserNotification";
@@ -29,6 +28,52 @@ function getBccRecipients(): string {
   return bccRecipients.join(", ");
 }
 
+// Helper function to determine admin email subject
+function getAdminEmailSubject(
+  purchaseDetailsForEmail: any,
+  isEventRegistration: boolean
+): string {
+  if (isEventRegistration) {
+    const isFreeEvent =
+      purchaseDetailsForEmail?.eventPrice === null ||
+      purchaseDetailsForEmail?.eventPrice === 0;
+    const isEOIEvent = purchaseDetailsForEmail?.eventType === "EOI";
+
+    if (isFreeEvent || isEOIEvent) {
+      return "প্রায়োগিক - ইভেন্ট রেজিস্ট্রেশন নোটিফিকেশন";
+    }
+    return "প্রায়োগিক - ইভেন্ট রেজিস্ট্রেশন এবং পেমেন্ট নোটিফিকেশন";
+  }
+
+  if (purchaseDetailsForEmail?.courseName) {
+    const isFreeCourse =
+      purchaseDetailsForEmail?.coursePrice === null ||
+      purchaseDetailsForEmail?.coursePrice === 0;
+
+    if (isFreeCourse) {
+      return "প্রায়োগিক - কোর্স এনরোলমেন্ট নোটিফিকেশন";
+    }
+    return "প্রায়োগিক - কোর্স ক্রয় এবং পেমেন্ট নোটিফিকেশন";
+  }
+
+  if (purchaseDetailsForEmail?.subscriptionPlanName) {
+    const isTrial = purchaseDetailsForEmail?.isTrial;
+
+    if (isTrial) {
+      return "প্রায়োগিক - ট্রায়াল সাবস্ক্রিপশন নোটিফিকেশন";
+    }
+    return "প্রায়োগিক - সাবস্ক্রিপশন ক্রয় এবং পেমেন্ট নোটিফিকেশন";
+  }
+
+  // Generic fallback
+  const isPaidTransaction =
+    purchaseDetailsForEmail?.amount && purchaseDetailsForEmail.amount > 0;
+
+  if (isPaidTransaction) {
+    return "প্রায়োগিক - নতুন পেমেন্ট নোটিফিকেশন";
+  }
+  return "প্রায়োগিক - নতুন এনরোলমেন্ট নোটিফিকেশন";
+}
 // Helper function to get email resource details
 async function getEmailResourceDetails(payload: any) {
   let courseForEmail = null;
@@ -165,14 +210,11 @@ class PurchaseEmailService {
 
       // Get admin recipients
       const bccRecipients = getBccRecipients();
-      // Prepare admin email
-      const adminSubject = isEventRegistration
-        ? `প্রায়োগিক - ${
-            isNewUser ? "নতুন নিবন্ধন ও " : ""
-          }ইভেন্ট রেজিস্ট্রেশন নোটিফিকেশন`
-        : `প্রায়োগিক - ${
-            isNewUser ? "নতুন নিবন্ধন" : "নতুন পেমেন্ট"
-          } নোটিফিকেশন`;
+      // Get admin email subject using helper function
+      const adminSubject = getAdminEmailSubject(
+        purchaseDetailsForEmail,
+        isEventRegistration
+      );
 
       const adminMailOptions = {
         from: `"প্রায়োগিক সিস্টেম" <${process.env.SMTP_USERNAME}>`,
