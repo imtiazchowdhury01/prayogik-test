@@ -18,41 +18,48 @@ export const sendAdminNotification = (
   const isPaidTransaction =
     purchaseDetailsForEmail?.amount && purchaseDetailsForEmail.amount > 0;
 
-// Determine main notification message
-let notificationMessage = "";
+  // Determine main notification message
+  let notificationMessage = "";
 
-if (isEventRegistration) {
-  // Event registration scenarios
-  if (isFreeEvent || isEOIEvent) {
-    notificationMessage = "একজন সফলভাবে একটি ইভেন্টে নিবন্ধন করেছে।";
+  if (isEventRegistration) {
+    // Event registration scenarios
+    if (isFreeEvent || isEOIEvent) {
+      notificationMessage = "একজন সফলভাবে একটি ইভেন্টে নিবন্ধন করেছে।";
+    } else {
+      notificationMessage =
+        "একজন সফলভাবে একটি ইভেন্টে নিবন্ধন করেছে এবং পেমেন্ট সম্পন্ন করেছে।";
+    }
+  } else if (purchaseDetailsForEmail?.courseName) {
+    // Course enrollment scenarios
+    if (isFreeCourse) {
+      notificationMessage = "একজন সফলভাবে একটি কোর্সে এনরোল করেছে।";
+    } else {
+      notificationMessage =
+        "একজন সফলভাবে একটি কোর্সে এনরোল করেছে এবং পেমেন্ট সম্পন্ন করেছে।";
+    }
+  } else if (purchaseDetailsForEmail?.subscriptionPlanName) {
+    // Subscription scenarios
+    if (isTrial) {
+      notificationMessage = "একজন সফলভাবে ট্রায়াল সাবস্ক্রিপশন শুরু করেছে।";
+    } else {
+      notificationMessage =
+        "একজন সফলভাবে সাবস্ক্রিপশন ক্রয় করেছে এবং পেমেন্ট সম্পন্ন করেছে।";
+    }
   } else {
-    notificationMessage = "একজন সফলভাবে একটি ইভেন্টে নিবন্ধন করেছে এবং পেমেন্ট সম্পন্ন করেছে।";
+    // Generic fallback
+    notificationMessage = isPaidTransaction
+      ? "একজন সফলভাবে একটি ক্রয় সম্পন্ন করেছে এবং পেমেন্ট সম্পন্ন করেছে।"
+      : "সিস্টেমে একটি নতুন এনরোলমেন্ট সফলভাবে সম্পন্ন হয়েছে।";
   }
-} else if (purchaseDetailsForEmail?.courseName) {
-  // Course enrollment scenarios
-  if (isFreeCourse) {
-    notificationMessage = "একজন সফলভাবে একটি কোর্সে এনরোল করেছে।";
-  } else {
-    notificationMessage = "একজন সফলভাবে একটি কোর্সে এনরোল করেছে এবং পেমেন্ট সম্পন্ন করেছে।";
-  }
-} else if (purchaseDetailsForEmail?.subscriptionPlanName) {
-  // Subscription scenarios
-  if (isTrial) {
-    notificationMessage = "একজন সফলভাবে ট্রায়াল সাবস্ক্রিপশন শুরু করেছে।";
-  } else {
-    notificationMessage = "একজন সফলভাবে সাবস্ক্রিপশন ক্রয় করেছে এবং পেমেন্ট সম্পন্ন করেছে।";
-  }
-} else {
-  // Generic fallback
-  notificationMessage = isPaidTransaction
-    ? "একজন সফলভাবে একটি ক্রয় সম্পন্ন করেছে এবং পেমেন্ট সম্পন্ন করেছে।"
-    : "সিস্টেমে একটি নতুন এনরোলমেন্ট সফলভাবে সম্পন্ন হয়েছে।";
-}
-
 
   const { timeString, dateString }: any = purchaseDetailsForEmail?.eventDate
     ? getConsistentBangladeshTime(purchaseDetailsForEmail.eventDate)
     : { timeString: "", dateString: "" };
+
+  const { timeString: userRegistrationTime, userRegistrationDate }: any =
+    purchaseDetailsForEmail?.eventDate
+      ? getConsistentBangladeshTime(new Date())
+      : { userRegistrationTime: "", userRegistrationDate: "" };
 
   // Block 1: User Information
   const userInformationBlock = `
@@ -100,13 +107,7 @@ if (isEventRegistration) {
             নিবন্ধনের সময়:
           </td>
           <td style="padding:12px 0;font-size:15px;color:#2d3748;font-family:'Open Sans', Arial,sans-serif;font-weight:500;">
-            ${new Date().toLocaleString("bn-BD", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-              hour: "numeric",
-              minute: "2-digit",
-            })}
+            ${`${userRegistrationDate}, ${userRegistrationTime}`}
           </td>
         </tr>
       </table>
@@ -221,7 +222,7 @@ if (isEventRegistration) {
           <td style="padding:12px 0;font-size:15px;color:#2d3748;font-family:'Open Sans', Arial,sans-serif;">
             <a href="${purchaseDetailsForEmail.eventZoomLink}" 
                style="color:#3182ce;text-decoration:none;font-weight:500;padding:8px 12px;background-color:#f7fafc;border-radius:6px;display:inline-block;">
-              জুম লিংক দেখুন
+              লিংক দেখুন
             </a>
           </td>
         </tr>
